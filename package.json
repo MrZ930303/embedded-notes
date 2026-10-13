@@ -1,0 +1,22 @@
+{
+  "name": "embedded-notes",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "中文嵌入式技术笔记，使用 VitePress 与 GitHub Pages。",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "docs:dev": "vitepress dev docs --host 127.0.0.1",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs --host 127.0.0.1",
+    "test": "node scripts/test-models.cjs && node scripts/check-source.mjs",
+    "test:build": "node scripts/check-build.mjs",
+    "check": "npm test && npm run docs:build && npm run test:build"
+  },
+  "devDependencies": {
+    "vitepress": "1.6.4",
+    "minisearch": "7.2.0"
+  }
+}
