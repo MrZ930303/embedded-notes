@@ -22,6 +22,8 @@
 .eyebrow>span { width:6px; height:6px; border-radius:50%; background:var(--vp-c-brand-1); }
 .intro h1 { font-size:15px; letter-spacing:.08em; font-weight:600; color:var(--vp-c-text-2); margin:0 0 14px; }
 .intro-lead { font-size:clamp(32px,3.5vw,46px); line-height:1.38; font-weight:760; letter-spacing:-.04em; margin:0; }
+/* VitePress .vp-doc p sets a fixed 28px line height; keep the large hero text proportional. */
+.notebook-home p.intro-lead { line-height:1.38; }
 .intro-lead em { font-style:normal; color:var(--vp-c-brand-1); }
 .intro-description { font-size:14px; color:var(--vp-c-text-2); line-height:1.9; max-width:420px; margin:20px 0 25px; }
 .intro-actions { display:flex; gap:12px; flex-wrap:wrap; }
