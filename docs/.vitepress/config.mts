@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitepress'
+import { readInteractiveNote, interactiveNoteDevPlugin } from '../../scripts/interactive-note.mjs'
 
 // GitHub 项目站默认 /embedded-notes/；个人主页或自定义域名可设为 /。
 const requestedBase = process.env.SITE_BASE || '/embedded-notes/'
@@ -10,7 +11,11 @@ export default defineConfig({
   description: '从 C 语言与内存到 MCU、FreeRTOS 和工程调试。把原理学清楚，把证据留在工程里。',
   base,
   cleanUrls: false,
+  transformHtml(html, _id, context) {
+    return context.page === 'c-memory/heap-stack.md' ? readInteractiveNote() : html
+  },
   vite: {
+    plugins: [interactiveNoteDevPlugin(base)],
     server: { host: '127.0.0.1', cors: false, allowedHosts: ['localhost', '127.0.0.1'] },
     preview: { host: '127.0.0.1', cors: false, allowedHosts: ['localhost', '127.0.0.1'] }
   },
@@ -24,6 +29,7 @@ export default defineConfig({
     siteTitle: '嵌入式技术笔记',
     nav: [
       { text: '首页', link: '/' },
+      { text: '交互笔记', link: '/c-memory/heap-stack.html' },
       { text: '学习路线', link: '/guide/memory-roadmap.html' },
       { text: '笔记分类', items: [
         { text: 'C 语言与内存', link: '/c-memory/' },
