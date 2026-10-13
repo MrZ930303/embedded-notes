@@ -21,6 +21,7 @@ export async function scan(dir) {
     else if (/\.(?:md|html|css|[cm]?[jt]s|vue|json|ya?ml|svg)$/.test(entry.name)) {
       const text = await readFile(file, 'utf8')
       for (const pattern of patterns) assert.ok(!pattern.test(text), 'Potential private data or credential: ' + path.relative(root, file))
+      if (file.startsWith(path.join(root, 'docs'))) assert.ok(!/\b(?:C51|8051|ML51)\b/i.test(text), 'Excluded architecture content: ' + path.relative(root, file))
       count++
     }
   }
@@ -34,6 +35,6 @@ const lock = JSON.parse(await readFile(path.join(root, 'package-lock.json'), 'ut
 assert.equal(pkg.devDependencies.vitepress, '1.6.4')
 assert.equal(lock.packages['node_modules/vitepress'].version, '1.6.4')
 const article = await readFile(path.join(root, 'docs/c-memory/heap-stack.md'), 'utf8')
-for (const concept of ['sizeof(StackType_t)', 'vPortGetHeapStats', '不能在 main 中直接覆盖整个栈', 'MSP', 'PSP', 'malloc', 'free(p)', '8051']) assert.ok(article.includes(concept), 'Missing required concept: ' + concept)
+for (const concept of ['sizeof(StackType_t)', 'vPortGetHeapStats', '不能在 main 中直接覆盖整个栈', 'MSP', 'PSP', 'malloc', 'free(p)']) assert.ok(article.includes(concept), 'Missing required concept: ' + concept)
 console.log('PASS: ' + count + ' source files scanned; no known private links/metadata or common secret patterns; stable dependency and core caveats retained.')
 
