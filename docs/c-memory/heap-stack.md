@@ -1,21 +1,15 @@
 ---
 title: MCU 堆栈原理与监测
-description: 理解 Cortex-M 堆栈、指针、泄漏和碎片，结合 Keil 与 FreeRTOS 做内存预算和运行期监测。
+description: 交互式理解 Cortex-M 堆栈、指针、泄漏和碎片，结合 Keil 与 FreeRTOS 做内存预算和运行期监测。
 ---
 
-<script setup>
-import { withBase } from 'vitepress'
-</script>
+<!-- 此文件为全文搜索索引输入。公开阅读页由构建钩子输出完整交互 HTML。 -->
 
 # MCU 堆栈原理与监测
 
 适用于 STM32 与 GD32 Cortex-M 系列、Keil MDK 裸机及 FreeRTOS 工程。重点掌握堆栈的用途、地址方向、常见风险，以及编译期和运行时的监测方法。
 
 **先记住：栈通常随函数调用自动使用和回收；堆通过分配器申请与释放。栈顶不等于高地址，RAM 总占用也不等于实际栈峰值。**
-
-::: tip 先动手，再回来看
-<a :href="withBase('/demos/stack-heap.html')" target="_blank" rel="noopener" data-no-router>打开堆栈交互实验</a>，观察压栈、碎片与泄漏。演示是教学模型，数值不是设备实测。
-:::
 
 ## 堆和栈的基本区别
 
@@ -97,8 +91,6 @@ malloc 可按 memory allocation 记忆。在 C 中，包含 stdlib.h 后通常�
 函数调用可理解为 main → A → B，返回顺序是 B → A → main。实际函数可能一次预留完整栈帧，不会每声明一个变量就单独改变 SP。
 
 堆常被画成向高地址扩展，但分配器可能只在固定内存池中复用空闲块；不能据此认为每次 malloc 返回地址都递增。实际堆栈位置、大小和边界应查启动文件、Scatter 文件和 Map 文件。
-
-**不同内核不能照搬：**经典 8051（如 ML51）的硬件栈向高地址增长，PUSH 时先增加 SP 再写入。本文后续 Cortex-M 监测方法不直接适用于 8051。
 
 ## 三类常见内存风险
 
