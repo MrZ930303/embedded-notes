@@ -2,7 +2,7 @@
 
 使用 VitePress 1.6.4 稳定版构建的中文技术笔记站。依赖版本由 package-lock.json 锁定，适合部署到 GitHub Pages。
 
-当前内容：一篇完整的 MCU 堆栈原理与监测笔记、一条 MCU 内存学习路线，以及自包含的堆栈交互实验。其他分类明确标为规划中。
+当前内容：一篇完整的 MCU 堆栈交互式 HTML 笔记和一条 MCU 内存学习路线。首页、分类和搜索用于找到笔记；进入笔记后直接操作模型、阅读图解并展开完整正文。其他分类明确标为规划中。
 
 ## 本地预览（Windows / macOS / Linux）
 
@@ -46,9 +46,9 @@ npm run docs:preview
 5. 运行 npm run check，然后在浏览器检查文章、搜索、移动端布局与交互。
 6. 审阅改动后提交并推送；main 分支的推送会触发自动发布。
 
-重要：docs/c-memory/heap-stack.md 与 docs/public/demos/stack-heap.html 中的完整笔记是同一内容的两份呈现。修改概念、代码或限定条件后，必须同步更新两处，并分别预览；不能只改文章而让实验里的正文过时。
+重要：docs/public/demos/stack-heap.html 是主阅读体验的完整交互 HTML 源码。VitePress 的 transformHtml 构建钩子将它原样输出到 c-memory/heap-stack.html；开发服务也在相同路径提供这份 HTML。旧 demos/ 路径仅用于兼容历史链接。docs/c-memory/heap-stack.md 只提供全文搜索输入，不作为公开文档式阅读页。修改正文、代码或限定条件后必须同步 HTML 与搜索输入；新增搜索标题还需为 HTML 中对应章节添加相同 id。构建测试会核对搜索结果锚点。
 
-文章内链接到另一篇文章时，使用相对 Markdown 路径，如 ./heap-stack.md。主题组件中的站内链接使用 VitePress 的 withBase()。指向独立 HTML 实验时，加 data-no-router，让浏览器正常打开实验。
+文章内链接到另一篇文章时，使用相对 Markdown 路径，如 ./heap-stack.md。主题组件中的站内链接使用 VitePress 的 withBase()。主交互笔记使用 data-no-router 和主题路由守卫进行浏览器原生导航，搜索及后退/前进也不会恢复成文档版。交互页中的搜索入口返回知识库并打开本地搜索。
 
 本地搜索使用 VitePress 内置 MiniSearch，并用 Intl.Segmenter 做中文分词；构建时生成索引，不需要外部搜索账户。
 
@@ -90,10 +90,12 @@ SITE_BASE=/ npm run docs:preview
 - docs/index.md：首页入口
 - docs/.vitepress/config.mts：导航、搜索、部署路径
 - docs/.vitepress/theme/：首页组件与主题样式
-- docs/c-memory/：C 语言与内存笔记
+- docs/c-memory/：分类索引，以及交互笔记的全文搜索输入
 - docs/guide/：学习路线
 - docs/mcu/、docs/freertos/、docs/debug/：后续分类
-- docs/public/demos/stack-heap.html：独立交互实验，正文完整内嵌
+- docs/public/demos/stack-heap.html：主交互笔记 HTML 源码，正文完整内嵌；demos/ 为历史兼容入口
+- scripts/interactive-note.mjs：主阅读 URL 的开发/生产 HTML 输出适配
+- docs/.vitepress/theme/interactive-routing.mjs：点击、搜索与历史导航保护
 - templates/note.md：新笔记模板，不会被发布
 - scripts/：模型、源文件和构建检查
 - .github/workflows/deploy.yml：自动构建与发布
