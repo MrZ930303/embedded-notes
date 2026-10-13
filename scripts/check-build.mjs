@@ -21,12 +21,14 @@ const pages = files.filter(p=>p.endsWith('.html'))
 for (const file of files) {
   if (!/\.(?:html|js|json|css|svg)$/.test(file)) continue
   const text=await readFile(file,'utf8')
+  assert.ok(!/\b(?:C51|8051|ML51)\b/i.test(text), 'Excluded architecture content in public output: ' + file)
   assert.ok(!/https?:\/\/(?:chatgpt|chat)\.com\/(?:share|space)\//i.test(text), 'Private link in output')
   assert.ok(!/page_[a-f0-9]{24,}|creator_account_user_id|owner_workspace_id/.test(text), 'Private metadata in output')
   if(file.endsWith('.html')) ids.set(file,new Set([...text.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1])))
 }
 for (const file of pages) {
   const text=await readFile(file,'utf8')
+  assert.ok(!/\b(?:C51|8051|ML51)\b/i.test(text), 'Excluded architecture content in public output: ' + file)
   const current=new URL(base+path.relative(root,file).split(path.sep).join('/'),origin)
   for(const [,attr,raw] of text.matchAll(/\b(href|src)="([^"]+)"/g)) {
     if(!raw||raw.startsWith('data:')||raw.startsWith('mailto:')||raw.startsWith('javascript:')) continue
@@ -46,12 +48,16 @@ for (const file of pages) {
 }
 const html=await readFile(path.join(root,'index.html'),'utf8')
 assert.ok(html.includes('嵌入式技术笔记'))
-assert.ok(html.includes(base+'demos/stack-heap.html'))
+assert.ok(html.includes(base+'c-memory/heap-stack.html'))
 assert.ok(html.includes('data-no-router'))
 assert.ok(files.some(p=>/hashmap\.json$/.test(p)))
 assert.ok(files.some(p=>/localSearchIndex/.test(p)), 'Local search index is missing')
 const demo=await readFile(path.join(root,'demos/stack-heap.html'),'utf8')
-assert.ok(demo.includes('href="../c-memory/heap-stack.html"'))
+assert.ok(demo.includes('href="../?search=1"'))
+const interactiveNote = await readFile(path.join(root, 'c-memory/heap-stack.html'), 'utf8')
+assert.equal(interactiveNote, demo, 'Canonical note must be the complete standalone interactive HTML')
+assert.ok(interactiveNote.includes('id="memory-model"'))
+assert.ok(!interactiveNote.includes('__VP_SITE_DATA__'), 'Canonical note must not hydrate the docs page')
 console.log('PASS: '+pages.length+' HTML pages, '+checked+' internal asset/page/anchor links, public output scan, '+base+' base path and local search index.')
 
 // Test the actual generated index with the exact tokenizer serialized for browsers.
@@ -63,6 +69,11 @@ assert.ok(serializedTokenizer.startsWith('_vp-fn_'))
 const tokenize = new Function('return ' + serializedTokenizer.slice(7))()
 const indexFile = files.find(p => /@localSearchIndexroot\..*\.js$/.test(p))
 const generatedIndex = (await import(pathToFileURL(indexFile).href)).default
+for (const id of Object.values(JSON.parse(generatedIndex).documentIds)) {
+  if (!id.startsWith(base + 'c-memory/heap-stack.html#')) continue
+  const anchor = decodeURIComponent(id.split('#')[1])
+  assert.ok(ids.get(path.join(root, 'c-memory/heap-stack.html')).has(anchor), 'Search anchor missing from interactive note: ' + anchor)
+}
 const search = MiniSearch.loadJSON(generatedIndex, {
   fields: ['title', 'titles', 'text'],
   storeFields: ['title', 'titles'],
@@ -75,5 +86,6 @@ for (const query of ['碎片', '任务栈', '历史最小', 'malloc', 'MSP', 'vP
   assert.ok(results.some(r => r.id.startsWith(base + 'c-memory/heap-stack.html')), 'Missing article result: ' + query)
 }
 assert.equal(search.search('zzzxxyyunknownquery').length, 0)
+for (const excluded of ['C51', '8051', 'ML51']) assert.equal(search.search(excluded).length, 0, 'Excluded architecture search result: ' + excluded)
 console.log('PASS: generated Chinese/English/API full-text search, client tokenizer serialization and empty-result query.')
 
