@@ -1,7 +1,7 @@
 <script setup>
 import { withBase } from 'vitepress'
 const categories = [
-  { n: '01', title: 'C 语言与内存', desc: '从指针、生命周期到堆栈，建立清晰的内存模型。', path: '/c-memory/', label: '1 篇完整笔记', ready: true },
+  { n: '01', title: 'C 语言与内存', desc: '从指针、生命周期到堆栈，建立清晰的内存模型。', path: '/c-memory/', label: '1 篇交互笔记', ready: true },
   { n: '02', title: 'MCU 外设', desc: 'GPIO、定时器、通信与 DMA，沿着数据流理解硬件。', path: '/mcu/', label: '规划中', ready: false },
   { n: '03', title: 'FreeRTOS', desc: '任务、调度与同步，从能运行走向可分析。', path: '/freertos/', label: '规划中', ready: false },
   { n: '04', title: '调试与实战', desc: '从现象找到证据，记录问题、实验和排查路径。', path: '/debug/', label: '规划中', ready: false }
@@ -15,10 +15,10 @@ const categories = [
         <p class="eyebrow"><span></span> EMBEDDED / FIELD NOTES</p>
         <h1>嵌入式技术笔记</h1>
         <p class="intro-lead">把原理学清楚，<br><em>把证据留在工程里。</em></p>
-        <p class="intro-description">从 C 语言与内存开始，逐步理解 MCU、实时系统与工程调试。一边学习，一边用代码和实验验证。</p>
+        <p class="intro-description">以可操作的 HTML 笔记为主：看图、点击、观察变化，再展开完整原理和代码。从 C 语言与内存，逐步理解 MCU 与实时系统。</p>
         <div class="intro-actions">
-          <a class="notebook-button primary" :href="withBase('/guide/memory-roadmap.html')">开始学习 <span aria-hidden="true">↗</span></a>
-          <a class="notebook-button secondary" :href="withBase('/c-memory/heap-stack.html')">阅读第一篇笔记</a>
+          <a class="notebook-button primary" :href="withBase('/c-memory/heap-stack.html')" data-no-router>打开交互笔记 <span aria-hidden="true">↗</span></a>
+          <a class="notebook-button secondary" :href="withBase('/guide/memory-roadmap.html')">查看学习路线</a>
         </div>
       </div>
       <div class="memory-card" role="img" aria-label="Cortex-M 栈示意：栈从高地址向低地址增长，SP 指向当前栈顶。">
@@ -40,10 +40,9 @@ const categories = [
       <div class="home-section-heading"><div><p class="eyebrow">LATEST NOTE</p><h2 id="latest-heading">从内存开始</h2></div><a :href="withBase('/c-memory/')">全部笔记 <span aria-hidden="true">→</span></a></div>
       <article class="featured-note">
         <div class="note-number" aria-hidden="true">01<span>STACK<br>&amp; HEAP</span></div>
-        <div class="featured-copy"><p class="note-meta">C 语言与内存 <span>·</span> Cortex-M / Keil / FreeRTOS</p><h3><a :href="withBase('/c-memory/heap-stack.html')">MCU 堆栈原理与监测</a></h3><p>分清栈顶与地址方向，读懂指针与动态内存，再把栈水位、堆统计和异常现场接进工程。</p><div class="note-tags"><span>C 代码示例</span><span>工程检查清单</span><span>交互演示</span></div></div>
-        <a class="note-arrow" :href="withBase('/c-memory/heap-stack.html')" aria-label="阅读 MCU 堆栈原理与监测">↗</a>
+        <div class="featured-copy"><p class="note-meta">C 语言与内存 <span>·</span> Cortex-M / Keil / FreeRTOS</p><h3><a :href="withBase('/c-memory/heap-stack.html')" data-no-router>MCU 堆栈原理与监测</a></h3><p>点一下压栈，观察 SP；逐步分配与释放，理解碎片和泄漏。完整原理、代码与工程清单，就在同一篇交互笔记里。</p><div class="note-tags"><span>交互式 HTML</span><span>完整原理与代码</span><span>工程检查清单</span></div></div>
+        <a class="note-arrow" :href="withBase('/c-memory/heap-stack.html')" data-no-router aria-label="阅读 MCU 堆栈原理与监测">↗</a>
       </article>
-      <a class="lab-link" :href="withBase('/demos/stack-heap.html')" data-no-router><span class="lab-icon" aria-hidden="true">⌘</span><div><strong>动手实验：把 MCU 堆栈看明白</strong><span>点几次压栈、分配与释放，观察 SP、碎片和泄漏如何变化。</span></div><span aria-hidden="true">↗</span></a>
     </section>
 
     <section class="home-section categories-section" aria-labelledby="categories-heading">
