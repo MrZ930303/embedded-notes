@@ -42,3 +42,18 @@ for(let i=0;i<10000;i++){const op=Math.floor(rand()*5);if(op===0)s.select(SKILLS
 s.reset();assert.equal(s.selected,'clarify');assert.equal(s.tracker,'local');assert.ok(Object.values(s.permissions).every(v=>v===false));
 const sd=dom(skills);vm.runInNewContext([...skills.matchAll(/<script(?: id="[^"]+")?>([\s\S]*?)<\/script>/g)].map(m=>m[1]).join('\n'),{document:sd.document,window:sd.window,requestAnimationFrame:fn=>fn()});const sel=id=>sd.byId.get(id),taskButton=id=>sel('task-options').children.find(button=>button.id==='task-'+id);assert.equal(sel('skills-lab-panel').hidden,false);assert.equal(sel('task-options').children.length,9);taskButton('implement').click();assert.equal(sel('selected-skill').textContent,'implement + tdd');sel('skills-next').click();assert.equal(sel('skills-next').disabled,true);for(const key of ['write','run']){sel('permission-'+key).checked=true;sel('permission-'+key).listeners.change({target:sel('permission-'+key)});}assert.equal(sel('skills-next').disabled,false);sel('skills-next').click();assert.match(sel('current-step-title').textContent,/GREEN/);sel('skills-prev').click();assert.match(sel('current-step-title').textContent,/RED/);taskButton('spec').click();sel('tracker-remote').click();assert.equal(sel('tracker-remote').attributes['aria-pressed'],'true');while(!sel('skills-next').disabled)sel('skills-next').click();assert.match(sel('step-help').textContent,/仍缺确认/);sel('skills-reset').click();assert.equal(sel('tracker-local').attributes['aria-pressed'],'true');assert.ok(['write','run','commit','remote'].every(key=>sel('permission-'+key).checked===false));assert.equal(sel('skills-prev').disabled,true);assert.equal(taskButton('clarify').attributes['aria-pressed'],'true');
 console.log('PASS: all 9 Skills routes, permission/tracker gates, immutable snapshots, 10,000 bounded transitions, actual chooser/checkbox/step/reset handlers.');
+
+// The Skills chooser must not inherit Beads' generic white .step-card surface.
+assert.ok(skills.includes('class="skills-step-card"'));
+assert.ok(!skills.includes('class="step-card"'));
+const stepStyle=skills.match(/\.skills-step-card\{([^}]+)\}/)[1];
+const headingStyle=skills.match(/\.skills-step-card h4\{([^}]+)\}/)[1];
+const labelStyle=skills.match(/\.skills-step-card dt\{([^}]+)\}/)[1];
+const bodyStyle=skills.match(/\.skills-step-card dd\{([^}]+)\}/)[1];
+const value=(style,property)=>{const match=style.match(new RegExp('(?:^|;)'+property+':(#[a-fA-F0-9]{6})(?:;|$)'));assert.ok(match,'explicit '+property+' missing');return match[1];};
+const luminance=hex=>{const rgb=[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)/255).map(c=>c<=.04045?c/12.92:((c+.055)/1.055)**2.4);return .2126*rgb[0]+.7152*rgb[1]+.0722*rgb[2];};
+const contrast=(a,b)=>{const [light,dark]=[luminance(a),luminance(b)].sort((a,b)=>b-a);return(light+.05)/(dark+.05);};
+const surface=value(stepStyle,'background');
+for(const block of [stepStyle,headingStyle,labelStyle,bodyStyle])assert.ok(contrast(surface,value(block,'color'))>=4.5,'Skills step text must meet normal-text contrast');
+assert.ok(skills.includes('.skills-step-card{background:#ffffff;color:#172f2c;border-color:#9caaa3}'),'print card needs explicit readable colors');
+console.log('PASS: Skills step-card scoped class, explicit dark surface/text colors, WCAG AA text contrast and print-color regression.');
