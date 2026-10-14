@@ -74,7 +74,8 @@
 .lab-link strong { display:block; font-size:13px; font-weight:650; }
 .lab-link div span { display:block; margin-top:3px; font-size:11px; line-height:1.7; color:var(--vp-c-text-2); }
 .lab-link>span:last-child { color:var(--vp-c-brand-1); }
-.category-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+.tools-next { margin-top:14px; }
+.category-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
 .category-card { border:1px solid var(--vp-c-divider); border-radius:9px; padding:20px; display:flex; flex-direction:column; transition:border-color .2s,background .2s; }
 .category-card:hover { border-color:var(--vp-c-brand-1); background:var(--vp-c-bg-soft); }
 .category-top { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:21px; color:var(--vp-c-text-2); font:10px/1.5 var(--vp-font-family-mono); }
