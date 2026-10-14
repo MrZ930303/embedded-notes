@@ -1,9 +1,10 @@
-export const notePath = 'c-memory/heap-stack.html'
+export const notePaths = ['c-memory/heap-stack.html', 'tools/beads.html', 'tools/plane.html', 'tools/matt-pocock-skills.html']
+export const notePath = notePaths[0]
 
 export function isInteractiveNote(href, base, currentUrl) {
   const target = new URL(href, currentUrl)
   const current = new URL(currentUrl)
-  return target.origin === current.origin && target.pathname === base + notePath
+  return target.origin === current.origin && notePaths.some(path => target.pathname === base + path)
 }
 
 export function createInteractiveNoteGuard(base, location) {
