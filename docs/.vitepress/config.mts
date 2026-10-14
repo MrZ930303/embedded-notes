@@ -32,6 +32,7 @@ export default defineConfig({
       { text: '首页', link: '/' },
       { text: '交互笔记', items: [
         { text: 'MCU 堆栈原理与监测', link: '/c-memory/heap-stack.html' },
+        { text: 'MCU 晶振与主频：从 8 MHz 到 168 MHz', link: '/mcu/crystal-pll-clock.html' },
         { text: 'Beads：任务依赖与就绪队列', link: '/tools/beads.html' },
         { text: 'Plane：项目协作与工作流', link: '/tools/plane.html' },
         { text: 'Matt Pocock Skills：AI 编程工作流', link: '/tools/matt-pocock-skills.html' }
@@ -40,7 +41,7 @@ export default defineConfig({
       { text: '笔记分类', items: [
         { text: 'C 语言与内存', link: '/c-memory/' },
         { text: '工程工具与协作', link: '/tools/' },
-        { text: 'MCU 外设 · 规划中', link: '/mcu/' },
+        { text: 'MCU 基础与外设', link: '/mcu/' },
         { text: 'FreeRTOS · 规划中', link: '/freertos/' },
         { text: '调试与实战 · 规划中', link: '/debug/' }
       ]}
@@ -59,8 +60,11 @@ export default defineConfig({
         { text: 'Plane：项目协作与工作流', link: '/tools/plane.html' },
         { text: 'Matt Pocock Skills：AI 编程工作流', link: '/tools/matt-pocock-skills.html' }
       ]},
+      { text: 'MCU 基础与外设', items: [
+        { text: '分类概览', link: '/mcu/' },
+        { text: 'MCU 晶振与主频', link: '/mcu/crystal-pll-clock.html' }
+      ]},
       { text: '后续专题', collapsed: true, items: [
-        { text: 'MCU 外设 · 规划中', link: '/mcu/' },
         { text: 'FreeRTOS · 规划中', link: '/freertos/' },
         { text: '调试与实战 · 规划中', link: '/debug/' }
       ]}
