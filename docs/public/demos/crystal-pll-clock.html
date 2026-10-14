@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#173f35"><meta name="description" content="从 8 MHz 晶体到 168 MHz CPU：可调 STM32F407 PLL 时钟树、锁相反馈、时钟分频及工程约束。"><title>MCU 晶振与主频：从 8 MHz 到 168 MHz · 嵌入式技术笔记</title><link rel="icon" href="../favicon.svg" type="image/svg+xml"><style>
+:root{--paper:#f8faf4;--ink:#203d32;--green:#246b50;--line:#d9e2d3;--muted:#586b5c;--card:#ffffff;--dark:#173f35;--lime:#d5edac;--danger:#a52c25;--mono:Consolas,ui-monospace,monospace}*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:95px}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.85 system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}a{color:var(--green);text-underline-offset:4px;overflow-wrap:anywhere}button,input,select{font:inherit}button,a,input,select{-webkit-tap-highlight-color:transparent}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.5}button,input,select{min-height:44px}input,select{max-width:100%;min-width:0}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid #b47b25;outline-offset:4px}.wrap{max-width:1180px;margin:auto;padding-inline:32px}.skip{position:absolute;top:-80px;left:16px;z-index:9;background:white;padding:10px}.skip:focus{top:10px}.topbar{background:rgba(248,250,244,.97);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:3}.topbar-inner{display:flex;align-items:center;justify-content:space-between;gap:24px;min-height:70px}.brand{font-weight:750;text-decoration:none;white-space:nowrap;color:var(--ink)}.brandmark{display:inline-grid;place-items:center;margin-right:10px;width:32px;height:32px;background:var(--green);color:#fff;border-radius:8px;font:20px var(--mono)}nav{display:flex;gap:21px;flex-wrap:wrap;font-size:12px}nav a{text-decoration:none}.hero{display:grid;grid-template-columns:1.18fr 1fr;gap:65px;align-items:center;padding-block:58px 44px}.eyebrow{font:11px/1.5 var(--mono);letter-spacing:.13em;color:var(--green);margin:0 0 18px}.tag{font-size:11px;border:1px solid var(--line);padding:5px 10px;border-radius:30px;display:inline-block;margin-bottom:22px}h1{font-size:clamp(34px,4vw,52px);line-height:1.3;letter-spacing:-.04em;margin:0}h1 em{font-style:normal;color:var(--green)}.hero-intro{color:var(--muted);font-size:16px;max-width:540px;margin:24px 0}.btn{display:inline-block;background:var(--green);color:white;padding:10px 17px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:650}.hero-card{background:var(--dark);color:#f1f7e7;border-radius:16px;padding:28px;box-shadow:0 16px 35px #173f3512}.hero-card .eyebrow{color:#c0d5b6}.hero-numbers{display:flex;align-items:center;justify-content:space-between;gap:12px}.hero-numbers strong{font:clamp(38px,5vw,61px)/1.2 var(--mono);color:var(--lime)}.hero-numbers span{display:block;font-size:11px;color:#cad8c2}.hero-arrow{font-size:28px;color:#d4e9b2}.hero-formula{font:16px/1.8 var(--mono);padding:19px 0;margin:18px 0;border-top:1px solid #557363;border-bottom:1px solid #557363}.hero-card p:last-child{font-size:12px;color:#d1ddc8;margin-bottom:0}.principles{display:grid;grid-template-columns:repeat(3,1fr);border-block:1px solid var(--line);padding:20px 0;gap:22px}.principles strong{display:block;font-size:15px}.principles span{font-size:12px;color:var(--muted)}.content-section{padding-top:48px}.section-head{margin-bottom:22px}.section-head .eyebrow{margin-bottom:8px}h2{font-size:25px;line-height:1.5;margin:0 0 10px;letter-spacing:-.02em}h3{font-size:19px;line-height:1.6;margin:28px 0 12px}.section-head p{font-size:14px;color:var(--muted);margin:0}.clock-lab{border:1px solid #416656;background:var(--dark);color:#eef5e5;border-radius:14px;overflow:hidden}.clock-lab-top{padding:19px 24px;border-bottom:1px solid #486856;display:flex;justify-content:space-between;gap:15px;flex-wrap:wrap}.clock-lab-top strong{font-size:15px}.clock-lab-top span{font-size:11px;color:#c5d8b7}.clock-layout{display:grid;grid-template-columns:320px 1fr}.clock-controls{padding:24px;background:#12382e;border-right:1px solid #486856}.clock-controls h3{margin:0 0 16px;color:#eaf3dc;font-size:15px}.clock-field{margin-bottom:13px}.clock-field label{display:block;font-size:12px;color:#dae7cd;margin-bottom:4px}.clock-field input,.clock-field select{width:100%;padding:8px 10px;background:#fbfcf8;color:#203d32;border:1px solid #93ab94;border-radius:5px;font-size:14px}.clock-pair{display:grid;grid-template-columns:1fr 1fr;gap:12px}.clock-controls small{font-size:11px;color:#bfd1b8;display:block;line-height:1.6}.clock-check{display:flex;gap:9px;align-items:flex-start;font-size:12px;line-height:1.7;margin-top:12px}.clock-check input{min-height:20px;width:18px;height:18px;flex-shrink:0;margin-top:2px;accent-color:#bedba0}.clock-buttons{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}.clock-buttons button{padding:8px 12px;border:1px solid #89a97a;background:#d5edac;color:#173f35;border-radius:5px;font-size:12px;font-weight:650}.clock-buttons .secondary{color:#edf4e0;background:#214c3d}.clock-display{padding:24px;min-width:0}.clock-display h3{margin:0 0 10px;color:#edf5df;font-size:14px}.clock-tree-flow{display:grid;grid-template-columns:1fr 30px 1fr;align-items:center;gap:8px}.clock-node{padding:12px;border:1px solid #66866e;border-radius:7px;background:#214f3f;min-width:0}.clock-node small{display:block;font:10px/1.5 var(--mono);color:#cbdcc0;letter-spacing:.02em}.clock-node strong{display:block;font:22px/1.5 var(--mono);color:#e0f4bf;overflow-wrap:anywhere}.clock-node span{font-size:11px;color:#dde8d1}.clock-node.main{border-color:#c2df9d;background:#315a3d}.clock-tree-arrow{text-align:center;font:20px var(--mono);color:#d0e6b3}.clock-tree-down{font:11px/1.5 var(--mono);text-align:center;color:#d0e6b3;padding:9px}.clock-branch{border-left:2px solid #83a36d;margin:12px 0 0 16px;padding-left:18px;display:grid;grid-template-columns:1fr 1fr;gap:10px}.clock-branch .clock-node strong{font-size:19px}.clock-math{font:13px/1.8 var(--mono);background:#103429;padding:12px 14px;border-radius:7px;margin:17px 0 12px;color:#ecf6dc;overflow-wrap:anywhere}.clock-candidate{font-size:12px;color:#d2dfc8;line-height:1.7}.clock-checks{background:#edf5e2;color:#214532;border-radius:7px;padding:13px 16px;font-size:13px;line-height:1.75;margin-top:18px}.clock-checks.bad{background:#fff0e9;color:#7a3026}.clock-checks ul{padding-left:18px;margin:5px 0}.clock-checks p{margin:0}.clock-warnings{font-size:12px;color:#e9dfb1;line-height:1.75;margin:11px 0}.clock-current{border-top:1px solid #526f5c;padding:17px 24px;background:#10362b;display:flex;justify-content:space-between;gap:20px;align-items:center}.clock-current strong{color:#e3f2ca;font-size:15px}.clock-current p{margin:4px 0 0;font-size:12px;color:#c6d8ba}.clock-current .current-chip{padding:7px 12px;border:1px solid #96b67b;border-radius:5px;color:#e1f1c4;white-space:nowrap;font:18px var(--mono)}.clock-lab-foot{padding:12px 24px;font-size:12px;color:#d3e3c5;border-top:1px solid #476451}.model-scope{font-size:12px;color:var(--muted);margin:14px 0}.diagram-pair{display:grid;grid-template-columns:1fr 1fr;gap:18px}.diagram-card{padding:23px;border:1px solid var(--line);border-radius:11px;background:#fff;min-width:0}.diagram-card h3{margin:0 0 18px;font-size:17px}.diagram-card p{font-size:12px;color:var(--muted);margin:13px 0 0}.feedback-flow{display:grid;grid-template-columns:1fr 30px 1fr;align-items:center;gap:6px}.feedback-node{background:#e9f0df;border:1px solid #b7c9a8;padding:12px 7px;border-radius:5px;text-align:center;font-size:12px;line-height:1.6}.feedback-node strong{display:block;color:var(--green)}.feedback-down{grid-column:3;text-align:center;color:var(--green);font-size:13px}.feedback-return{grid-column:1/4;padding:9px;border-bottom:2px solid var(--green);border-left:2px solid var(--green);border-right:2px solid var(--green);border-radius:0 0 7px 7px;text-align:center;font-size:12px;color:var(--green)}.accuracy{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;text-align:center;margin-block:15px}.accuracy strong{font:25px/1.4 var(--mono);display:block;color:var(--green)}.accuracy small{display:block;font-size:11px;color:var(--muted)}.accuracy-result{background:#edf3e4;border-radius:7px;padding:13px;font-size:13px;text-align:center}.notes-toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}.notes-toolbar button{border:1px solid #b6c8aa;color:var(--green);border-radius:5px;background:#fff;padding:8px 14px;font-size:12px}.note-section{border:1px solid var(--line);border-radius:9px;background:#fff;margin-bottom:12px;overflow:hidden;scroll-margin-top:100px}.note-section summary{list-style:none;cursor:pointer;padding:21px 24px;display:flex;gap:14px;align-items:baseline}.note-section summary::-webkit-details-marker{display:none}.note-section summary:before{content:'+';font:20px var(--mono);color:var(--green)}.note-section[open] summary:before{content:'−'}.note-section summary h2{font-size:19px;line-height:1.6;margin:0}.note-body{padding:0 28px 24px 57px;overflow-wrap:anywhere}.note-body p,.note-body li{font-size:15px}.note-body p{margin:14px 0}.note-body li{margin:7px 0}.note-body strong{color:#194b36}.note-body ul,.note-body ol{padding-left:24px}.note-body table{border-collapse:collapse;width:100%;font-size:13px;margin:20px 0;display:block;overflow-x:auto}.note-body th,.note-body td{padding:10px 13px;text-align:left;border:1px solid var(--line);min-width:100px}.note-body th{background:#edf2e6}.note-body tr:nth-child(even){background:#fafcf7}.header-anchor{display:none}.note-body code{font:13px var(--mono);background:#edf2e7;padding:2px 4px;border-radius:3px}.footer{padding:34px 0 40px;margin-top:42px;border-top:1px solid var(--line);font-size:12px;color:var(--muted);display:flex;justify-content:space-between;gap:20px}.print-only{display:none}[hidden]{display:none!important}
+@media(max-width:900px){.hero{gap:28px}.clock-layout{grid-template-columns:270px 1fr}.clock-controls,.clock-display{padding:19px}.clock-node strong{font-size:18px}.clock-branch{margin-left:4px;padding-left:10px}.clock-branch .clock-node strong{font-size:16px}.hero-card{padding:22px}.topbar-inner{gap:15px}nav{gap:13px}}
+@media(max-width:680px){.wrap{padding-inline:20px}.topbar-inner{display:block;padding-block:12px}.brand{font-size:14px}nav{gap:16px;margin-top:9px;flex-wrap:nowrap;overflow-x:auto;white-space:nowrap;padding-bottom:2px}nav a{flex-shrink:0}.hero{grid-template-columns:1fr;padding-block:35px 28px;gap:25px}h1{font-size:37px}.hero-intro{font-size:14px;margin:18px 0}.hero-card{padding:22px}.hero-numbers strong{font-size:47px}.principles{gap:12px}.principles strong{font-size:12px}.principles span{font-size:10px;line-height:1.7;display:block}.content-section{padding-top:33px}h2{font-size:22px}.clock-layout{grid-template-columns:1fr}.clock-controls{border-right:0;border-bottom:1px solid #486856;padding:20px}.clock-display{padding:20px}.clock-node strong{font-size:20px}.clock-branch .clock-node strong{font-size:18px}.clock-current{display:block;padding:17px 20px}.clock-current .current-chip{display:inline-block;margin-top:12px}.clock-lab-top{padding:16px 20px;gap:6px}.clock-lab-foot{padding:12px 20px}.diagram-pair{grid-template-columns:1fr}.note-section summary{padding:17px 18px;gap:10px}.note-section summary h2{font-size:17px}.note-body{padding:0 20px 20px}.note-body p,.note-body li{font-size:14px}.note-body th,.note-body td{font-size:12px;padding:8px}.footer{display:block}.footer a{display:inline-block;margin-top:10px}html{scroll-padding-top:125px}.note-section{scroll-margin-top:125px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{body{background:#fff;color:#172d22;font-size:11pt}.wrap{max-width:none;padding:0}.topbar,.skip,.hero .btn,.clock-lab,.notes-toolbar,.footer{display:none!important}.hero{padding:0 0 20px;gap:20px}.hero-card{box-shadow:none;background:white;color:#172d22;border:1px solid #a0b498}.hero-card .eyebrow,.hero-card p:last-child,.hero-numbers strong,.hero-numbers span,.hero-arrow{color:#172d22}.hero-formula{border-color:#b5c7aa}h1{font-size:27pt}.principles{padding:10px 0}.content-section{padding-top:22px}.print-only{display:block;font-size:10pt}.diagram-card{break-inside:avoid}.note-section{border:0;overflow:visible;break-inside:auto}.note-section summary{padding:14px 0 4px;break-after:avoid}.note-section summary:before{display:none}.note-section summary h2{font-size:16pt}.note-body{padding:0}.note-body p,.note-body li{font-size:10.5pt}.note-body table{display:table;font-size:9pt}.note-body th,.note-body td{min-width:0;padding:6px}a{color:#173f35}.model-scope{font-size:9pt}}
+</style></head><body>
+<a class="skip" href="#main">跳到正文</a><header class="topbar"><div class="wrap topbar-inner"><a class="brand" href="../"><span class="brandmark" aria-hidden="true">∿</span>嵌入式技术笔记</a><nav aria-label="主导航"><a href="../">知识库首页</a><a href="../mcu/">MCU 分类</a><a href="#clock-lab">时钟树实验</a><a href="#clock-notes">完整笔记</a><a href="../?search=1">搜索笔记</a></nav></div></header>
+<main class="wrap" id="main"><section class="hero" aria-labelledby="mcu-clock"><div><span class="tag">MCU 基础 · 时钟系统</span><p class="eyebrow">SMALL REFERENCE. FASTER CORE.</p><h1 id="mcu-clock">晶体只有 8 MHz，<br><em>CPU 为什么能跑<br>168 MHz？</em></h1><p class="hero-intro">外部给基准，片内做倍频。沿着 PLL 的反馈回路，把每一段时钟的来处与边界看清楚。</p><a class="btn" href="#clock-lab">调一棵时钟树 ↓</a></div><div class="hero-card"><p class="eyebrow">STM32F407 / ONE WORKED EXAMPLE</p><div class="hero-numbers"><div><strong>8</strong><span>MHz · 外部基准</span></div><div class="hero-arrow" aria-hidden="true">→</div><div><strong>168</strong><span>MHz · 内核时钟</span></div></div><div class="hero-formula">8 ÷ 8 × 336 ÷ 2 = 168</div><p>晶体没有变快。片内 VCO 产生更快的振荡，PLL 用反馈把它锁定到参考源。</p></div></section>
+<div class="principles"><div><strong>参考源 ≠ CPU 主频</strong><span>中间还有 PLL 与时钟树</span></div><div><strong>倍率 ≠ 精度提升</strong><span>20 ppm 仍然是约 20 ppm</span></div><div><strong>算得出 ≠ 能运行</strong><span>电压、总线和 Flash 都有限制</span></div></div>
+<section class="content-section" aria-labelledby="clock-lab"><div class="section-head"><p class="eyebrow">01 / TRY THE CLOCK TREE</p><h2 id="clock-lab">动手算：从参考源到每一条总线</h2><p>改一个参数，看它影响哪一段。错误方案只显示原因，不会覆盖已应用方案。</p></div>
+<div class="clock-lab" id="clock-lab-panel" hidden><div class="clock-lab-top"><strong>STM32F407 · 可调 PLL 时钟树</strong><span>纯本地数值模型 · SYSCLK 固定选择 PLL</span></div><div class="clock-layout"><div class="clock-controls"><h3>候选配置</h3><div class="clock-pair"><div class="clock-field"><label for="clock-source">PLL 参考源</label><select id="clock-source"><option value="HSE">HSE 晶体</option><option value="HSI">HSI 片内 RC</option></select></div><div class="clock-field"><label for="clock-input">参考频率 / MHz</label><input id="clock-input" type="number" value="8" min="4" max="26" step="any" inputmode="decimal"></div></div><small id="clock-source-help">HSE 晶体模式：4–26 MHz；本页不模拟 bypass。</small><div class="clock-pair"><div class="clock-field"><label for="clock-m">输入分频 M（2–63）</label><input id="clock-m" type="number" value="8" min="2" max="63" step="1" inputmode="numeric"></div><div class="clock-field"><label for="clock-n">反馈倍频 N（50–432）</label><input id="clock-n" type="number" value="336" min="50" max="432" step="1" inputmode="numeric"></div></div><div class="clock-pair"><div class="clock-field"><label for="clock-p">主输出分频 P</label><select id="clock-p"><option value="2">2</option><option value="4">4</option><option value="6">6</option><option value="8">8</option></select></div><div class="clock-field"><label for="clock-q">48 MHz 域分频 Q</label><input id="clock-q" type="number" value="7" min="2" max="15" step="1" inputmode="numeric"></div></div><div class="clock-pair"><div class="clock-field"><label for="clock-ahb">AHB 预分频</label><select id="clock-ahb"><option>1</option><option>2</option><option>4</option><option>8</option><option>16</option><option>64</option><option>128</option><option>256</option><option>512</option></select></div><div class="clock-field"><label for="clock-flash">Flash 等待周期 / WS</label><select id="clock-flash"><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option selected>5</option><option>6</option><option>7</option></select></div></div><div class="clock-pair"><div class="clock-field"><label for="clock-apb1">APB1 预分频</label><select id="clock-apb1"><option>1</option><option>2</option><option selected>4</option><option>8</option><option>16</option></select></div><div class="clock-field"><label for="clock-apb2">APB2 预分频</label><select id="clock-apb2"><option>1</option><option selected>2</option><option>4</option><option>8</option><option>16</option></select></div></div><label class="clock-check"><input id="clock-usb-target" type="checkbox" checked><span>要求 Q 支路标称 48 MHz<small>只检查名义频率；不代表 USB 精度已验证。</small></span></label><div class="clock-buttons"><button id="clock-apply" type="button">模拟锁定并应用</button><button id="clock-efficient" class="secondary" type="button">试试 2 MHz 输入</button><button id="clock-reset" class="secondary" type="button">恢复 8 → 168 示例</button></div></div>
+<div class="clock-display"><h3>候选时钟树 · 全部数值单位 MHz</h3><div class="clock-tree-flow"><div class="clock-node"><small id="tree-source-label">HSE</small><strong id="tree-source">8</strong><span>参考源</span></div><div class="clock-tree-arrow" aria-hidden="true">→</div><div class="clock-node"><small id="tree-m-label">÷ M8</small><strong id="tree-pllin">1</strong><span>PLL 输入 · 1–2</span></div></div><div class="clock-tree-down" id="tree-n-label">↓ 锁定后 × N336</div><div class="clock-node main"><small>VCO · 100–432</small><strong id="tree-vco">336</strong><span>片内振荡器 · N 分频反馈见下图</span></div><div class="clock-branch"><div class="clock-node"><small id="tree-p-label">÷ P2 → SYSCLK</small><strong id="tree-sysclk">168</strong><span>主输出 · 24–168</span></div><div class="clock-node"><small id="tree-q-label">÷ Q7 → PLL48CLK</small><strong id="tree-pll48">48</strong><span>外设模型范围 · ≤48</span></div></div><div class="clock-tree-down" id="tree-ahb-label">SYSCLK ↓ ÷ AHB1</div><div class="clock-node"><small>HCLK · AHB / 内核 · ≤168</small><strong id="tree-hclk">168</strong><span id="tree-flash">当前 5 WS · 最少需要 5 WS</span></div><div class="clock-branch"><div class="clock-node"><small id="tree-apb1-label">÷ APB1 4 → PCLK1</small><strong id="tree-pclk1">42</strong><span id="tree-tim1">定时器 84</span></div><div class="clock-node"><small id="tree-apb2-label">÷ APB2 2 → PCLK2</small><strong id="tree-pclk2">84</strong><span id="tree-tim2">定时器 168</span></div></div><p class="clock-math" id="clock-formula">8 ÷ 8 × 336 ÷ 2 = 168 MHz</p><p class="clock-candidate">上图是候选算式，不是实际输出或已锁定信号。红色提示意味着不能应用，即使图中能算出数字。</p><div class="clock-checks" id="clock-validation" aria-live="polite" aria-atomic="true"><p id="clock-validation-title"></p><ul id="clock-errors"></ul></div><p class="clock-warnings" id="clock-warnings"></p></div></div><div class="clock-current"><div><strong>已应用的模拟方案</strong><p id="clock-applied-detail">HSE 8 MHz · M8 N336 P2 Q7 · HCLK 168 · PCLK1 42 · PCLK2 84</p><p id="clock-applied-state">初始教学示例。模拟锁定不是硬件测量。</p></div><span class="current-chip" id="clock-applied-rate">168 MHz</span></div><div class="clock-lab-foot" id="clock-status" role="status" aria-live="polite" aria-atomic="true">所有改动仅在页面内存中；刷新即重置。</div></div>
+<noscript><p>交互时钟树需要 JavaScript。下面的图解、完整正文和原生展开项仍可阅读；8 MHz 示例所有数值均列在第一节。</p></noscript><p class="model-scope">固定条件：STM32F407，VDD=3.3 V、Scale 1、SYSCLK=PLL。按当前 DS8626 / RM0090 做名义频率与 Flash 校验，不模拟电气误差、温度、起振、锁定时间或外设功能。<a href="#clock-constraints">阅读模型约束</a>。</p><p class="print-only">交互示例：HSE 8 MHz，M=8、N=336、P=2、Q=7；SYSCLK/HCLK=168 MHz，PCLK1=42 MHz，PCLK2=84 MHz，Q 支路=48 MHz；3.3 V / Scale 1 / Flash 5 WS。数值通过不等于硬件验证通过。</p></section>
+<section class="content-section" aria-label="PLL 原理图"><div class="diagram-pair"><div class="diagram-card"><h3>反馈为什么会得到“倍频”？</h3><div class="feedback-flow" role="img" aria-label="参考时钟除以 M，和 VCO 除以 N 的反馈比较，控制环路调整 VCO；锁定后两者平均频率相同。"><div class="feedback-node">参考时钟 ÷ M<strong>fREF / M</strong></div><div class="clock-tree-arrow" aria-hidden="true">→</div><div class="feedback-node">比较误差<strong>鉴相 / 鉴频</strong></div><div class="feedback-down">↓</div><div class="feedback-node">VCO 输出<strong>fVCO</strong></div><div class="clock-tree-arrow" aria-hidden="true">←</div><div class="feedback-node">控制环路<strong>调整振荡器</strong></div><div class="feedback-return">VCO ÷ N → 反馈至比较端 ↑</div></div><p>锁定后 fVCO/N = fREF/M。它由电源供能，控制自身振荡；不是从低频输入中“复制能量”。图为原理级示意。</p></div><div class="diagram-card"><h3>频率变大，标尺没有自动变准</h3><div class="accuracy"><div><strong>8 MHz</strong><small>+20 ppm → +160 Hz</small></div><div aria-hidden="true">×21 →</div><div><strong>168 MHz</strong><small>+20 ppm → +3360 Hz</small></div></div><div class="accuracy-result">理想倍频前后，相对频率误差仍约为 +20 ppm</div><p>短期抖动与相位噪声还涉及环路特性及 PLL 自身噪声，需要另外看规格；不能用“锁定了”替代精度验证。</p></div></div></section>
+<section class="content-section" id="clock-notes"><div class="section-head"><p class="eyebrow">02 / READ THE WHOLE STORY</p><h2>从器件到工程，把边界一起记住</h2><p>全部正文都在这页。搜索和章节链接会自动展开对应内容。</p></div><div class="notes-toolbar"><button type="button" id="expand-notes">展开全文</button><button type="button" id="collapse-notes">收起全文</button><button type="button" id="print-notes">打印 / 保存为 PDF</button></div>
+<details class="note-section" id="clock-short-answer" open><summary><h2>01 · 8 MHz 的晶体，为什么能跑 168 MHz？</h2></summary><div class="note-body"><p>外部晶体提供的是<strong>频率基准</strong>。CPU 使用的是芯片时钟树送来的时钟，两者不必相同。MCU 内部的锁相环 PLL 可以在自身允许范围内，把基准经过分频、倍频、再分频，得到更高频率。</p>
+<p>以本文唯一数值模型 STM32F407 为例：</p>
+<ul>
+<li>外部 8 MHz 晶体配合片内 HSE 振荡电路，形成 8 MHz 参考时钟。</li>
+<li>先除以 M=8，得到 1 MHz 的 PLL 输入。</li>
+<li>PLL 让内部 VCO 稳定在 336 MHz，即输入的 N=336 倍。</li>
+<li>VCO 输出除以 P=2，得到 168 MHz 的 PLL 主输出，选作 SYSCLK。</li>
+<li>AHB 不再分频，HCLK=168 MHz，供 Cortex-M4 内核等使用。</li>
+</ul>
+<p><strong>8 ÷ 8 × 336 ÷ 2 = 168 MHz</strong>，总倍率是 21，不是直接把 N=336 当成 CPU 相对晶体的倍率。8 MHz 的周期为 125 ns，168 MHz 的周期约 5.95 ns。</p>
+<p>这不是让晶体本身突然以 168 MHz 振动，而是片内有源振荡器在电源供能下产生更快的时钟，PLL 用反馈约束它的频率与相位。CPU 也并非每个时钟都完成一条指令：流水线、存储器等待、总线竞争与具体指令都会影响执行时间。</p>
+<p>来源：<a href="https://www.st.com/resource/en/datasheet/stm32f407vg.pdf" target="_blank" rel="noreferrer">STM32F407 数据手册 DS8626</a>、<a href="https://www.st.com/resource/en/reference_manual/rm0090-stm32f4xx-reference-manual-stmicroelectronics.pdf" target="_blank" rel="noreferrer">RM0090 的 RCC 时钟树与 PLL 配置</a>。</p>
+</div></details>
+<details class="note-section" id="clock-crystal"><summary><h2>02 · 晶体、晶振、HSE 与 HSI，分别是什么？</h2></summary><div class="note-body"><h3 id="clock-passive-crystal" tabindex="-1">无源晶体不是独立的时钟发生器 <a class="header-anchor" href="#clock-passive-crystal" aria-label="Permalink to &quot;无源晶体不是独立的时钟发生器 {#clock-passive-crystal}&quot;">&ZeroWidthSpace;</a></h3>
+<p>石英晶体是有谐振特性的无源器件。它需要放大器、反馈网络和合适的负载等组成振荡电路，才能持续振荡。MCU 常把放大电路集成在芯片里，外部晶体接到 OSC_IN / OSC_OUT，按芯片与晶体参数设计外围电容和 PCB。</p>
+<p>口语里的“晶振”有时泛指无源晶体，有时指带有源电路的振荡器，选型时不能只看这个名称。<strong>有源振荡器模块</strong>自带振荡电路，需要供电，输出时钟信号；接入 STM32 的 HSE bypass 模式时，应按规定接 OSC_IN，OSC_OUT 的处理遵循手册。两者电气接法不能互换。</p>
+<p>负载电容不是“各接一个标称 CL 的电容”。常见近似是 CL ≈ Ca×Cb/(Ca+Cb)+Cstray（Ca、Cb 为两侧电容），Cstray 包含引脚与 PCB 寄生；还要核查 ESR、驱动功率、起振裕量和布局，不能只凭频率相同替换晶体。见 <a href="https://www.st.com/resource/en/application_note/an2867-guidelines-for-oscillator-design-on-stm8afals-and-stm32-mcusmpus-stmicroelectronics.pdf" target="_blank" rel="noreferrer">AN2867 振荡器设计指南</a>。</p>
+<h3 id="clock-hse-hsi" tabindex="-1">HSE / HSI 是时钟源名称 <a class="header-anchor" href="#clock-hse-hsi" aria-label="Permalink to &quot;HSE / HSI 是时钟源名称 {#clock-hse-hsi}&quot;">&ZeroWidthSpace;</a></h3>
+<ul>
+<li>HSE：High-speed external，外部高速时钟源。在 STM32F407 中，可使用 4–26 MHz 晶体/陶瓷谐振器；外部数字时钟 bypass 模式的频率范围为 1–50 MHz，且须符合输入电平、占空比等电气条件。这两个范围不可混用。</li>
+<li>HSI：High-speed internal，片内高速 RC 时钟，STM32F407 的标称值是 16 MHz。它省去外部器件，复位后的系统时钟使用 HSI；精度随校准、供电与温度条件变化。</li>
+<li>HSE 与 HSI 都可以作为这个型号主 PLL 的输入源。本文交互中的 HSE 专指晶体模式，因此只接受 4–26 MHz；没有模拟 bypass。</li>
+</ul>
+<p>“外部”不等于无条件更准。精度取决于实际器件、负载、温度、老化与 PCB。高精度/低漂移参考、满足接口要求的时钟与低成本起振方案，可能是不同的设计目标。</p>
+</div></details>
+<details class="note-section" id="clock-pll"><summary><h2>03 · PLL 如何倍频？看反馈回路</h2></summary><div class="note-body"><h3 id="clock-feedback" tabindex="-1">锁相的是分频后的反馈 <a class="header-anchor" href="#clock-feedback" aria-label="Permalink to &quot;锁相的是分频后的反馈 {#clock-feedback}&quot;">&ZeroWidthSpace;</a></h3>
+<p>把参考输入先除以 M，送到鉴相/鉴频与控制环节；把 VCO 输出除以 N，也送回同一个比较环节。环路根据二者的误差调整 VCO。锁定后，平均意义上满足：</p>
+<p><strong>fVCO ÷ N = fREF ÷ M</strong>，所以 <strong>fVCO = fREF ÷ M × N</strong>。</p>
+<p>随后，P 分频支路产生主 PLL 输出，Q 分频支路产生供 USB OTG FS、SDIO 和 RNG 使用的相关时钟域。图里的“×N”是锁定结果的等效表达，真实电路不是一个不耗能的数字乘法器。</p>
+<p>本文图只画原理级反馈，不声称复现芯片内部的模拟实现、环路带宽或启动波形。PLL 需要等待锁定；输入频率、电压或分频参数不符合要求时，算式仍可能有结果，但不能据此认为硬件能可靠运行。</p>
+<h3 id="clock-accuracy" tabindex="-1">倍频没有凭空提高相对精度 <a class="header-anchor" href="#clock-accuracy" aria-label="Permalink to &quot;倍频没有凭空提高相对精度 {#clock-accuracy}&quot;">&ZeroWidthSpace;</a></h3>
+<p>假设 8 MHz 参考相对标称值偏高 20 ppm，绝对偏差是 160 Hz。理想整数倍频到 168 MHz 后，仍偏高约 20 ppm，绝对偏差变成 3360 Hz。倍频没有把有误差的标尺变准。</p>
+<p>频率精度、频率稳定度、相位噪声和边沿抖动是不同指标。PLL 对不同频段的噪声有不同传递特性，也会增加自身噪声；不能笼统说它总能“消除抖动”或总会“放大所有抖动”。高速接口还要核查具体精度和抖动指标。</p>
+</div></details>
+<details class="note-section" id="clock-tree"><summary><h2>04 · SYSCLK、HCLK、PCLK 不是同一个时钟</h2></summary><div class="note-body"><p>STM32F407 的 SYSCLK 可以选择 HSI、HSE 或主 PLL 输出。没有开启 PLL 时，系统也可以运行；不是所有 MCU 都必须外挂晶体，也不是所有型号都具备同样的 PLL。</p>
+<ul>
+<li><strong>SYSCLK</strong>：系统时钟选择器输出。本例选 PLL，168 MHz。</li>
+<li><strong>HCLK</strong>：SYSCLK 经 AHB 预分频器后得到的 AHB/内核相关时钟。本例除以 1，168 MHz。</li>
+<li><strong>PCLK1</strong>：HCLK 经 APB1 预分频。本例除以 4，42 MHz；STM32F407 的 APB1 上限为 42 MHz。</li>
+<li><strong>PCLK2</strong>：HCLK 经 APB2 预分频。本例除以 2，84 MHz；APB2 上限为 84 MHz。</li>
+<li><strong>PLL 的 Q 支路</strong>：从 VCO 单独除以 Q。本例 336÷7=48 MHz；它不是由 HCLK 再分出来的。</li>
+</ul>
+<p>CPU 168 MHz 不代表所有外设也都运行在 168 MHz。UART 波特率、SPI、定时器、ADC 等还会在自己的时钟域继续选择或分频，读寄存器之前要先找出真实时钟源。</p>
+<h3 id="clock-timers" tabindex="-1">定时器还有一个常见例外 <a class="header-anchor" href="#clock-timers" aria-label="Permalink to &quot;定时器还有一个常见例外 {#clock-timers}&quot;">&ZeroWidthSpace;</a></h3>
+<p>对本文 STM32F407：APB 预分频为 1 时，连接该 APB 的定时器时钟等于 PCLK；预分频不为 1 时，定时器时钟等于 2×PCLK。因此典型方案下 APB1 定时器是 84 MHz，APB2 定时器是 168 MHz。<strong>这不表示 APB 总线本身也被加倍</strong>，定时器内部还可继续分频。</p>
+<p>其他 STM32 系列/型号的定时器时钟选择、TIMPRE、内核时钟域、PLL 数量与允许范围可能不同。不要把本例寄存器或“乘二规则”不加检查地移植。</p>
+</div></details>
+<details class="note-section" id="clock-limits"><summary><h2>05 · 算出来，不等于能运行</h2></summary><div class="note-body"><p>本文资料核查日期为 <strong>2026-10-14</strong>。数值模型依据 STM32F405/407 的 <strong>DS8626 Rev 12（March 2026）</strong> 与 <strong>RM0090 Rev 22（May 2026）</strong>，不覆盖同一本手册中的全部其他型号。</p>
+<h3 id="clock-constraints" tabindex="-1">本例的约束表 <a class="header-anchor" href="#clock-constraints" aria-label="Permalink to &quot;本例的约束表 {#clock-constraints}&quot;">&ZeroWidthSpace;</a></h3>
+<table tabindex="0">
+<thead>
+<tr>
+<th>项目</th>
+<th>本模型采用的限制或条件</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>HSE 晶体输入</td>
+<td>4–26 MHz；bypass 是另外的电气模式</td>
+</tr>
+<tr>
+<td>HSI</td>
+<td>标称 16 MHz；不是精度保证</td>
+</tr>
+<tr>
+<td>PLLM</td>
+<td>整数 2–63，且 fREF/M 为 1–2 MHz</td>
+</tr>
+<tr>
+<td>PLLN</td>
+<td>整数 50–432，且 VCO 为 100–432 MHz</td>
+</tr>
+<tr>
+<td>PLLP</td>
+<td>2、4、6、8</td>
+</tr>
+<tr>
+<td>PLLQ</td>
+<td>整数 2–15</td>
+</tr>
+<tr>
+<td>PLL 主输出 / SYSCLK</td>
+<td>本模型选 PLL 作为 SYSCLK，P 输出须在 24–168 MHz</td>
+</tr>
+<tr>
+<td>HCLK / APB1 / APB2</td>
+<td>不超过 168 / 42 / 84 MHz</td>
+</tr>
+<tr>
+<td>AHB 预分频</td>
+<td>1、2、4、8、16、64、128、256、512</td>
+</tr>
+<tr>
+<td>APB 预分频</td>
+<td>1、2、4、8、16</td>
+</tr>
+<tr>
+<td>电源条件</td>
+<td>固定为 VDD=3.3 V（落在 2.7–3.6 V 档）、内部调压器 Scale 1、正常运行</td>
+</tr>
+<tr>
+<td>Flash 等待周期</td>
+<td>本电压档：0/1/2/3/4/5 WS 分别支持 HCLK ≤30/60/90/120/150/168 MHz；额外等待周期不会提高最高允许频率</td>
+</tr>
+<tr>
+<td>USB OTG FS 数值目标</td>
+<td>勾选目标时，Q 支路标称值必须等于 48 MHz；还需单独满足精度与电气条件</td>
+</tr>
+</tbody>
+</table>
+<p>RM 建议把 PLL 输入选在 2 MHz 以限制抖动；例如 M4/N168/P2/Q7 同样得到 168/48 MHz。本文保留常见的 1 MHz 输入算例，它仍在合法范围内。数据手册电气表的输入边界为 0.95–2.10 MHz，本模型按 RM 的名义配置范围 1–2 MHz 校验。</p>
+<p>当前文档的 VCO 下限为 <strong>100 MHz</strong>，PLLN 可为 <strong>50–432</strong>。旧版本或旧教程可能写 192 MHz / N≥192。DS8626 修订历史记录了 VCO 下限更改；查表时要同时核对型号、文档版本与频率条件，不能把不同版本的数字拼在一起。</p>
+<h3 id="clock-power-flash" tabindex="-1">168 MHz 的前提 <a class="header-anchor" href="#clock-power-flash" aria-label="Permalink to &quot;168 MHz 的前提 {#clock-power-flash}&quot;">&ZeroWidthSpace;</a></h3>
+<p>上限不是无条件承诺。要核查数据手册的供电、温度等级、内部调压器状态、电源稳定性与运行条件。本文锁定 3.3 V / Scale 1，168 MHz 时要求至少 5 个 Flash 等待周期；Scale 2 最高仅 144 MHz，不能与 Scale 1 混用。换到其他 VDD 档位，等待周期表会变，不应套用本文简化校验。</p>
+<p>升频前应先确保供电/调压器模式与 Flash 延迟满足目标频率，再调整分频与切换时钟；降频后再根据新频率降低延迟和电源要求。缓存与预取影响性能，不能代替合法的 Flash 等待周期配置。本文没有给出可直接烧录的寄存器写入程序。</p>
+<h3 id="clock-usb" tabindex="-1">48 MHz 只是 USB 检查的一部分 <a class="header-anchor" href="#clock-usb" aria-label="Permalink to &quot;48 MHz 只是 USB 检查的一部分 {#clock-usb}&quot;">&ZeroWidthSpace;</a></h3>
+<p>USB OTG FS 需要合规的 48 MHz 时钟；RM §34.3.2 要求其输入时钟为 48 MHz ±0.25%（±120 kHz）。本页只能检查标称分频是否得到 48 MHz，不能测出振荡器在所有温度、电压下的误差与抖动。数据手册 USB FS 完整电气指标采用 VDD=3.0–3.6 V，本模型取 3.3 V。选择 HSI 即使能算出 48 MHz，也不能据此宣称 USB 合规；必须核验整个方案的精度预算。</p>
+<p>不使用 USB 时，可以关闭本页的“要求 48 MHz”目标。此时 Q 支路超过 48 MHz 仍会被本模型拒绝：这是为了把练习限定在 SDIO/RNG 等外设所需的 ≤48 MHz 支路，并非 PLL Q 输出的普遍电气上限（DS 的 PLL48_OUT 上限为 75 MHz）。本页不覆盖关闭相关外设时的其他 Q 输出配置，也不会仅凭本页数值宣称 USB 合规。SDIO 与 RNG 的自身约束、时钟使能与寄存器配置仍需另查；本页不验证这些外设。</p>
+</div></details>
+<details class="note-section" id="clock-engineering"><summary><h2>06 · 为什么通常用较低频率的外部参考？</h2></summary><div class="note-body"><p>低频外部参考与片内倍频，把两个职责分开：外部器件提供合适的频率基准，片内时钟系统按性能和功耗需要分配频率。常见几到几十 MHz 的器件容易选型，外围设计也能避免直接把几百 MHz 的时钟引入 PCB；成本、功耗、EMI、封装与电气兼容性都可能参与取舍。</p>
+<p>这不是绝对规律。外部高速有源时钟、MEMS 振荡器、片内 RC、低速 32.768 kHz 晶体以及其他时钟方案各有用途。低速时钟通常用于 RTC 或低功耗计时，也不能仅凭“有晶体”推断它在给 CPU 提供主频。</p>
+<h3 id="clock-performance" tabindex="-1">高频率也有代价 <a class="header-anchor" href="#clock-performance" aria-label="Permalink to &quot;高频率也有代价 {#clock-performance}&quot;">&ZeroWidthSpace;</a></h3>
+<p>动态功耗常用 P≈αCV²f 帮助理解趋势：频率更高，电压或开关活动更高，通常会提高动态功耗。它不是芯片总功耗的精确计算式，还要考虑漏电、Flash、外设、等待和休眠时间。</p>
+<p>提高主频不保证任务等比例变快。若程序受 Flash 等待、存储器访问、外设吞吐或算法限制，收益会更小；有时更快完成工作后进入休眠更省电，有时低频更合适，要测量任务级能耗与时序。</p>
+</div></details>
+<details class="note-section" id="clock-checklist"><summary><h2>07 · 真正配置硬件前，按这条顺序检查</h2></summary><div class="note-body"><ol>
+<li><strong>确认器件身份</strong>：完整 MCU 料号、修订版本、供电与温度范围；使用对应 datasheet、reference manual 和 errata。</li>
+<li><strong>确认参考源</strong>：晶体还是有源时钟，HSE 普通模式还是 bypass；检查电气规格、负载和起振条件，HSI 则查校准与全温误差。</li>
+<li><strong>画出所有时钟域</strong>：先算 PLL 输入、VCO、P/Q 输出，再算 HCLK、PCLK、定时器与接口时钟，不只看 CPU。</li>
+<li><strong>配置运行条件</strong>：在升频前确保合适的电源/调压器状态、Flash 等待周期和安全的总线分频。</li>
+<li><strong>启动并等待就绪</strong>：等待 HSERDY 等对应标志；配置 PLL 必须遵守关闭/不可作为当前系统时钟等要求；更改 PLLM 或 PLL 时钟源也须遵守 PLLI2S 关闭要求；开启后检查 PLLRDY，设置超时与失败处理。</li>
+<li><strong>切换并确认</strong>：改变 SYSCLK 选择后，读 SWS 确认实际时钟源；更新工程的时钟变量、SysTick 和依赖时钟的驱动，不能只改一个频率宏。</li>
+<li><strong>测量并回归</strong>：用合法分频的 MCO 输出或适合的定时器信号验证频率，避免探头负载扰乱晶体节点；测试通信、温度变化、复位与异常恢复。</li>
+</ol>
+<p>时钟安全系统 CSS 和失效回退也有型号规定的行为，不能认为所有失锁都会自动无缝恢复。本文“模拟应用”只更新页面状态，省略真实上电、稳定与锁定时间，不连接硬件，也不保证某块开发板可运行。</p>
+</div></details>
+<details class="note-section" id="clock-references"><summary><h2>08 · 官方资料与阅读边界</h2></summary><div class="note-body"><ul>
+<li><a href="https://www.st.com/resource/en/datasheet/stm32f407vg.pdf" target="_blank" rel="noreferrer">DS8626：STM32F405xx / STM32F407xx 数据手册</a>：查供电/频率条件、HSE/HSI 电气特性、PLL 参数、USB OTG FS 特性及修订历史。本文核验 Rev 12。</li>
+<li><a href="https://www.st.com/resource/en/reference_manual/rm0090-stm32f4xx-reference-manual-stmicroelectronics.pdf" target="_blank" rel="noreferrer">RM0090：STM32F4 参考手册</a>：STM32F405/407 对应的 RCC 章节、RCC_PLLCFGR、时钟树、Flash 延迟表与电源控制。本文核验 Rev 22，PLLCFGR 见 §7.3.2。</li>
+<li><a href="https://www.st.com/resource/en/application_note/an2867-guidelines-for-oscillator-design-on-stm8afals-and-stm32-mcusmpus-stmicroelectronics.pdf" target="_blank" rel="noreferrer">AN2867：STM8 / STM32 振荡器设计指南</a>：晶体选型、负载、增益裕量、起振与 PCB 设计。</li>
+<li><a href="https://www.st.com/en/microcontrollers-microprocessors/stm32f407vg.html" target="_blank" rel="noreferrer">STM32F407VG 官方产品页</a>：查当前文档、勘误与完整器件信息。</li>
+</ul>
+<p>本页是独立中文学习笔记，图形与交互为原理级教学模型，非 ST 官方配置工具或硬件验证报告。不同系列的 PLL/VCO 范围、最高主频、供电模式、外设时钟与寄存器编码都可能不同；移植之前必须重新核对。</p>
+</div></details></section><footer class="footer"><span>独立中文技术笔记 · 资料核验于 2026-10-14 · 原理模型，非设备测量</span><a href="../mcu/">返回 MCU 分类 →</a></footer></main>
+<script id="clock-model">
+'use strict';
+const CLOCK_DEFAULT=Object.freeze({source:'HSE',input:8,m:8,n:336,p:2,q:7,ahb:1,apb1:4,apb2:2,flash:5,usb:true});
+const CLOCK_KEYS=Object.keys(CLOCK_DEFAULT);
+function clockEvaluate(config){
+ const c={...config},errors=[],warnings=[];let structurallyValid=true;
+ const invalid=message=>{errors.push(message);structurallyValid=false;};
+ if(!['HSE','HSI'].includes(c.source))invalid('参考源必须是 HSE 或 HSI。');
+ if(typeof c.input!=='number'||!Number.isFinite(c.input)||c.input<=0)invalid('参考频率必须是有限正数。');
+ else if(c.source==='HSE'&&(c.input<4||c.input>26))invalid('本模型 HSE 晶体模式只支持 4–26 MHz。');
+ else if(c.source==='HSI'&&c.input!==16)invalid('本模型 HSI 标称频率固定为 16 MHz。');
+ for(const [key,min,max,label] of [['m',2,63,'M'],['n',50,432,'N'],['q',2,15,'Q'],['flash',0,7,'Flash WS']]){
+  if(typeof c[key]!=='number'||!Number.isInteger(c[key])||c[key]<min||c[key]>max)invalid(label+' 必须是 '+min+'–'+max+' 的整数。');
+ }
+ for(const [key,allowed,label] of [['p',[2,4,6,8],'P'],['ahb',[1,2,4,8,16,64,128,256,512],'AHB'],['apb1',[1,2,4,8,16],'APB1'],['apb2',[1,2,4,8,16],'APB2']]){
+  if(!allowed.includes(c[key]))invalid(label+' 分频值不在该型号支持的集合中。');
+ }
+ if(typeof c.usb!=='boolean')invalid('48 MHz 目标必须是布尔值。');
+ if(!structurallyValid)return{valid:false,errors,warnings,frequencies:null,requiredWS:null};
+ const pllIn=c.input/c.m,vco=pllIn*c.n,sysclk=vco/c.p,pll48=vco/c.q,hclk=sysclk/c.ahb,pclk1=hclk/c.apb1,pclk2=hclk/c.apb2;
+ const frequencies={reference:c.input,pllIn,vco,sysclk,pll48,hclk,pclk1,pclk2,tim1:pclk1*(c.apb1===1?1:2),tim2:pclk2*(c.apb2===1?1:2)};
+ const epsilon=1e-9;
+ if(pllIn<1-epsilon||pllIn>2+epsilon)errors.push('PLL 输入 '+clockFormat(pllIn)+' MHz 不在 1–2 MHz 内，请调整 M。');
+ if(vco<100-epsilon||vco>432+epsilon)errors.push('VCO '+clockFormat(vco)+' MHz 不在 100–432 MHz 内，请调整 M/N。');
+ if(sysclk<24-epsilon||sysclk>168+epsilon)errors.push('PLL 主输出 '+clockFormat(sysclk)+' MHz 不在 24–168 MHz 内，请调整 P 或 VCO。');
+ if(hclk>168+epsilon)errors.push('HCLK 超过 168 MHz。');
+ if(pclk1>42+epsilon)errors.push('PCLK1 超过 42 MHz，请增大 APB1 分频。');
+ if(pclk2>84+epsilon)errors.push('PCLK2 超过 84 MHz，请增大 APB2 分频。');
+ if(pll48>48+epsilon)errors.push('Q 支路超过本页的外设模型范围 48 MHz，请增大 Q。');
+ if(c.usb&&Math.abs(pll48-48)>epsilon)errors.push('已要求 48 MHz，但 Q 支路为 '+clockFormat(pll48)+' MHz。');
+ const requiredWS=hclk<=168+epsilon?Math.max(0,Math.ceil((hclk-epsilon)/30)-1):null;
+ if(requiredWS!==null&&c.flash<requiredWS)errors.push('当前 '+c.flash+' WS 不足：3.3 V 下此 HCLK 至少需要 '+requiredWS+' WS。');
+ if(c.source==='HSI')warnings.push('HSI 名义值不代表实际精度；即使除法得到 48 MHz，也不能据此保证 USB 合规。');
+ else warnings.push('HSE 精度、温漂、抖动与起振未验证；48 MHz 的除法结果不等于 USB 验证通过。');
+ if(!c.usb)warnings.push('48 MHz 名义目标已关闭；本页不据此判断 USB 合规，实际仍须满足 ±0.25% 及相关电气条件。');
+ if(pllIn<2-epsilon)warnings.push('RM 推荐 PLL 输入为 2 MHz 以限制抖动；1–2 MHz 都在本模型名义配置范围内。');
+ return{valid:errors.length===0,errors,warnings,frequencies,requiredWS};
+}
+function clockFormat(value){return Number.isFinite(value)?Number(value.toFixed(6)).toString():'—';}
+class ClockModel{
+ constructor(){this.reset();}
+ reset(){this._draft={...CLOCK_DEFAULT};this._applied={...CLOCK_DEFAULT};this.appliedCount=0;}
+ draft(){return{...this._draft};}
+ applied(){return{...this._applied};}
+ update(patch){if(!patch||typeof patch!=='object'||Array.isArray(patch)||Object.keys(patch).some(key=>!CLOCK_KEYS.includes(key)))return false;this._draft={...this._draft,...patch};return true;}
+ evaluate(){return clockEvaluate(this._draft);}
+ apply(){const result=this.evaluate();if(!result.valid)return false;this._applied={...this._draft};this.appliedCount++;return true;}
+}
+</script>
+<script id="clock-ui">
+(()=>{
+ const model=new ClockModel(),byId=id=>document.getElementById(id);
+ const fields={source:'clock-source',input:'clock-input',m:'clock-m',n:'clock-n',p:'clock-p',q:'clock-q',ahb:'clock-ahb',apb1:'clock-apb1',apb2:'clock-apb2',flash:'clock-flash',usb:'clock-usb-target'};
+ const tree={reference:'source',pllIn:'pllin',vco:'vco',sysclk:'sysclk',pll48:'pll48',hclk:'hclk',pclk1:'pclk1',pclk2:'pclk2'};
+ let hseInput=8;
+ function syncFields(){const c=model.draft();for(const [key,id]of Object.entries(fields)){if(key==='usb')byId(id).checked=c[key];else byId(id).value=String(c[key]);}}
+ function render(message){
+  const c=model.draft(),r=model.evaluate(),f=r.frequencies;
+  for(const [key,id]of Object.entries(tree))byId('tree-'+id).textContent=f?clockFormat(f[key]):'—';
+  byId('tree-source-label').textContent=c.source;byId('tree-m-label').textContent='÷ M'+clockFormat(c.m);byId('tree-n-label').textContent='↓ 锁定后 × N'+clockFormat(c.n);byId('tree-p-label').textContent='÷ P'+clockFormat(c.p)+' → SYSCLK';byId('tree-q-label').textContent='÷ Q'+clockFormat(c.q)+' → PLL48CLK';byId('tree-ahb-label').textContent='SYSCLK ↓ ÷ AHB'+clockFormat(c.ahb);
+  byId('tree-apb1-label').textContent='÷ APB1 '+clockFormat(c.apb1)+' → PCLK1';byId('tree-apb2-label').textContent='÷ APB2 '+clockFormat(c.apb2)+' → PCLK2';
+  byId('tree-tim1').textContent='定时器 '+(f?clockFormat(f.tim1):'—');byId('tree-tim2').textContent='定时器 '+(f?clockFormat(f.tim2):'—');
+  byId('tree-flash').textContent='当前 '+clockFormat(c.flash)+' WS · '+(r.requiredWS===null?'频率无效，无法判定等待周期':'最少需要 '+r.requiredWS+' WS');
+  byId('clock-input').disabled=c.source==='HSI';byId('clock-source-help').textContent=c.source==='HSI'?'HSI 标称 16 MHz，实际精度受温度、供电与校准影响。':'HSE 晶体模式：4–26 MHz；本页不模拟 bypass。';
+  byId('clock-formula').textContent=f?clockFormat(c.input)+' ÷ '+clockFormat(c.m)+' × '+clockFormat(c.n)+' ÷ '+clockFormat(c.p)+' = '+clockFormat(f.sysclk)+' MHz':'存在空值或非法参数，请先修正输入。';
+  byId('clock-validation').classList.toggle('bad',!r.valid);
+  byId('clock-validation-title').textContent=r.valid?'模型数值检查通过。硬件条件仍需另行验证。':'不能应用此方案：';
+  const errors=byId('clock-errors');errors.replaceChildren();for(const text of r.errors){const li=document.createElement('li');li.textContent=text;errors.appendChild(li);}errors.hidden=r.errors.length===0;
+  byId('clock-warnings').textContent=r.warnings.join(' ');byId('clock-apply').disabled=!r.valid;
+  const applied=model.applied(),af=clockEvaluate(applied).frequencies;
+  byId('clock-applied-rate').textContent=clockFormat(af.hclk)+' MHz';
+  byId('clock-applied-detail').textContent=applied.source+' '+clockFormat(applied.input)+' MHz · M'+applied.m+' N'+applied.n+' P'+applied.p+' Q'+applied.q+' · HCLK '+clockFormat(af.hclk)+' · PCLK1 '+clockFormat(af.pclk1)+' · PCLK2 '+clockFormat(af.pclk2)+' · '+applied.flash+' WS';
+  const changed=CLOCK_KEYS.some(key=>!Object.is(c[key],applied[key]));
+  byId('clock-applied-state').textContent=changed?'候选配置尚未应用；这里保留上一次通过的方案。':model.appliedCount?'模拟已应用：已省略真实起振与锁定时间，未操作硬件。':'初始教学示例。模拟锁定不是硬件测量。';
+  if(message)byId('clock-status').textContent=message;
+ }
+ for(const [key,id]of Object.entries(fields))byId(id).addEventListener(key==='usb'||key==='source'||['p','ahb','apb1','apb2','flash'].includes(key)?'change':'input',()=>{
+  if(key==='source'){const source=byId(id).value;model.update({source,input:source==='HSI'?16:hseInput});syncFields();}
+  else if(key==='usb')model.update({usb:byId(id).checked});
+  else{const raw=byId(id).value,value=raw.trim()===''?NaN:Number(raw);model.update({[key]:value});if(key==='input'&&model.draft().source==='HSE')hseInput=value;}
+  render('候选配置已更新，尚未应用。');
+ });
+ byId('clock-apply').addEventListener('click',()=>{if(model.apply())render('模拟锁定并应用成功。这里只更新页面状态；真实设备必须等待就绪标志并确认时钟源切换。');else render('方案无效，已应用方案保持不变。');});
+ byId('clock-efficient').addEventListener('click',()=>{hseInput=8;model.update({...CLOCK_DEFAULT,m:4,n:168});syncFields();render('已载入 2 MHz PLL 输入候选方案：8÷4×168÷2=168 MHz。按应用按钮确认模拟。');});
+ byId('clock-reset').addEventListener('click',()=>{model.reset();hseInput=8;syncFields();render('已恢复默认 8→168 MHz 教学示例，候选与模拟方案均已重置。');});
+ byId('clock-lab-panel').hidden=false;syncFields();render();
+})();
+</script>
+<script id="note-disclosures">
+(()=>{const sections=Array.from(document.querySelectorAll('.note-section'));let printState=null;document.getElementById('expand-notes').addEventListener('click',()=>sections.forEach(s=>s.open=true));document.getElementById('collapse-notes').addEventListener('click',()=>sections.forEach(s=>s.open=false));document.getElementById('print-notes').addEventListener('click',()=>window.print());window.addEventListener('beforeprint',()=>{if(printState===null)printState=sections.map(s=>s.open);sections.forEach(s=>s.open=true);});window.addEventListener('afterprint',()=>{if(printState!==null){sections.forEach((s,i)=>s.open=printState[i]);printState=null;}});})();
+</script>
+<script id="note-deep-links">
+(()=>{function reveal(){let id;try{id=decodeURIComponent(window.location.hash.slice(1));}catch{return;}if(!id)return;const target=document.getElementById(id);if(!target)return;const details=target.closest('details');if(details)details.open=true;requestAnimationFrame(()=>target.scrollIntoView({block:'start'}));}window.addEventListener('hashchange',reveal);window.addEventListener('pageshow',reveal);reveal();})();
+</script></body></html>
