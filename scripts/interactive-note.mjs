@@ -6,7 +6,8 @@ export const interactiveNotes = [
   { path: notePath, source: 'stack-heap.html' },
   { path: notePaths[1], source: 'beads.html' },
   { path: notePaths[2], source: 'plane.html' },
-  { path: notePaths[3], source: 'matt-pocock-skills.html' }
+  { path: notePaths[3], source: 'matt-pocock-skills.html' },
+  { path: notePaths[4], source: 'crystal-pll-clock.html' }
 ]
 
 export function readInteractiveNote(path = notePath) {
