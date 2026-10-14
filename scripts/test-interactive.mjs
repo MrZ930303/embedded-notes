@@ -83,7 +83,7 @@ vm.runInNewContext(observerScript, {
 assert.deepEqual(observed, ['stack'])
 console.log('PASS: canonical HTML navigation, click/search/history guard, both base paths, dev HTML serving, collapsed search anchors and invalid hashes.')
 
-// All tool-note search sections must have unique, real HTML anchors.
+// All additional interactive-note search sections must have unique, real HTML anchors.
 for (const note of interactiveNotes.slice(1)) {
   const article = await readInteractiveNote(note.path)
   const ids = [...article.matchAll(/\bid="([^"]+)"/g)].map(match => match[1])
@@ -106,8 +106,8 @@ for (const note of interactiveNotes.slice(1)) {
     section.open = false; events.hashchange(); assert.equal(section.open, true)
     window.location.hash = '#%ZZ'; assert.doesNotThrow(events.pageshow)
   }
-  for (const href of ['../', '../tools/', '../?search=1']) assert.ok(article.includes('href="' + href + '"'), 'Missing hub link: ' + href)
+  for (const href of ['../', note.path.startsWith('mcu/') ? '../mcu/' : '../tools/', '../?search=1']) assert.ok(article.includes('href="' + href + '"'), 'Missing hub link: ' + href)
   assert.ok(!/<(?:script|iframe)[^>]+src=/i.test(article), 'Self-contained article must not load scripts or integrations')
   assert.ok(!/\b(?:fetch|XMLHttpRequest|WebSocket|localStorage|sessionStorage)\b/.test([...article.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)].map(match => match[1]).join('')), 'Teaching state stays in page memory')
 }
-console.log('PASS: all tool-note headings resolve, HTML ids are unique, hub/search links exist, and teaching pages have no external execution or persistence.');
+console.log('PASS: all interactive-note headings resolve, HTML ids are unique, hub/search links exist, and teaching pages have no external execution or persistence.');
