@@ -2,7 +2,7 @@
 
 使用 VitePress 1.6.4 稳定版构建的中文技术笔记站。依赖版本由 package-lock.json 锁定，适合部署到 GitHub Pages。
 
-当前内容：四篇完整的交互式 HTML 笔记（MCU 堆栈、Beads、Plane、Matt Pocock Skills）和一条 MCU 内存学习路线。首页、分类和搜索用于找到笔记；进入笔记后直接操作模型、阅读图解并展开完整正文。尚未完成的分类明确标为规划中。
+当前内容：五篇完整的交互式 HTML 笔记（MCU 堆栈、Beads、Plane、Matt Pocock Skills、MCU 晶振与主频）和一条 MCU 内存学习路线。首页、分类和搜索用于找到笔记；进入笔记后直接操作模型、阅读图解并展开完整正文。尚未完成的分类明确标为规划中。
 
 ## 本地预览（Windows / macOS / Linux）
 
@@ -46,7 +46,7 @@ npm run docs:preview
 5. 运行 npm run check，然后在浏览器检查文章、搜索、移动端布局与交互。
 6. 审阅改动后提交并推送；main 分支的推送会触发自动发布。
 
-重要：docs/public/demos/ 下的 stack-heap.html、beads.html、plane.html 和 matt-pocock-skills.html 是主阅读体验的完整交互 HTML 源码。scripts/interactive-note.mjs 注册源码和主路径；VitePress 的 transformHtml 构建钩子原样输出到 c-memory/heap-stack.html 与 tools/ 下对应主阅读路径，开发服务提供相同 HTML。demos/ 路径保留兼容访问。docs/c-memory/heap-stack.md 和 docs/tools/ 下对应 Markdown 只提供全文搜索输入，不作为公开文档式阅读页。修改正文、代码或限定条件后必须同步 HTML 与搜索输入；新增搜索标题还需为 HTML 中对应章节添加相同 id。构建测试会核对搜索结果锚点。
+重要：docs/public/demos/ 下的 stack-heap.html、beads.html、plane.html、matt-pocock-skills.html 和 crystal-pll-clock.html 是主阅读体验的完整交互 HTML 源码。scripts/interactive-note.mjs 注册源码和主路径；VitePress 的 transformHtml 构建钩子原样输出到 c-memory/heap-stack.html、tools/ 与 mcu/ 下对应主阅读路径，开发服务提供相同 HTML。demos/ 路径保留兼容访问。docs/c-memory/heap-stack.md、docs/tools/ 与 docs/mcu/ 下对应文章 Markdown 只提供全文搜索输入，不作为公开文档式阅读页。修改正文、代码或限定条件后必须同步 HTML 与搜索输入；新增搜索标题还需为 HTML 中对应章节添加相同 id。构建测试会核对搜索结果锚点。
 
 文章内链接到另一篇文章时，使用相对 Markdown 路径，如 ./heap-stack.md。主题组件中的站内链接使用 VitePress 的 withBase()。主交互笔记使用 data-no-router 和主题路由守卫进行浏览器原生导航，搜索及后退/前进也不会恢复成文档版。交互页中的搜索入口返回知识库并打开本地搜索。
 
@@ -93,8 +93,9 @@ SITE_BASE=/ npm run docs:preview
 - docs/c-memory/：分类索引，以及交互笔记的全文搜索输入
 - docs/tools/：Beads、Plane、Matt Pocock Skills 分类与全文搜索输入
 - docs/guide/：学习路线
-- docs/mcu/、docs/freertos/、docs/debug/：后续分类
-- docs/public/demos/：四篇主交互笔记 HTML 源码，样式、模型与正文完整内嵌；demos/ 保留兼容访问
+- docs/mcu/：时钟系统分类与晶振/PLL 全文搜索输入
+- docs/freertos/、docs/debug/：后续分类
+- docs/public/demos/：五篇主交互笔记 HTML 源码，样式、模型与正文完整内嵌；demos/ 保留兼容访问
 - scripts/interactive-note.mjs：主阅读 URL 的开发/生产 HTML 输出适配
 - docs/.vitepress/theme/interactive-routing.mjs：点击、搜索与历史导航保护
 - templates/note.md：新笔记模板，不会被发布
@@ -106,6 +107,8 @@ SITE_BASE=/ npm run docs:preview
 GitHub 公开仓库与 Pages 网站任何人都能访问。上传前确认代码、日志、截图、路径和元数据适合公开，不包含私人聊天链接、个人联系方式、密钥或公司内部资料。自动扫描只提供基础提示，不能代替人工审阅。网站没有表单、账户或第三方统计脚本；主题偏好由 VitePress 在本地浏览器保存。
 
 Beads、Plane 与 Skills 交互均为本地教学模拟，不调用 CLI、不连接真实账户、不运行技能，也不会创建或同步真实任务；数据仅保存在当前页面内存中。工具笔记注明资料核查日期，具体行为、版本与许可请再以官方资料及安装版本为准。
+
+MCU 晶振与主频笔记以 STM32F407、3.3 V / Scale 1 为限定条件，按当前官方资料校验 PLL、总线及 Flash 的名义数值。交互不配置硬件，不验证起振、锁相时间、精度、温漂或 USB 电气合规；其他系列不可直接套用。
 
 教学模型和示例代码不代表真实设备测量值。移植到工程前，应检查芯片内核、编译器、链接布局、RTOS 端口与版本；不要覆盖正在使用的栈。
 
