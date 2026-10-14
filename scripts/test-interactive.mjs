@@ -111,3 +111,35 @@ for (const note of interactiveNotes.slice(1)) {
   assert.ok(!/\b(?:fetch|XMLHttpRequest|WebSocket|localStorage|sessionStorage)\b/.test([...article.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)].map(match => match[1]).join('')), 'Teaching state stays in page memory')
 }
 console.log('PASS: all interactive-note headings resolve, HTML ids are unique, hub/search links exist, and teaching pages have no external execution or persistence.');
+
+// The standalone pages share a scoped reading layer while keeping their own diagrams.
+let sharedReadingLayer
+for (const note of interactiveNotes) {
+  const article = await readInteractiveNote(note.path)
+  const layer = article.match(/\/\* Shared reading layer:[\s\S]*?<\/style>/)?.[0]
+  assert.ok(layer, 'Shared reading layer missing: ' + note.path)
+  if (sharedReadingLayer) assert.equal(layer, sharedReadingLayer, 'Reading styles drifted: ' + note.path)
+  sharedReadingLayer = layer
+  assert.ok(article.includes('<body class="notes-article">'))
+  const header = article.match(/<header class="topbar">([\s\S]*?)<\/header>/)?.[1]
+  for (const text of ['嵌入式技术笔记', '返回分类', '交互实验', '完整笔记', '搜索笔记']) assert.ok(header.includes(text), 'Navigation label missing: ' + text)
+  assert.equal((header.match(/<nav /g) || []).length, 1)
+  assert.ok(article.includes('href="../favicon.svg"'))
+  assert.match(layer, /max-width:44rem;font-size:16px;line-height:1\.95/)
+  assert.match(layer, /min-height:44px;min-width:44px;font-size:14px/)
+  assert.match(layer, /prefers-reduced-motion:reduce/)
+  assert.ok(!article.split('<script')[0].includes('↗'), 'Decorative icon must use SVG: ' + note.path)
+}
+const planeArticle = await readInteractiveNote('tools/plane.html')
+assert.equal((planeArticle.match(/class="section-index" aria-hidden="true"/g) || []).length, 10)
+assert.ok(!planeArticle.includes('h2:before{content:counter'), 'Section numbers must be hidden from assistive technology')
+const luminance = hex => {
+  const [r, g, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255).map(c => c <= .04045 ? c / 12.92 : ((c + .055) / 1.055) ** 2.4)
+  return .2126 * r + .7152 * g + .0722 * b
+}
+const contrast = (a, b) => {
+  const [light, dark] = [luminance(a), luminance(b)].sort((a, b) => b - a)
+  return (light + .05) / (dark + .05)
+}
+for (const [ink, paper] of [['#21382e', '#fafbf8'], ['#526359', '#fafbf8'], ['#22664f', '#fafbf8'], ['#ffffff', '#22664f'], ['#e2efca', '#173e33']]) assert.ok(contrast(ink, paper) >= 4.5, 'Reading/navigation normal-text contrast must meet WCAG AA: ' + ink)
+console.log('PASS: identical scoped reading theme, consistent navigation, 16px/44rem prose, 44px controls, SVG decoration, reduced motion, semantic numbering and core text contrast.')
