@@ -21,7 +21,10 @@ export async function scan(dir) {
     else if (/\.(?:md|html|css|[cm]?[jt]s|vue|json|ya?ml|svg)$/.test(entry.name)) {
       const text = await readFile(file, 'utf8')
       for (const pattern of patterns) assert.ok(!pattern.test(text), 'Potential private data or credential: ' + path.relative(root, file))
-      if (file.startsWith(path.join(root, 'docs'))) assert.ok(!/\b(?:C51|8051|ML51)\b/i.test(text), 'Excluded architecture content: ' + path.relative(root, file))
+      if (file.startsWith(path.join(root, 'docs'))) {
+        assert.ok(!/\b(?:C51|8051|ML51)\b/i.test(text), 'Excluded architecture content: ' + path.relative(root, file))
+        assert.ok(!/https?:\/\/(?:chatgpt|chat)\.com\/|(?:codex|obsidian):\/\/|\/(?:user_notes|agent_notes)\//i.test(text), 'Private workspace or account link: ' + path.relative(root, file))
+      }
       count++
     }
   }
