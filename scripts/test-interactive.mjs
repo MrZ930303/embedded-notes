@@ -143,3 +143,7 @@ const contrast = (a, b) => {
 }
 for (const [ink, paper] of [['#21382e', '#fafbf8'], ['#526359', '#fafbf8'], ['#22664f', '#fafbf8'], ['#ffffff', '#22664f'], ['#e2efca', '#173e33']]) assert.ok(contrast(ink, paper) >= 4.5, 'Reading/navigation normal-text contrast must meet WCAG AA: ' + ink)
 console.log('PASS: identical scoped reading theme, consistent navigation, 16px/44rem prose, 44px controls, SVG decoration, reduced motion, semantic numbering and core text contrast.')
+
+for (const paper of ['#fafbf8', '#ffffff', '#e7ede1']) assert.ok(contrast('#ad751d', paper) >= 3, 'Focus ring must contrast with Plane light panels')
+assert.match(planeArticle, /\.notes-article \.scope-picker :focus-visible,\.notes-article \.board :focus-visible,\.notes-article \.detail :focus-visible\{outline-color:#ad751d\}/)
+console.log('PASS: Plane light-panel focus ring override and at least 3:1 contrast against page, control and lane surfaces.')
