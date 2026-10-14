@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#123b36"><meta name="description" content="通过本地交互看板理解 Plane 项目管理：工作空间、工作项、周期、模块、状态流转、自托管与 AGPL 许可证边界。"><title>Plane 团队协作与项目管理 · 交互式技术笔记</title><link rel="canonical" href="../tools/plane.html"><style>
+:root{--paper:#f6f6ef;--white:#fff;--ink:#172f2c;--muted:#596963;--line:#dce3d8;--green:#1b6a50;--lime:#d4ed8a;--pale:#e9f1db;--dark:#123b36;--gold:#f2ce79;--orange:#a95531;--mono:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;--sans:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:100px}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.85 var(--sans);-webkit-font-smoothing:antialiased}h1,h2,h3,h4,p,figure{margin:0}h1,h2,h3,h4{line-height:1.4}a{color:var(--green);text-underline-offset:4px}a:hover{color:#0a412f}button,select{font:inherit}button{cursor:pointer}button:disabled{cursor:default}button,a,select,summary,[tabindex]{outline-offset:4px}:focus-visible{outline:3px solid #c67223}button{border:0}button:disabled:not(.work-card):not([data-scope]){opacity:.48}button:disabled.work-card{opacity:1}strong{font-weight:730}ul,ol{padding-left:25px}li+li{margin-top:10px}code{font-family:var(--mono);font-size:.88em;overflow-wrap:anywhere}pre{overflow:auto;max-width:100%;white-space:pre-wrap;background:#eaf0e3;border:1px solid var(--line);border-radius:12px;padding:24px;font:13px/1.9 var(--mono)}pre code{font-size:inherit}.wrap{width:min(1160px,calc(100% - 64px));margin:auto}.skip{position:fixed;left:16px;top:-80px;padding:12px;background:white;z-index:20}.skip:focus{top:8px}.topbar{position:sticky;top:0;z-index:10;background:#f6f6eff5;border-bottom:1px solid var(--line)}.topbar-inner{min-height:68px;display:flex;align-items:center;justify-content:space-between;gap:25px}.brand{display:flex;align-items:center;gap:10px;white-space:nowrap;text-decoration:none;color:var(--ink);font-size:13px;font-weight:800}.brandmark{display:grid;place-items:center;width:31px;height:31px;background:var(--dark);color:var(--lime);border-radius:8px;font-size:19px}nav{display:flex;align-items:center;gap:25px}nav a{font-size:12px;color:var(--muted);white-space:nowrap;text-decoration:none}nav a:hover{color:var(--green)}.hero{display:grid;grid-template-columns:1.06fr 1fr;gap:64px;align-items:center;padding:64px 0 46px}.eyebrow{font:700 11px/1.6 var(--mono);letter-spacing:.12em}.hero .eyebrow{color:var(--green);margin-bottom:15px}.tag{display:inline-block;border:1px solid #cbd6c5;border-radius:30px;padding:5px 11px;font-size:11px;color:var(--green);margin-bottom:20px}h1{font-size:clamp(40px,4.6vw,59px);line-height:1.16;letter-spacing:-.05em}h1 span{display:block;font-size:.6em;line-height:1.45;margin-top:13px;letter-spacing:-.03em;color:var(--green)}.hero-intro{font-size:14px;color:var(--muted);margin-top:22px;max-width:500px}.hero-links{display:flex;flex-wrap:wrap;gap:22px;align-items:center;margin-top:25px}.btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:10px 19px;background:var(--green);color:white;border-radius:8px;text-decoration:none;font-size:13px;font-weight:700}.btn:hover{background:#14543e;color:white}.hero-links .text-link{font-size:13px}.date-note{font-size:11px;color:var(--muted);margin-top:17px}.map{border:1px solid #c9d5c6;border-radius:18px;background:#edf2e5;padding:22px;box-shadow:0 14px 35px #1b453709;transform:rotate(1deg)}.map-top{display:flex;align-items:center;gap:10px;border-bottom:1px solid #cbd8c5;padding-bottom:18px}.map-top .symbol{display:grid;place-items:center;width:36px;height:36px;border-radius:9px;background:var(--dark);color:var(--lime);font-size:20px}.map-top p{font-size:12px;font-weight:650;line-height:1.5}.map-top small{display:block;font:10px var(--mono);letter-spacing:.05em;color:var(--muted)}.map-top>span:last-child{margin-left:auto;font:10px var(--mono);color:var(--green);border:1px solid #c5d3bc;padding:4px 8px;border-radius:12px}.map-projects{display:grid;grid-template-columns:1.15fr .85fr;gap:12px;margin:18px 0}.map-project{background:white;border:1px solid #d4decd;border-radius:10px;padding:13px;font-size:12px}.map-project strong{display:block;font-size:13px;margin-bottom:10px}.mini-item{padding:9px 10px;border-radius:5px;background:#f1f4ec;border-left:3px solid #bccaaa;font-size:10px;margin-top:8px}.mini-item.active{background:var(--dark);color:white;border-color:var(--lime)}.mini-item span{display:block;font:9px/1.4 var(--mono);opacity:.8;margin-bottom:3px}.map-lenses{display:flex;gap:10px;font-size:11px}.map-lenses div{flex:1;padding:10px;background:#dde9c8;border-radius:7px;text-align:center;border:1px dashed #a7bb88}.map-lenses div+div{background:#f4e9c7;border-color:#cbbb88}.map-lenses strong{display:block;font-size:11px}.map-bottom{margin-top:13px;text-align:center;font-size:10px;color:var(--muted)}figcaption{font-size:11px;color:var(--muted);text-align:center;margin-top:17px}.lead-callout{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:21px 0;display:flex;gap:23px;align-items:center;font-size:14px}.lead-callout>span{flex-shrink:0;font:11px/1.8 var(--mono);letter-spacing:.1em;color:var(--green)}.lead-callout p{color:var(--muted)}.lead-callout strong{color:var(--ink)}.toc{padding:22px 0;display:flex;gap:13px;flex-wrap:wrap;font-size:12px}.toc a{padding:4px 10px;background:#edf1e7;border:1px solid var(--line);border-radius:5px;text-decoration:none}.article-section{padding:51px 0;border-bottom:1px solid var(--line);scroll-margin-top:110px;counter-increment:sections}main{counter-reset:sections}.article-section>h2{display:flex;gap:16px;align-items:flex-start;font-size:27px;letter-spacing:-.025em;margin-bottom:24px}.article-section>h2:before{content:counter(sections,decimal-leading-zero);flex-shrink:0;display:grid;place-items:center;width:32px;height:32px;margin-top:3px;border:1px solid #cbd5c6;border-radius:50%;font:11px var(--mono);color:var(--green)}.article-section>p,.article-section>ul,.article-section>ol,.article-section>pre{max-width:970px}.article-section>p{font-size:14px;line-height:1.95;margin:14px 0}.article-section>ul,.article-section>ol{font-size:14px;margin:17px 0}.article-section>h3{font-size:19px;margin:31px 0 12px;scroll-margin-top:105px}.table-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin:23px 0;background:white}table{border-collapse:collapse;width:100%;min-width:610px;font-size:12px;text-align:left}th,td{padding:13px 16px;border-bottom:1px solid var(--line);vertical-align:top}th{background:#eaf0e1;color:#325342}tr:last-child td{border:0}#plane-overview~ul{display:grid;grid-template-columns:1fr 1fr;list-style:none;padding:0;gap:11px;max-width:none}#plane-overview~ul li{margin:0;padding:17px 20px;border:1px solid var(--line);background:white;border-radius:9px;font-size:13px}#plane-references~ul{columns:2;column-gap:34px;font-size:12px;list-style:none;padding:0;max-width:none}#plane-references~ul li{break-inside:avoid;border-bottom:1px solid var(--line);padding:9px 0;margin:0}#plane-checklist~ul{list-style:none;padding:0}#plane-checklist~ul li{padding-left:27px;position:relative}#plane-checklist~ul li:before{content:'□';position:absolute;left:0;color:var(--green)}
+.lab{margin:30px 0;border-radius:17px;border:1px solid #cbd8c8;background:#f0f4eb;overflow:hidden}.lab-top{background:var(--dark);color:#f3f7ed;padding:22px 25px;display:flex;justify-content:space-between;gap:20px;align-items:center}.lab-top .eyebrow{color:var(--lime);display:block;font-size:10px;margin-bottom:6px}.lab-top strong{font-size:17px}.lab-top strong span{font-weight:400;color:#bed2c1;font-size:12px}.local-badge{white-space:nowrap;color:#d4e8be;font-size:10px;padding:5px 10px;border:1px solid #527360;border-radius:30px}.local-badge span{color:var(--lime);font-size:9px;margin-right:5px}.scope-picker{padding:24px 25px 20px;background:white;border-bottom:1px solid var(--line)}.control-caption{font-size:11px;font-weight:700;color:var(--green);letter-spacing:.025em}.control-caption>span{font-weight:400;color:var(--muted);margin-left:10px}.scope-buttons{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:13px}.scope-buttons button{display:flex;flex-direction:column;align-items:flex-start;padding:12px 14px;border:1px solid var(--line);border-radius:8px;background:var(--paper);text-align:left;color:var(--ink);min-height:70px}.scope-buttons button[aria-pressed=true]{background:var(--dark);border-color:var(--dark);color:white}.scope-buttons span{font-size:14px;font-weight:700}.scope-buttons small{font-size:10px;color:var(--muted);margin-top:3px}.scope-buttons [aria-pressed=true] small{color:#cadbc1}.scope-buttons button:not([aria-pressed=true]):hover:not(:disabled){background:var(--pale)}.scope-explanation{font-size:12px;color:var(--muted);margin-top:14px;min-height:23px}.board-heading{display:flex;justify-content:space-between;align-items:center;padding:21px 25px 13px;gap:18px}.board-heading p{font-size:11px;color:var(--muted);margin-top:3px}.board-metrics{display:flex;gap:17px;flex-shrink:0;font-size:10px;color:var(--muted)}.board-metrics strong{font:18px var(--mono);color:var(--green);margin-left:4px}.board{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;padding:0 19px 24px}.lane{min-width:0;background:#e7ede1;border:1px solid #d7e1d0;border-radius:9px;padding:12px 8px}.lane h4{display:flex;align-items:center;gap:6px;font-size:12px;padding:0 3px}.state-dot{display:inline-block;width:8px;height:8px;border:1.5px solid #7c8a75;border-radius:50%;flex-shrink:0}.state-dot.unstarted{border-color:#777c3f;background:#e6e6b3}.state-dot.started{border-color:#9b782c;background:var(--gold)}.state-dot.completed{border-color:var(--green);background:var(--green)}.state-dot.cancelled{border-color:#9d7057;background:#dcb7a0;border-radius:2px}.lane-count{margin-left:auto;font:10px var(--mono);color:#536650}.lane-en{font:9px/1.5 var(--mono);color:var(--muted);margin:5px 3px 12px}.lane-cards{min-height:142px;display:flex;flex-direction:column;gap:9px}.work-card{width:100%;text-align:left;border:1px solid #d2ddca;border-radius:7px;padding:11px 10px;background:white;color:var(--ink);box-shadow:0 2px 3px #1b453708}.work-card:hover:not(:disabled){border-color:var(--green);background:#fafdf5}.work-card.selected{border-color:var(--green);box-shadow:0 0 0 1px var(--green);background:#faffee}.work-card strong{display:block;font-size:12px;line-height:1.65;margin:8px 0}.card-id{display:flex;align-items:center;justify-content:space-between;font:9px var(--mono);color:var(--muted)}.card-id>span{display:grid;place-items:center;width:17px;height:17px;border:1px solid #d4decf;border-radius:4px;background:#f3f5ed;color:#66765c;font-size:9px}.card-project{display:block;font-size:10px;color:var(--muted);margin-bottom:9px}.card-tags{display:flex;gap:4px;flex-wrap:wrap}.card-tags>span{display:inline-block;padding:2px 5px;border-radius:4px;background:#eef2e8;color:#586b4e;font-size:9px;line-height:1.5}.card-status{display:block;font-size:9px;color:#5d6f55;margin-top:9px}.empty-lane{font-size:11px;color:#6a7965;padding:20px 5px;text-align:center;border:1px dashed #c7d2bd;border-radius:6px}.detail{display:grid;grid-template-columns:1fr 245px;gap:30px;padding:25px;border-top:1px solid #d4decd;background:white}.detail h4{font-size:18px;margin:7px 0}.detail-copy>p{font-size:11px;color:var(--muted)}.detail .acceptance{display:flex;align-items:flex-start;gap:13px;background:#eff4e6;padding:12px 14px;border-radius:7px;font-size:12px;color:var(--ink);margin:15px 0 11px}.acceptance strong{flex-shrink:0;font-size:11px;color:var(--green)}.state-controls{display:flex;flex-direction:column;align-items:stretch}.state-controls label{font-size:11px;font-weight:650;color:var(--green);margin-bottom:8px}.state-controls select{min-height:44px;width:100%;padding:8px 9px;border:1px solid #becdb9;border-radius:7px;background:var(--paper);color:var(--ink);font-size:12px}.state-controls .btn{margin-top:10px}.state-controls>p{font-size:10px;color:var(--muted);margin-top:9px;line-height:1.7}.lab-footer{display:flex;align-items:center;justify-content:space-between;gap:20px;background:var(--dark);color:#e0ecd3;padding:14px 25px;font-size:11px}.lab-footer p{min-height:22px}.reset{flex-shrink:0;min-height:44px;background:transparent;color:var(--lime);border:1px solid #658365;border-radius:7px;padding:7px 13px;font-size:11px}.reset:hover{background:#214c40}.noscript{background:#fff0d7;color:#72502d;font-size:13px;padding:15px 25px}[hidden]{display:none!important}.motto{margin:38px 0 0;background:var(--dark);border-radius:14px;color:var(--lime);padding:30px;text-align:center;font-size:20px;font-weight:700}.motto small{display:block;font-size:12px;font-weight:400;color:#bed2c1;margin-top:9px}footer{padding:28px 0 35px;display:flex;justify-content:space-between;gap:20px;font-size:11px;color:var(--muted)}
+@media(max-width:980px){.hero{gap:32px}.wrap{width:calc(100% - 44px)}.board{gap:7px;padding:0 13px 20px}.lane{padding:10px 5px}.work-card{padding:10px 7px}.scope-picker,.board-heading,.detail{padding-left:20px;padding-right:20px}.detail{grid-template-columns:1fr 210px;gap:20px}.lab-top strong span{display:block}.map{padding:17px}}
+@media(max-width:720px){html{scroll-padding-top:130px}.wrap{width:calc(100% - 32px)}.topbar-inner{flex-wrap:wrap;gap:0;padding-top:11px}.brand{margin-bottom:8px}nav{width:100%;overflow-x:auto;gap:23px;padding:7px 0 12px}nav a{font-size:11px}.hero{grid-template-columns:1fr;padding:35px 0;gap:34px}.hero h1{font-size:47px}.hero-intro{font-size:13px}.hero-figure{width:100%;max-width:460px;margin:auto}.map{transform:none;padding:19px}.lead-callout{gap:15px;align-items:flex-start;font-size:12px}.lead-callout>span{font-size:10px}.toc{gap:8px;font-size:11px;padding-bottom:10px}.article-section{padding:34px 0}.article-section>h2{font-size:23px;gap:10px;margin-bottom:20px}.article-section>h2:before{width:28px;height:28px;font-size:10px}.article-section>p,.article-section>ul,.article-section>ol{font-size:13px}.article-section>h3{font-size:18px;scroll-margin-top:135px}#plane-overview~ul{grid-template-columns:1fr;gap:8px}#plane-overview~ul li{padding:13px 15px;font-size:12px}#plane-references~ul{columns:1}.lab-top{padding:19px 16px;align-items:flex-start;gap:10px}.lab-top strong{font-size:16px}.lab-top strong span{font-size:10px}.local-badge{font-size:9px;padding:4px 7px}.scope-picker{padding:18px 15px 17px}.scope-buttons{grid-template-columns:1fr 1fr;gap:8px}.scope-buttons button{min-height:65px;padding:10px 12px}.scope-buttons span{font-size:13px}.scope-buttons small{font-size:10px}.scope-explanation{font-size:11px;min-height:0}.board-heading{padding:18px 15px 15px;align-items:flex-start;flex-direction:column;gap:10px}.board-metrics{gap:19px}.board{grid-template-columns:1fr 1fr;padding:0 12px 18px;gap:9px;align-items:start}.lane{padding:12px 8px}.lane:last-child{grid-column:1/-1}.lane:last-child .lane-cards{min-height:0;display:grid;grid-template-columns:1fr 1fr}.lane:last-child .empty-lane{grid-column:1/-1}.lane-cards{min-height:125px}.work-card{padding:11px 9px}.detail{grid-template-columns:1fr;gap:18px;padding:20px 15px}.detail h4{font-size:17px}.detail .acceptance{font-size:11px;padding:12px;gap:10px;flex-direction:column}.state-controls{display:grid;grid-template-columns:1fr 104px;gap:0 9px;align-items:center}.state-controls label,.state-controls p{grid-column:1/-1}.state-controls .btn{margin:0;padding:10px}.state-controls select{font-size:11px}.lab-footer{align-items:flex-start;padding:14px 15px;gap:13px}.lab-footer p{font-size:10px}.reset{font-size:10px;padding:7px 10px}.motto{font-size:17px;padding:25px 15px}footer{flex-direction:column;gap:6px;font-size:10px}pre{padding:17px;font-size:11px}}
+@media(max-width:370px){.board{grid-template-columns:1fr}.lane:last-child .lane-cards{grid-template-columns:1fr}.lane-cards{min-height:0}.local-badge{white-space:normal;max-width:100px}.hero h1{font-size:42px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+@media print{.topbar,.skip,.hero-links,.toc,.scope-buttons,.state-controls,.reset{display:none}.wrap{width:100%}body{background:white;font-size:11pt}.hero{padding:20px 0;gap:30px}.hero h1{font-size:32pt}.article-section{padding:20px 0;break-inside:auto}.article-section h2,.article-section h3{break-after:avoid}.lab{break-inside:auto}.lab-top,.lab-footer,.map,.motto{print-color-adjust:exact}.board{grid-template-columns:repeat(5,minmax(0,1fr))}.lane:last-child{grid-column:auto}.lane:last-child .lane-cards{display:flex}.work-card{break-inside:avoid}.table-scroll{overflow:visible}table{min-width:0}pre{white-space:pre-wrap}.detail{grid-template-columns:1fr}.motto{font-size:17px}a{text-decoration:none}.article-section>p,.article-section>ul,.article-section>ol{max-width:none}}
+</style></head>
+<body><a class="skip" href="#plane-overview">跳到正文</a><header class="topbar"><div class="topbar-inner wrap"><a class="brand" href="../"><span class="brandmark" aria-hidden="true">≋</span> 嵌入式技术笔记</a><nav aria-label="文章导航"><a href="../tools/">工具笔记</a><a href="#plane-lab">交互看板</a><a href="#plane-workflow">工作流</a><a href="#plane-hosting">部署与许可</a><a href="../?search=1">全文搜索</a></nav></div></header>
+<div class="wrap"><div class="hero"><div><span class="tag">工具与协作 · PLANE</span><p class="eyebrow">A SHARED MAP OF THE WORK</p><h1 id="plane">Plane<span>团队协作与项目管理</span></h1><p class="hero-intro">Plane 把团队要做什么、谁在推进、何时交付和为什么这样做，组织成一套共享的工作记录。读完这篇笔记，你应该能设计一个小项目的工作流，也能分清产品概念、部署方式与许可证。</p><div class="hero-links"><a class="btn" href="#plane-lab">动手试一张看板 <span aria-hidden="true">↗</span></a><a class="text-link" href="#plane-overview">先理解核心概念 ↓</a></div><p class="date-note">核对日期：2026-10-14 · 界面、版本、套餐与部署要求可能变化。<br>实际使用前应回到相应版本的官方文档。</p></div><figure class="hero-figure"><div class="map" aria-hidden="true"><div class="map-top"><span class="symbol">⌘</span><p>设备实验室<small>WORKSPACE</small></p><span>ONE SHARED RECORD</span></div><div class="map-projects"><div class="map-project"><strong>项目 A · 采集固件</strong><div class="mini-item active"><span>SEN-102 / STARTED</span>校准温度采样</div><div class="mini-item"><span>SEN-103 / UNSTARTED</span>补充边界值测试</div></div><div class="map-project"><strong>项目 B · 网关联调</strong><div class="mini-item"><span>GW-101 / UNSTARTED</span>验证网关心跳</div></div></div><div class="map-lenses"><div><strong>Cycle 周期</strong>这段时间推进什么</div><div><strong>Module 模块</strong>这项能力包含什么</div></div><p class="map-bottom">WORK ITEMS · 相同的工作项，不同的观察角度</p></div><figcaption>先有工作项，再用时间与范围组织它们。</figcaption></figure></div><aside class="lead-callout"><span>ONE IDEA<br>TO KEEP</span><p><strong>工作项是同一份事实。</strong> 看板、周期、模块和视图帮助你从不同角度理解它。移动一张卡片，不等于真实工作已经通过验收。</p></aside><nav class="toc" aria-label="文章目录"><a href="#plane-overview">核心边界</a><a href="#plane-lab">看板实验</a><a href="#plane-states">状态分组</a><a href="#plane-dimensions">概念分工</a><a href="#plane-license">许可证</a><a href="#plane-beads">与 Beads 的关系</a><a href="#plane-references">官方资料</a></nav></div>
+<main class="wrap"><section class="article-section"><h2 id="plane-overview" tabindex="-1">先认识 Plane 的边界 </h2>
+<p>Plane 是项目与工作管理平台，可以围绕工作项规划需求、协作推进、跟踪交付并记录上下文。一个团队可以用它管理固件迭代、产品需求、缺陷处理或跨职能项目。它可以承载敏捷流程，但不要求所有团队照搬同一种 Scrum 仪式。</p>
+<p><strong>先建立共享规则，再配置工具。</strong> 如果“完成”没有验收标准，增加状态、标签和仪表盘不会自动带来可靠交付。Plane 记录人的计划与事实，不自动证明代码正确、测试通过或产品已上线。</p>
+<ul>
+<li>Workspace 工作空间：组织项目与成员的协作边界。</li>
+<li>Project 项目：聚合目标相关的工作项，建立该项目的工作规则。</li>
+<li>Work item 工作项：可追踪的一件事，包含标题、状态、负责人、优先级等属性；描述应补齐背景与验收标准。</li>
+<li>Cycle 周期：把工作放进有起止时间的计划窗口。</li>
+<li>Module 模块：按功能、目标或交付范围组织工作。</li>
+<li>View 视图：保存筛选、布局与排序，观察同一批底层数据。</li>
+<li>Page 页面：承载需求说明、方案和决策等较长上下文。</li>
+</ul>
+<p>项目、周期和模块不是必须逐层创建的文件夹。项目包含工作项，周期与模块则给项目里的工作项增加不同维度；视图改变你看到的集合，不创建另一份任务。</p>
+</section><section class="article-section"><h2 id="plane-lab" tabindex="-1">动手：同一批工作，四种观察范围 </h2>
+<p>下面是一个完全本地的教学模型：虚构的“设备实验室”工作空间有“采集固件”和“网关联调”两个项目。它不连接 Plane，不调用 API，也不会保存、上传或修改任何真实项目。刷新页面或点击“重置演示”都会恢复初始状态。</p>
+<p>先切换工作空间、项目、周期、模块，观察可见卡片如何改变；再点击一张卡片，在详情中选择目标状态并应用。所有动作都支持触屏和键盘，不需要拖拽。关闭 JavaScript 后，初始卡片与完整文章仍可阅读。</p>
+<p>演示范围固定为：工作空间看全部 6 项；项目看“采集固件”的 4 项；周期看该项目“第 1 轮验证”的 3 项；模块看该项目“采样链路”的 2 项。周期与模块存在交集，但彼此不是父子关系。</p>
+<div class="lab" aria-label="Plane 概念教学看板">
+ <div class="lab-top"><div><span class="eyebrow">LOCAL LEARNING LAB</span><strong>设备实验室 <span>／ 虚构工作空间</span></strong></div><span class="local-badge"><span aria-hidden="true">●</span> 本地演示 · 不连接服务</span></div>
+ <div class="scope-picker"><div class="control-caption">01 选择观察范围 <span>同一数据，不同切面</span></div><div class="scope-buttons" role="group" aria-label="观察范围"><button id="plane-scope-workspace" type="button" data-scope="workspace" aria-pressed="true" aria-controls="plane-board plane-scope-description" disabled><span>工作空间</span><small>全部 6 项</small></button><button id="plane-scope-project" type="button" data-scope="project" aria-pressed="false" aria-controls="plane-board plane-scope-description" disabled><span>项目</span><small>采集固件 · 4 项</small></button><button id="plane-scope-cycle" type="button" data-scope="cycle" aria-pressed="false" aria-controls="plane-board plane-scope-description" disabled><span>周期</span><small>第 1 轮验证 · 3 项</small></button><button id="plane-scope-module" type="button" data-scope="module" aria-pressed="false" aria-controls="plane-board plane-scope-description" disabled><span>模块</span><small>采样链路 · 2 项</small></button></div><p id="plane-scope-description" class="scope-explanation">工作空间：汇总两个项目的 6 个工作项。这里是组织范围，不是一个新的工作项副本。</p></div>
+ <div class="board-heading"><div><span class="control-caption">02 选择一张卡片</span><p>每列对应一个状态组；演示不需要拖拽。</p></div><div class="board-metrics" aria-label="当前视图统计"><span>可见 <strong id="plane-visible-count">6</strong></span><span>完成 <strong id="plane-done-count">1</strong></span><span>取消 <strong id="plane-cancelled-count">1</strong></span></div></div>
+ <div id="plane-board" class="board"><section class="lane" aria-labelledby="plane-lane-title-backlog"><h4 id="plane-lane-title-backlog"><span class="state-dot backlog" aria-hidden="true"></span>待整理<span id="plane-count-backlog" class="lane-count">1</span></h4><p class="lane-en">Backlog</p><div class="lane-cards" id="plane-lane-backlog"><button class="work-card" type="button" id="plane-item-sen-101" data-item="SEN-101" aria-pressed="false" aria-controls="plane-detail" disabled><span class="card-id">SEN-101<span>S</span></span><strong>明确采样验收标准</strong><span class="card-project">采集固件</span><span class="card-tags"><span>需求基线</span></span><span class="card-status">当前状态：待整理</span></button><p class="empty-lane" id="plane-empty-backlog" hidden>此范围暂无工作项</p></div></section><section class="lane" aria-labelledby="plane-lane-title-unstarted"><h4 id="plane-lane-title-unstarted"><span class="state-dot unstarted" aria-hidden="true"></span>待开始<span id="plane-count-unstarted" class="lane-count">2</span></h4><p class="lane-en">Unstarted</p><div class="lane-cards" id="plane-lane-unstarted"><button class="work-card" type="button" id="plane-item-sen-103" data-item="SEN-103" aria-pressed="false" aria-controls="plane-detail" disabled><span class="card-id">SEN-103<span>S</span></span><strong>补充边界值测试</strong><span class="card-project">采集固件</span><span class="card-tags"><span>采样链路</span><span>质量保障</span></span><span class="card-status">当前状态：待开始</span></button><button class="work-card" type="button" id="plane-item-gw-101" data-item="GW-101" aria-pressed="false" aria-controls="plane-detail" disabled><span class="card-id">GW-101<span>G</span></span><strong>验证网关心跳</strong><span class="card-project">网关联调</span><span class="card-tags"><span>通信链路</span></span><span class="card-status">当前状态：待开始</span></button><p class="empty-lane" id="plane-empty-unstarted" hidden>此范围暂无工作项</p></div></section><section class="lane" aria-labelledby="plane-lane-title-started"><h4 id="plane-lane-title-started"><span class="state-dot started" aria-hidden="true"></span>进行中<span id="plane-count-started" class="lane-count">1</span></h4><p class="lane-en">Started</p><div class="lane-cards" id="plane-lane-started"><button class="work-card selected" type="button" id="plane-item-sen-102" data-item="SEN-102" aria-pressed="true" aria-controls="plane-detail" disabled><span class="card-id">SEN-102<span>S</span></span><strong>校准温度采样</strong><span class="card-project">采集固件</span><span class="card-tags"><span>采样链路</span></span><span class="card-status">当前状态：进行中</span></button><p class="empty-lane" id="plane-empty-started" hidden>此范围暂无工作项</p></div></section><section class="lane" aria-labelledby="plane-lane-title-completed"><h4 id="plane-lane-title-completed"><span class="state-dot completed" aria-hidden="true"></span>已完成<span id="plane-count-completed" class="lane-count">1</span></h4><p class="lane-en">Completed</p><div class="lane-cards" id="plane-lane-completed"><button class="work-card" type="button" id="plane-item-sen-104" data-item="SEN-104" aria-pressed="false" aria-controls="plane-detail" disabled><span class="card-id">SEN-104<span>S</span></span><strong>核对发布检查单</strong><span class="card-project">采集固件</span><span class="card-tags"><span>质量保障</span></span><span class="card-status">当前状态：已完成</span></button><p class="empty-lane" id="plane-empty-completed" hidden>此范围暂无工作项</p></div></section><section class="lane" aria-labelledby="plane-lane-title-cancelled"><h4 id="plane-lane-title-cancelled"><span class="state-dot cancelled" aria-hidden="true"></span>已取消<span id="plane-count-cancelled" class="lane-count">1</span></h4><p class="lane-en">Cancelled</p><div class="lane-cards" id="plane-lane-cancelled"><button class="work-card" type="button" id="plane-item-gw-102" data-item="GW-102" aria-pressed="false" aria-controls="plane-detail" disabled><span class="card-id">GW-102<span>G</span></span><strong>停止旧编码方案</strong><span class="card-project">网关联调</span><span class="card-tags"><span>通信链路</span></span><span class="card-status">当前状态：已取消</span></button><p class="empty-lane" id="plane-empty-cancelled" hidden>此范围暂无工作项</p></div></section></div>
+ <div class="detail" id="plane-detail"><div class="detail-copy"><span class="control-caption">03 查看与更新</span><h4 id="plane-selected-title">SEN-102 · 校准温度采样</h4><p id="plane-selected-meta">采集固件 ／ 第 1 轮验证 ／ 采样链路</p><p class="acceptance"><strong>验收条件</strong><span id="plane-selected-acceptance">在约定温度点验证，附测试结果，评审并确认误差满足项目阈值。</span></p><p id="plane-selected-owner" class="detail-owner">推进人：固件推进人（虚构角色）</p></div><div class="state-controls"><label for="plane-state">目标状态组</label><select id="plane-state" disabled><option value="backlog">待整理 · Backlog</option><option value="unstarted">待开始 · Unstarted</option><option value="started" selected>进行中 · Started</option><option value="completed">已完成 · Completed</option><option value="cancelled">已取消 · Cancelled</option></select><button class="btn" id="plane-move" type="button" disabled>应用状态</button><p>先验收，再标为完成。这里仅演示状态变化。</p></div></div>
+ <div class="lab-footer"><p id="plane-status" role="status" aria-live="polite" aria-atomic="true">初始状态：6 个工作项，其中 1 项完成、1 项取消。</p><button class="reset" id="plane-reset" type="button" disabled>↺ 重置演示</button></div>
+ <noscript><p class="noscript">JavaScript 已关闭：初始看板与正文可正常阅读。启用 JavaScript 后可切换范围和更新演示卡片。</p></noscript>
+</div>
+<h3 id="plane-demo-data" tabindex="-1">演示的初始工作项 </h3>
+<div class="table-scroll" role="region" tabindex="0" aria-label="可横向滚动的数据表"><table>
+<thead>
+<tr>
+<th>工作项</th>
+<th>项目</th>
+<th>初始状态组</th>
+<th>周期</th>
+<th>模块</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SEN-101 明确采样验收标准</td>
+<td>采集固件</td>
+<td>Backlog</td>
+<td>未排期</td>
+<td>需求基线</td>
+</tr>
+<tr>
+<td>SEN-102 校准温度采样</td>
+<td>采集固件</td>
+<td>Started</td>
+<td>第 1 轮验证</td>
+<td>采样链路</td>
+</tr>
+<tr>
+<td>SEN-103 补充边界值测试</td>
+<td>采集固件</td>
+<td>Unstarted</td>
+<td>第 1 轮验证</td>
+<td>采样链路、质量保障</td>
+</tr>
+<tr>
+<td>SEN-104 核对发布检查单</td>
+<td>采集固件</td>
+<td>Completed</td>
+<td>第 1 轮验证</td>
+<td>质量保障</td>
+</tr>
+<tr>
+<td>GW-101 验证网关心跳</td>
+<td>网关联调</td>
+<td>Unstarted</td>
+<td>联调窗口</td>
+<td>通信链路</td>
+</tr>
+<tr>
+<td>GW-102 停止旧编码方案</td>
+<td>网关联调</td>
+<td>Cancelled</td>
+<td>未排期</td>
+<td>通信链路</td>
+</tr>
+</tbody>
+</table></div>
+<p>在演示里把 SEN-103 标为完成后，切换到周期或模块仍会看到同一个已完成工作项。切换观察范围不会复制、删除或重置工作项；重置演示才会清除所有本页改动。演示不模拟权限、必填字段、自动化、通知或实际工作流约束。</p>
+</section><section class="article-section"><h2 id="plane-states" tabindex="-1">状态如何表达真实进展 </h2>
+<p>Plane 把状态归入五个状态组：Backlog、Unstarted、Started、Completed、Cancelled。项目可以配置具体状态名称，例如官方默认名称中的 Todo、In Progress 和 Done；名称与分组不要混为一谈。</p>
+<div class="table-scroll" role="region" tabindex="0" aria-label="可横向滚动的数据表"><table>
+<thead>
+<tr>
+<th>状态组</th>
+<th>这组状态回答什么</th>
+<th>团队可以如何约定</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Backlog</td>
+<td>已记录，但还没有进入明确执行计划</td>
+<td>需求待澄清、缺陷待确认</td>
+</tr>
+<tr>
+<td>Unstarted</td>
+<td>已准备开始，实际工作尚未启动</td>
+<td>验收标准与负责人已经明确</td>
+</tr>
+<tr>
+<td>Started</td>
+<td>正在推进中的工作</td>
+<td>开发中、测试中、评审中</td>
+</tr>
+<tr>
+<td>Completed</td>
+<td>达到团队定义的完成条件</td>
+<td>验收通过，证据与后续说明齐全</td>
+</tr>
+<tr>
+<td>Cancelled</td>
+<td>明确不再继续这项工作</td>
+<td>重复、方案废弃、需求撤回</td>
+</tr>
+</tbody>
+</table></div>
+<p>“测试中”可以被配置为 Started 组下的状态；它不是额外的第六种状态组。具体名称与规则取决于项目配置。Cancelled 也不是 Completed：取消的任务应该保留取消原因，不应被当成正常交付成果。</p>
+<p><strong>卡片状态是团队对事实的声明。</strong> 代码合并、自动化测试通过、现场验证完成和正式发布，可能是不同的里程碑。先决定本项目的“完成”究竟要求什么，再让卡片进入 Completed。</p>
+<p>在本演示中，可以自由选择五个状态组，便于理解分类。这不代表实际 Plane 实例中的所有用户都能执行任意变更；实际权限、字段与工作流应以当前部署为准。</p>
+</section><section class="article-section"><h2 id="plane-workflow" tabindex="-1">从一个需求走到可验收的交付 </h2>
+<h3 id="plane-item-template" tabindex="-1">先写成能执行的工作项 </h3>
+<p>把“优化传感器”改写为范围更窄的工作项，例如“校准温度采样并补齐边界值测试”。标题表达动作和对象；描述说明问题、范围、验收标准以及证据。下面的温度点与误差只是教学示例，不是通用产品指标。</p>
+<pre><code>标题：校准温度采样
+背景：当前读数在低温段偏差较大，需要验证校准方案。
+范围：采样换算与校准参数；本项不修改通信协议。
+验收：在项目约定的 3 个温度点验证，误差满足约定阈值；
+      补齐异常输入与边界值测试，并附测试记录。
+负责人：指定推进人；评审人按团队约定参与。
+证据：方案说明、变更记录、测试结果与剩余风险。
+完成条件：评审及验收通过；后续问题另建工作项。
+</code></pre>
+<p>优先级回答“先做哪件事”，负责人回答“谁负责推进”，状态回答“现在到哪一步”，截止日期回答“何时需要结果”。不要用一个字段代替全部管理判断。给工作项命名时保留可验证的目标，避免只写“处理一下”“继续优化”。</p>
+<h3 id="plane-six-steps" tabindex="-1">一轮小迭代的六个动作 </h3>
+<ol>
+<li>建立工作空间与项目，先确认成员可见范围和协作方式，不急着做复杂权限设计。</li>
+<li>收集需求与缺陷，拆成能说明背景、交付物和验收标准的工作项。</li>
+<li>整理 Backlog，去重、澄清范围、明确优先级与推进人；准备好再放入待开始状态。</li>
+<li>用 Module 组织功能目标，用 Cycle 选择当前时间窗口内计划推进的工作；容量应基于团队实际情况。</li>
+<li>执行期间更新状态，在评论或页面中保留决策与证据。遇到阻碍时记录原因与下一步，避免只把卡片留在“进行中”。</li>
+<li>验收通过再完成；复盘未完成项、取消原因与范围变化。需要延续的工作重新评估，不机械地整批挪到下个周期。</li>
+</ol>
+<p>做得少而一致，通常比一开始配置大量状态更有效。最小可用约定可以是：每项有明确标题与负责人；开始前说明验收标准；阻碍有下一步；完成时留下结果证据。</p>
+</section><section class="article-section"><h2 id="plane-dimensions" tabindex="-1">周期、模块、视图和页面怎么分工 </h2>
+<h3 id="plane-cycles" tabindex="-1">Cycle 关心时间窗口 </h3>
+<p>周期是有开始和结束日期的时间盒，适合表达“一段时间内计划完成哪些工作”。不要把一个周期永久延长来掩盖未完成工作。周期结束时，查看已完成与未完成的原因，比单看数量更有价值。</p>
+<p>同一工作项同一时间只能属于一个周期。即使配置允许并行周期，这条归属约束仍成立。启用并行周期不等于一项任务可以同时计入多个周期。</p>
+<h3 id="plane-modules" tabindex="-1">Module 关心交付范围 </h3>
+<p>模块按功能、目标或成果组织工作，例如“采样链路”“通信链路”“质量保障”。模块可以有日期，也可以跨越多个周期，因此不能简单理解为“没有日期的周期”。一个工作项可以属于多个模块。</p>
+<p>演示中的 SEN-103 同时属于“采样链路”和“质量保障”：前者按功能归类，后者按质量目标归类。它仍是一条工作记录。给多个模块统计求和时，要警惕同一工作项被重复计算。</p>
+<h3 id="plane-views" tabindex="-1">View 关心此刻要看什么 </h3>
+<p>视图是对已有工作项的筛选、布局和排序。例如“我负责且尚未完成”“当前周期的高优先级工作”“待评审事项”。看板、列表等布局帮助观察同一数据；实际可用布局与功能以版本、版本类型和套餐为准。</p>
+<p>一个工作项从视图中消失，可能只是状态或属性不再符合过滤条件，不代表它被删除。追查异常时，先检查筛选条件与项目范围。团队应尽量共享字段含义，避免各自创建一套互不相通的标签。</p>
+<h3 id="plane-pages" tabindex="-1">Page 关心上下文与决定 </h3>
+<p>把长篇需求说明、设计取舍、会议结论和交付说明放在页面里，并在工作项中引用相应上下文。任务负责追踪动作，页面负责解释为什么。不要只把重要决策留在临时聊天中，也不要把整份方案重复粘贴到每一张卡片。</p>
+</section><section class="article-section"><h2 id="plane-hosting" tabindex="-1">Cloud 与自托管：先决定谁负责运维 </h2>
+<p>部署方式和产品版本类型是两条不同的轴。Cloud 是由服务方运营的服务；self-hosted 自托管是由你或你的团队负责部署运行。自托管又包含 Community Edition 与 Commercial Edition 等版本类型，不能把“自托管”直接等同于“社区开源版”。</p>
+<h3 id="plane-cloud" tabindex="-1">使用 Cloud 前确认什么 </h3>
+<p>Cloud 能减少自建服务器、升级和备份设施的直接工作，但仍需评估组织账号管理、数据与附件导出、成员权限、合规要求和相应套餐。数据位置、保留策略、功能与价格都要按实际服务条款及当前方案核实；本文不把它们写成固定承诺。</p>
+<h3 id="plane-self-hosted" tabindex="-1">自托管前确认什么 </h3>
+<p>自托管给团队更多部署控制，同时也把可用性、安全补丁、数据保护和故障恢复责任带给团队。官方架构涉及 PostgreSQL 主数据、对象存储附件、Redis 或 Valkey 等缓存服务以及 RabbitMQ 异步任务；组件与连接方式应按选定版本的部署文件确认。</p>
+<ul>
+<li>先选择 Community 或 Commercial，再选择匹配的安装方式与版本。Docker Compose 文档中的两种安装入口不能互换；不要把 Commercial 安装器称为社区版安装器。</li>
+<li>明确域名、HTTPS、访问边界、成员管理、邮件发送以及附件存储的实际要求。</li>
+<li>备份覆盖数据库、附件对象以及恢复需要的配置；加密保存敏感配置，限制备份访问范围。</li>
+<li>在测试环境演练恢复，而不只确认“备份文件存在”。升级前核对版本路径、迁移说明与回退方案。</li>
+<li>查看遥测、许可证验证及其他外部连接设置；“自托管”本身不保证没有外联。</li>
+<li>若选择 Commercial 的官方离线支持，应另行评估 Airgapped 方案与许可要求，不能假设断网后所有商业功能仍可运行。Community Edition 在隔离网络中运行时，也需自行验证镜像获取、依赖服务、遥测配置与离线升级流程；这不等于社区版隔离部署必须购买商业 Airgapped。</li>
+</ul>
+<p>本文不提供一键安装命令：安装器、版本、环境要求和 edition 选择相互关联，应直接使用所选版本的官方自托管文档。尤其不要未经审阅就把网络脚本作为日常维护流程执行。</p>
+</section><section class="article-section"><h2 id="plane-license" tabindex="-1">Community、Commercial 与 AGPL 的边界 </h2>
+<p>截至 2026-10-14 核对，官方 makeplane/plane 仓库的 Community Edition 采用 GNU AGPL v3；Commercial Edition 按官方说明属于闭源商业版本，并有相应许可条款和不同权益。免费额度或免费商业层不等于 AGPL 开源版，付费与否也不是判断源码许可的充分条件。</p>
+<p>AGPL 允许商业使用，但附有条件。义务取决于你是否修改、分发以及如何向用户提供网络交互等事实。特别是 AGPL 第 13 节：对修改后的程序，如果用户通过网络与其远程交互，应向这些用户提供显著的机会获取相应源码。</p>
+<p><strong>不要把“仅在内网”当作自动豁免，也不要把这条义务解释为“所有业务数据与公司所有源码都必须公开”。</strong> 相应源码的范围、修改和组合方式需要根据实际项目判断；项目记录、附件与代码许可不是同一件事。</p>
+<p>选型或二次开发前，至少核对仓库 LICENSE、目标版本、使用的商业功能和对应协议。计划分发修改版、提供托管服务或组合闭源组件时，应由熟悉开源许可的人针对实际方案审查。这里是理解边界的笔记，不代替具体法律判断。</p>
+</section><section class="article-section"><h2 id="plane-beads" tabindex="-1">与 Beads 放在一起怎么理解 </h2>
+<p>Plane 更适合让人和团队共享计划、状态与上下文；Beads 则更贴近代理与开发工作中的任务记录和依赖关系。两者可以分别服务协作层和执行层，但不是安装后就自动同步的一对产品。</p>
+<p>如果同一件事同时出现在两个工具里，先指定哪个记录负责验收状态，另一个保留对应标识与必要摘要。状态不一致时以约定的事实来源为准，避免形成两份长期分叉的待办清单。本页没有配置任何集成、自动同步或双向更新。</p>
+<p>进一步阅读：<a href="./../tools/beads.html">Beads 任务与依赖笔记</a>。</p>
+</section><section class="article-section"><h2 id="plane-checklist" tabindex="-1">落地前的检查清单 </h2>
+<ul>
+<li>能说明工作空间、项目、周期、模块和视图各自回答什么问题。</li>
+<li>项目中的状态组含义一致；完成与取消明确区分。</li>
+<li>每个计划执行的工作项都有负责人、范围和可核对的验收标准。</li>
+<li>周期基于真实容量规划；未完成项会重新评估，而不是机械顺延。</li>
+<li>使用多个模块时知道可能存在交集，不把去重前的总数当成唯一工作量。</li>
+<li>已确认 Cloud 或自托管的运维责任，并验证备份恢复与访问边界。</li>
+<li>已按实际版本类型核对功能、许可与外联要求；没有把免费、开源和自托管混为一谈。</li>
+</ul>
+<p>复习口诀：项目定边界，工作项记事实；周期管时间，模块管范围，视图换角度，页面留上下文。</p>
+</section><section class="article-section"><h2 id="plane-references" tabindex="-1">官方参考与核对日期 </h2>
+<p>以下为核对时使用的一手资料，核对日期为 2026-10-14。产品文档可能持续更新，使用时请匹配部署版本；版本类型、套餐与商业许可不能只凭本文推断。</p>
+<ul>
+<li><a href="https://docs.plane.so/introduction/core-concepts" target="_blank" rel="noreferrer">Plane 官方核心概念</a>：工作空间、项目与工作项。</li>
+<li><a href="https://docs.plane.so/core-concepts/issues/states" target="_blank" rel="noreferrer">工作项状态</a>：五种状态组与状态名称。</li>
+<li><a href="https://docs.plane.so/core-concepts/cycles" target="_blank" rel="noreferrer">Cycles</a>：时间盒与并行周期的归属规则。</li>
+<li><a href="https://docs.plane.so/core-concepts/modules" target="_blank" rel="noreferrer">Modules</a>：范围组织与多模块归属。</li>
+<li><a href="https://docs.plane.so/core-concepts/views" target="_blank" rel="noreferrer">Views</a>：对现有数据的筛选与展示。</li>
+<li><a href="https://developers.plane.so/self-hosting/editions-and-versions" target="_blank" rel="noreferrer">版本类型与版本</a>：Community、Commercial 与 Airgapped。</li>
+<li><a href="https://developers.plane.so/self-hosting/methods/docker-compose" target="_blank" rel="noreferrer">Docker Compose 部署</a>：区分 Community 和 Commercial 安装入口。</li>
+<li><a href="https://developers.plane.so/self-hosting/plane-architecture" target="_blank" rel="noreferrer">Plane 自托管架构</a>：数据、附件、缓存与异步任务组件。</li>
+<li><a href="https://developers.plane.so/self-hosting/manage/backup-restore" target="_blank" rel="noreferrer">备份与恢复</a>：按实际安装方式执行。</li>
+<li><a href="https://developers.plane.so/self-hosting/telemetry" target="_blank" rel="noreferrer">自托管遥测</a>：确认外联行为与配置。</li>
+<li><a href="https://developers.plane.so/self-hosting/manage/manage-licenses/overview" target="_blank" rel="noreferrer">自托管许可证管理</a>：在线激活与隔离部署的区别。</li>
+<li><a href="https://github.com/makeplane/plane" target="_blank" rel="noreferrer">Community 仓库</a>与<a href="https://github.com/makeplane/plane/blob/preview/LICENSE.txt" target="_blank" rel="noreferrer">仓库许可证</a>：开源版本与许可原文。</li>
+<li><a href="https://www.gnu.org/licenses/agpl-3.0.en.html" target="_blank" rel="noreferrer">GNU AGPL v3 全文</a>与<a href="https://www.gnu.org/licenses/gpl-faq.en.html#UnreleasedModsAGPL" target="_blank" rel="noreferrer">GNU 关于内部修改版服务器的说明</a>：特别核对第 13 节。</li>
+<li><a href="https://plane.so/legals/eula" target="_blank" rel="noreferrer">Plane 商业许可协议</a>：商业版本需另行核对的条款。</li>
+</ul>
+</section><div class="motto">项目定边界，工作项记事实。<small>周期管时间 · 模块管范围 · 视图换角度 · 页面留上下文</small></div></main><footer class="wrap"><span>工具与协作学习手册 · Plane</span><span>独立交互文章 · 本地教学模型 · 无外部依赖</span></footer><script id="plane-model">'use strict';
+const PLANE_STATES = ["backlog","unstarted","started","completed","cancelled"];
+const PLANE_SCOPES = ['workspace','project','cycle','module'];
+const PLANE_INITIAL_ITEMS = [{"id":"SEN-101","title":"明确采样验收标准","project":"sensor","projectName":"采集固件","state":"backlog","cycle":null,"modules":["需求基线"],"owner":"需求推进人","acceptance":"明确范围、测试条件和误差阈值，并经相关成员确认。"},{"id":"SEN-102","title":"校准温度采样","project":"sensor","projectName":"采集固件","state":"started","cycle":"第 1 轮验证","modules":["采样链路"],"owner":"固件推进人","acceptance":"在约定温度点验证，附测试结果，评审并确认误差满足项目阈值。"},{"id":"SEN-103","title":"补充边界值测试","project":"sensor","projectName":"采集固件","state":"unstarted","cycle":"第 1 轮验证","modules":["采样链路","质量保障"],"owner":"测试推进人","acceptance":"覆盖异常输入与边界条件，记录结果并通过评审。"},{"id":"SEN-104","title":"核对发布检查单","project":"sensor","projectName":"采集固件","state":"completed","cycle":"第 1 轮验证","modules":["质量保障"],"owner":"发布推进人","acceptance":"版本、测试记录、回退准备和交付说明均已核对。"},{"id":"GW-101","title":"验证网关心跳","project":"gateway","projectName":"网关联调","state":"unstarted","cycle":"联调窗口","modules":["通信链路"],"owner":"联调推进人","acceptance":"验证正常、超时与恢复场景，附联调记录。"},{"id":"GW-102","title":"停止旧编码方案","project":"gateway","projectName":"网关联调","state":"cancelled","cycle":null,"modules":["通信链路"],"owner":"协议推进人","acceptance":"旧方案不再推进；记录取消原因并链接替代方案。"}];
+class PlaneModel {
+  constructor(){ this.reset(); }
+  reset(){ this.items=JSON.parse(JSON.stringify(PLANE_INITIAL_ITEMS)); this.scope='workspace'; this.selectedId='SEN-102'; return this; }
+  visibleItems(){ return this.items.filter(item => this.scope==='workspace' || (item.project==='sensor' && (this.scope==='project' || (this.scope==='cycle' && item.cycle==='第 1 轮验证') || (this.scope==='module' && item.modules.includes('采样链路'))))); }
+  selected(){ return this.items.find(item=>item.id===this.selectedId) || null; }
+  select(id){ if(!this.visibleItems().some(item=>item.id===id)) return false; this.selectedId=id; return true; }
+  setScope(scope){ if(!PLANE_SCOPES.includes(scope)) return false; this.scope=scope; const visible=this.visibleItems(); if(!visible.some(item=>item.id===this.selectedId)) this.selectedId=visible.length?visible[0].id:null; return true; }
+  move(id,state){ if(!PLANE_STATES.includes(state)) return false; const item=this.items.find(item=>item.id===id); if(!item || item.state===state) return false; item.state=state; return true; }
+  counts(){ const result=Object.fromEntries(PLANE_STATES.map(state=>[state,0])); for(const item of this.visibleItems()) result[item.state]++; return result; }
+}
+</script><script id="plane-ui">'use strict';
+(function(){
+ const model=new PlaneModel();
+ const byId=id=>document.getElementById(id);
+ const labels={backlog:'待整理',unstarted:'待开始',started:'进行中',completed:'已完成',cancelled:'已取消'};
+ const scopeNames={workspace:'工作空间',project:'项目',cycle:'周期',module:'模块'};
+ const explanations={workspace:'工作空间：汇总两个项目的 6 个工作项。这里是组织范围，不是一个新的工作项副本。',project:'项目：仅看“采集固件”的 4 个工作项。“网关联调”的任务仍然存在，只是被当前范围隐藏。',cycle:'周期：采集固件 / 第 1 轮验证，共 3 项。周期回答何时推进，不限定这些任务属于哪个模块。',module:'模块：采集固件 / 采样链路，共 2 项。模块回答交付什么；SEN-103 还属于“质量保障”，并没有复制成两项。'};
+ const cards=new Map(Array.from(document.querySelectorAll('[data-item]')).map(node=>[node.dataset.item,node]));
+ const scopes=Array.from(document.querySelectorAll('[data-scope]'));
+ const stateSelect=byId('plane-state');
+ const moveButton=byId('plane-move');
+ function render(message){
+   const visible=new Set(model.visibleItems().map(item=>item.id));
+   for(const item of model.items){const card=cards.get(item.id); card.hidden=!visible.has(item.id); card.disabled=false; card.classList.toggle('selected',item.id===model.selectedId); card.setAttribute('aria-pressed',String(item.id===model.selectedId)); card.querySelector('.card-status').textContent='当前状态：'+labels[item.state]; byId('plane-lane-'+item.state).appendChild(card);}
+   const counts=model.counts();
+   for(const state of PLANE_STATES){byId('plane-count-'+state).textContent=counts[state]; byId('plane-empty-'+state).hidden=counts[state]!==0;}
+   for(const button of scopes){button.disabled=false;button.setAttribute('aria-pressed',String(button.dataset.scope===model.scope));}
+   byId('plane-scope-description').textContent=explanations[model.scope];
+   byId('plane-visible-count').textContent=visible.size;
+   byId('plane-done-count').textContent=counts.completed;
+   byId('plane-cancelled-count').textContent=counts.cancelled;
+   const selected=model.selected();
+   byId('plane-selected-title').textContent=selected.id+' · '+selected.title;
+   byId('plane-selected-meta').textContent=selected.projectName+' ／ '+(selected.cycle||'未排期')+' ／ '+selected.modules.join('、');
+   byId('plane-selected-acceptance').textContent=selected.acceptance;
+   byId('plane-selected-owner').textContent='推进人：'+selected.owner+'（虚构角色）';
+   stateSelect.value=selected.state;stateSelect.disabled=false;moveButton.disabled=true;byId('plane-reset').disabled=false;
+   if(message) byId('plane-status').textContent=message;
+ }
+ for(const [id,card] of cards) card.addEventListener('click',()=>{if(model.select(id))render('已选择 '+id+'，当前状态为“'+labels[model.selected().state]+'”。可以在详情中选择目标状态。');});
+ for(const button of scopes) button.addEventListener('click',()=>{model.setScope(button.dataset.scope);render('已切换到'+scopeNames[model.scope]+'范围：可见 '+model.visibleItems().length+' 个工作项。状态没有改变。');});
+ stateSelect.addEventListener('change',()=>{moveButton.disabled=stateSelect.value===model.selected().state;});
+ moveButton.addEventListener('click',()=>{const selected=model.selected();const state=stateSelect.value;if(model.move(selected.id,state)){render(selected.id+' 已更新为“'+labels[state]+'”。其他观察范围中的同一工作项同步显示这一变化；此操作仅影响本页演示。');stateSelect.focus();}});
+ byId('plane-reset').addEventListener('click',()=>{model.reset();render('演示已重置。恢复工作空间中的 6 个初始工作项，所有本页状态改动已清除。');});
+ render('教学模型已就绪。选择范围或卡片，尝试改变状态；所有改动仅存在于当前页面。');
+})();
+</script></body></html>
