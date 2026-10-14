@@ -1,4 +1,4 @@
-export const notePaths = ['c-memory/heap-stack.html', 'tools/beads.html', 'tools/plane.html', 'tools/matt-pocock-skills.html']
+export const notePaths = ['c-memory/heap-stack.html', 'tools/beads.html', 'tools/plane.html', 'tools/matt-pocock-skills.html', 'mcu/crystal-pll-clock.html']
 export const notePath = notePaths[0]
 
 export function isInteractiveNote(href, base, currentUrl) {
