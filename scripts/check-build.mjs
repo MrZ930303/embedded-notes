@@ -3,6 +3,7 @@ import path from 'node:path'
 import assert from 'node:assert/strict'
 import { pathToFileURL } from 'node:url'
 import MiniSearch from 'minisearch'
+import { interactiveNotes } from './interactive-note.mjs'
 const root = path.resolve(import.meta.dirname, '../docs/.vitepress/dist')
 const requestedBase = process.env.SITE_BASE || '/embedded-notes/'
 const base = '/' + requestedBase.split('/').filter(Boolean).join('/') + (requestedBase === '/' ? '' : '/')
@@ -52,12 +53,14 @@ assert.ok(html.includes(base+'c-memory/heap-stack.html'))
 assert.ok(html.includes('data-no-router'))
 assert.ok(files.some(p=>/hashmap\.json$/.test(p)))
 assert.ok(files.some(p=>/localSearchIndex/.test(p)), 'Local search index is missing')
-const demo=await readFile(path.join(root,'demos/stack-heap.html'),'utf8')
-assert.ok(demo.includes('href="../?search=1"'))
-const interactiveNote = await readFile(path.join(root, 'c-memory/heap-stack.html'), 'utf8')
-assert.equal(interactiveNote, demo, 'Canonical note must be the complete standalone interactive HTML')
-assert.ok(interactiveNote.includes('id="memory-model"'))
-assert.ok(!interactiveNote.includes('__VP_SITE_DATA__'), 'Canonical note must not hydrate the docs page')
+for (const note of interactiveNotes) {
+  const demo = await readFile(path.join(root, 'demos', note.source), 'utf8')
+  assert.ok(demo.includes('href="../?search=1"'))
+  const article = await readFile(path.join(root, note.path), 'utf8')
+  assert.equal(article, demo, 'Canonical note must be the complete standalone interactive HTML: ' + note.path)
+  assert.ok(!article.includes('__VP_SITE_DATA__'), 'Canonical note must not hydrate the docs page: ' + note.path)
+  assert.ok(html.includes(base + note.path), 'Missing home article link: ' + note.path)
+}
 console.log('PASS: '+pages.length+' HTML pages, '+checked+' internal asset/page/anchor links, public output scan, '+base+' base path and local search index.')
 
 // Test the actual generated index with the exact tokenizer serialized for browsers.
@@ -70,9 +73,10 @@ const tokenize = new Function('return ' + serializedTokenizer.slice(7))()
 const indexFile = files.find(p => /@localSearchIndexroot\..*\.js$/.test(p))
 const generatedIndex = (await import(pathToFileURL(indexFile).href)).default
 for (const id of Object.values(JSON.parse(generatedIndex).documentIds)) {
-  if (!id.startsWith(base + 'c-memory/heap-stack.html#')) continue
+  const note = interactiveNotes.find(note => id.startsWith(base + note.path + '#'))
+  if (!note) continue
   const anchor = decodeURIComponent(id.split('#')[1])
-  assert.ok(ids.get(path.join(root, 'c-memory/heap-stack.html')).has(anchor), 'Search anchor missing from interactive note: ' + anchor)
+  assert.ok(ids.get(path.join(root, note.path)).has(anchor), 'Search anchor missing from interactive note: ' + note.path + '#' + anchor)
 }
 const search = MiniSearch.loadJSON(generatedIndex, {
   fields: ['title', 'titles', 'text'],
@@ -80,10 +84,18 @@ const search = MiniSearch.loadJSON(generatedIndex, {
   tokenize,
   searchOptions: { fuzzy: 0.2, prefix: true, boost: { title: 4, text: 2, titles: 1 } }
 })
-for (const query of ['碎片', '任务栈', '历史最小', 'malloc', 'MSP', 'vPortGetHeapStats']) {
-  const results = search.search(query)
-  assert.ok(results.length > 0, 'Search returned no results: ' + query)
-  assert.ok(results.some(r => r.id.startsWith(base + 'c-memory/heap-stack.html')), 'Missing article result: ' + query)
+const queries = {
+  'c-memory/heap-stack.html': ['碎片', '任务栈', '历史最小', 'malloc', 'MSP', 'vPortGetHeapStats'],
+  'tools/beads.html': ['Beads', '依赖', '就绪', 'Dolt', 'claim', '认领'],
+  'tools/plane.html': ['Plane', '周期', '模块', '工作空间', 'AGPL', 'Cancelled'],
+  'tools/matt-pocock-skills.html': ['Matt', 'Skills', 'tdd', 'GLOSSARY', '技能', '规格']
+}
+for (const [article, terms] of Object.entries(queries)) {
+  for (const query of terms) {
+    const results = search.search(query)
+    assert.ok(results.length > 0, 'Search returned no results: ' + query)
+    assert.ok(results.some(r => r.id.startsWith(base + article)), 'Missing article result: ' + article + ': ' + query)
+  }
 }
 assert.equal(search.search('zzzxxyyunknownquery').length, 0)
 for (const excluded of ['C51', '8051', 'ML51']) assert.equal(search.search(excluded).length, 0, 'Excluded architecture search result: ' + excluded)
