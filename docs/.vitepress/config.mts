@@ -1,5 +1,5 @@
 import { defineConfig } from 'vitepress'
-import { readInteractiveNote, interactiveNoteDevPlugin } from '../../scripts/interactive-note.mjs'
+import { readInteractiveNote, interactiveNoteDevPlugin, interactiveNotes } from '../../scripts/interactive-note.mjs'
 
 // GitHub 项目站默认 /embedded-notes/；个人主页或自定义域名可设为 /。
 const requestedBase = process.env.SITE_BASE || '/embedded-notes/'
@@ -12,7 +12,8 @@ export default defineConfig({
   base,
   cleanUrls: false,
   transformHtml(html, _id, context) {
-    return context.page === 'c-memory/heap-stack.md' ? readInteractiveNote() : html
+    const note = interactiveNotes.find(note => context.page === note.path.replace(/\.html$/, '.md'))
+    return note ? readInteractiveNote(note.path) : html
   },
   vite: {
     plugins: [interactiveNoteDevPlugin(base)],
@@ -29,10 +30,16 @@ export default defineConfig({
     siteTitle: '嵌入式技术笔记',
     nav: [
       { text: '首页', link: '/' },
-      { text: '交互笔记', link: '/c-memory/heap-stack.html' },
+      { text: '交互笔记', items: [
+        { text: 'MCU 堆栈原理与监测', link: '/c-memory/heap-stack.html' },
+        { text: 'Beads：任务依赖与就绪队列', link: '/tools/beads.html' },
+        { text: 'Plane：项目协作与工作流', link: '/tools/plane.html' },
+        { text: 'Matt Pocock Skills：AI 编程工作流', link: '/tools/matt-pocock-skills.html' }
+      ] },
       { text: '学习路线', link: '/guide/memory-roadmap.html' },
       { text: '笔记分类', items: [
         { text: 'C 语言与内存', link: '/c-memory/' },
+        { text: '工程工具与协作', link: '/tools/' },
         { text: 'MCU 外设 · 规划中', link: '/mcu/' },
         { text: 'FreeRTOS · 规划中', link: '/freertos/' },
         { text: '调试与实战 · 规划中', link: '/debug/' }
@@ -45,6 +52,12 @@ export default defineConfig({
       { text: 'C 语言与内存', items: [
         { text: '分类概览', link: '/c-memory/' },
         { text: 'MCU 堆栈原理与监测', link: '/c-memory/heap-stack.html' }
+      ]},
+      { text: '工程工具与协作', items: [
+        { text: '分类概览', link: '/tools/' },
+        { text: 'Beads：任务依赖与就绪队列', link: '/tools/beads.html' },
+        { text: 'Plane：项目协作与工作流', link: '/tools/plane.html' },
+        { text: 'Matt Pocock Skills：AI 编程工作流', link: '/tools/matt-pocock-skills.html' }
       ]},
       { text: '后续专题', collapsed: true, items: [
         { text: 'MCU 外设 · 规划中', link: '/mcu/' },
