@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import vm from 'node:vm'
 import { readFile } from 'node:fs/promises'
 import { createInteractiveNoteGuard, isInteractiveNote } from '../docs/.vitepress/theme/interactive-routing.mjs'
-import { readInteractiveNote, interactiveNoteDevPlugin } from './interactive-note.mjs'
+import { readInteractiveNote, interactiveNoteDevPlugin, interactiveNotes } from './interactive-note.mjs'
 
 for (const base of ['/', '/embedded-notes/']) {
   const origin = 'https://notes.example'
@@ -13,25 +13,31 @@ for (const base of ['/', '/embedded-notes/']) {
     replace: href => events.push(['replace', href])
   }
   const guard = createInteractiveNoteGuard(base, location)
-  const target = origin + base + 'c-memory/heap-stack.html#任务栈历史余量'
-  assert.equal(guard(target), false)
-  assert.deepEqual(events[0], ['assign', new URL(target).href])
-  assert.equal(guard(base + 'guide/memory-roadmap.html'), undefined)
-  assert.equal(isInteractiveNote('https://other.example' + base + 'c-memory/heap-stack.html', base, location.href), false)
-  location.href = new URL(target).href
-  assert.equal(guard(location.href), false)
-  assert.deepEqual(events[1], ['replace', location.href])
+  for (const note of interactiveNotes) {
+    const target = origin + base + note.path + '#search-section'
+    assert.equal(guard(target), false)
+    assert.deepEqual(events.at(-1), ['assign', new URL(target).href])
+    assert.equal(guard(base + 'guide/memory-roadmap.html'), undefined)
+    assert.equal(isInteractiveNote('https://other.example' + base + note.path, base, location.href), false)
+    location.href = new URL(target).href
+    assert.equal(guard(location.href), false)
+    assert.deepEqual(events.at(-1), ['replace', location.href])
+    location.href = origin + base
+  }
 
   let middleware
   interactiveNoteDevPlugin(base).configureServer({ middlewares: { use: fn => { middleware = fn } } })
-  let body, header, next = false
-  await middleware({ url: base + 'c-memory/heap-stack.html' }, {
-    setHeader: (name, value) => { header = [name, value] },
-    end: value => { body = value }
-  }, () => { next = true })
-  assert.equal(body, await readInteractiveNote())
-  assert.deepEqual(header, ['Content-Type', 'text/html; charset=utf-8'])
-  assert.equal(next, false)
+  let next = false
+  for (const note of interactiveNotes) {
+    let body, header
+    await middleware({ url: base + note.path }, {
+      setHeader: (name, value) => { header = [name, value] },
+      end: value => { body = value }
+    }, () => { next = true })
+    assert.equal(body, await readInteractiveNote(note.path))
+    assert.deepEqual(header, ['Content-Type', 'text/html; charset=utf-8'])
+    assert.equal(next, false)
+  }
   await middleware({ url: base + 'guide/memory-roadmap.html' }, {}, () => { next = true })
   assert.equal(next, true)
 }
@@ -76,3 +82,32 @@ vm.runInNewContext(observerScript, {
 })
 assert.deepEqual(observed, ['stack'])
 console.log('PASS: canonical HTML navigation, click/search/history guard, both base paths, dev HTML serving, collapsed search anchors and invalid hashes.')
+
+// All tool-note search sections must have unique, real HTML anchors.
+for (const note of interactiveNotes.slice(1)) {
+  const article = await readInteractiveNote(note.path)
+  const ids = [...article.matchAll(/\bid="([^"]+)"/g)].map(match => match[1])
+  assert.equal(ids.length, new Set(ids).size, 'Duplicate HTML id: ' + note.path)
+  const markdown = await readFile(new URL('../docs/' + note.path.replace(/\.html$/, '.md'), import.meta.url), 'utf8')
+  const headings = markdown.replace(/```[\s\S]*?```/g, '').match(/^#{1,6} .+$/gm) || []
+  for (const heading of headings) {
+    const match = heading.match(/\{#([^}]+)\}/)
+    assert.ok(match, 'Explicit search anchor required: ' + heading)
+    assert.ok(ids.includes(match[1]), 'Missing search anchor: ' + match[1])
+  }
+  const deepLink = article.match(/<script id="note-deep-links">([\s\S]*?)<\/script>/)
+  if (article.includes('<details')) {
+    assert.ok(deepLink, 'Collapsed articles require search deep-link support')
+    const section = { open: false }, events = {}
+    const target = { closest: () => section, scrollIntoView: () => {} }
+    const window = { location: { hash: '#section' }, addEventListener: (event, fn) => { events[event] = fn } }
+    vm.runInNewContext(deepLink[1], { window, document: { getElementById: () => target }, requestAnimationFrame: fn => fn() })
+    assert.equal(section.open, true)
+    section.open = false; events.hashchange(); assert.equal(section.open, true)
+    window.location.hash = '#%ZZ'; assert.doesNotThrow(events.pageshow)
+  }
+  for (const href of ['../', '../tools/', '../?search=1']) assert.ok(article.includes('href="' + href + '"'), 'Missing hub link: ' + href)
+  assert.ok(!/<(?:script|iframe)[^>]+src=/i.test(article), 'Self-contained article must not load scripts or integrations')
+  assert.ok(!/\b(?:fetch|XMLHttpRequest|WebSocket|localStorage|sessionStorage)\b/.test([...article.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)].map(match => match[1]).join('')), 'Teaching state stays in page memory')
+}
+console.log('PASS: all tool-note headings resolve, HTML ids are unique, hub/search links exist, and teaching pages have no external execution or persistence.');
