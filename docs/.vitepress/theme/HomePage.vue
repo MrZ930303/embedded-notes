@@ -3,7 +3,7 @@ import { withBase } from 'vitepress'
 const categories = [
   { n: '01', title: 'C 语言与内存', desc: '从指针、生命周期到堆栈，建立清晰的内存模型。', path: '/c-memory/', label: '1 篇交互笔记', ready: true },
   { n: '02', title: '工程工具与协作', desc: '任务依赖、工作流和项目边界，让执行与协作都有据可查。', path: '/tools/', label: '3 篇交互笔记', ready: true },
-  { n: '03', title: 'MCU 外设', desc: 'GPIO、定时器、通信与 DMA，沿着数据流理解硬件。', path: '/mcu/', label: '规划中', ready: false },
+  { n: '03', title: 'MCU 基础与外设', desc: '从晶体与 PLL 到时钟树，先弄清每条总线的时钟从哪里来。', path: '/mcu/', label: '1 篇交互笔记', ready: true },
   { n: '04', title: 'FreeRTOS', desc: '任务、调度与同步，从能运行走向可分析。', path: '/freertos/', label: '规划中', ready: false },
   { n: '05', title: '调试与实战', desc: '从现象找到证据，记录问题、实验和排查路径。', path: '/debug/', label: '规划中', ready: false }
 ]
@@ -62,6 +62,15 @@ const categories = [
         <div class="note-number" aria-hidden="true">04<span>MATT POCOCK<br>SKILLS</span></div>
         <div class="featured-copy"><p class="note-meta">工程工具与协作 <span>·</span> AI Agent / 工程工作流</p><h3><a :href="withBase('/tools/matt-pocock-skills.html')" data-no-router>Matt Pocock Skills：AI 编程工作流</a></h3><p>从当前卡点选择一张工作卡，沿着需求、规格、实现和审查前进。看懂技能能指导什么，以及哪些动作仍需明确授权。</p><div class="note-tags"><span>交互技能选择器</span><span>工作流图解</span><span>执行与权限边界</span></div></div>
         <a class="note-arrow" :href="withBase('/tools/matt-pocock-skills.html')" data-no-router aria-label="阅读 Matt Pocock Skills：AI 编程工作流">↗</a>
+      </article>
+    </section>
+
+    <section class="home-section" aria-labelledby="clock-heading">
+      <div class="home-section-heading"><div><p class="eyebrow">NEW / MCU CLOCKS</p><h2 id="clock-heading">从 8 MHz 到 168 MHz</h2></div><a :href="withBase('/mcu/')">MCU 基础与外设 <span aria-hidden="true">→</span></a></div>
+      <article class="featured-note">
+        <div class="note-number" aria-hidden="true">05<span>CRYSTAL<br>&amp; PLL</span></div>
+        <div class="featured-copy"><p class="note-meta">MCU 基础与外设 <span>·</span> STM32F407 / 时钟系统</p><h3><a :href="withBase('/mcu/crystal-pll-clock.html')" data-no-router>MCU 晶振与主频：从 8 MHz 到 168 MHz</a></h3><p>外部晶体提供基准，PLL 生成更快时钟。动手调整 M/N/P/Q 与总线分频，看懂倍频、锁相反馈，以及 Flash、USB 和外设的限制。</p><div class="note-tags"><span>可调 PLL 时钟树</span><span>反馈原理图</span><span>非法配置校验</span></div></div>
+        <a class="note-arrow" :href="withBase('/mcu/crystal-pll-clock.html')" data-no-router aria-label="阅读 MCU 晶振与主频：从 8 MHz 到 168 MHz">↗</a>
       </article>
     </section>
 
