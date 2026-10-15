@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#fafbf8"><meta name="description" content="以 Cortex-M3/M4 Armv7-M 为主，交互查看 R0 到 PC、xPSR、PRIMASK、FAULTMASK、BASEPRI 与 CONTROL。"><title>Cortex-M CPU 核心寄存器｜嵌入式技术笔记</title><link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<style>
+:root{--paper:#fafbf8;--ink:#21382e;--muted:#526359;--line:#dce3d7;--green:#22664f;--pale:#eef2e9;--lime:#d5e7b3;--dark:#193e33;--mono:Consolas,ui-monospace,monospace}*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:100px}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.9 system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}a{color:var(--green);text-underline-offset:4px;overflow-wrap:anywhere}button,input,select{font:inherit;min-height:44px}button,select{cursor:pointer}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #b47b25;outline-offset:3px}.wrap{width:min(1120px,calc(100% - 64px));margin-inline:auto}.skip{position:absolute;top:-90px;left:16px;z-index:20;padding:8px 12px;background:#fff}.skip:focus{top:8px}.topbar{position:sticky;top:0;z-index:10;background:#fafbf8f5;border-bottom:1px solid var(--line)}.topbar-inner{min-height:68px;display:flex;align-items:center;justify-content:space-between;gap:24px}.brand{display:inline-flex;align-items:center;gap:10px;min-height:44px;color:var(--ink);font-weight:700;text-decoration:none}.brandmark{display:grid;place-items:center;width:30px;height:30px;border-radius:6px;background:var(--dark);color:#e0edcb;font:19px/1 var(--mono)}nav{display:flex;align-items:center;gap:12px;flex-wrap:wrap}nav a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:4px 8px;color:var(--muted);text-decoration:none;border-radius:4px}nav a:hover{background:var(--pale);color:var(--green)}.hero{display:grid;grid-template-columns:1.1fr .9fr;align-items:center;gap:42px;padding-block:48px 38px}.hero .tag{display:inline-block;margin:0 0 16px;padding:4px 9px;border:1px solid var(--line);border-radius:4px;color:var(--green);font-size:12px}.hero h1{margin:0;font-size:clamp(32px,3.6vw,44px);line-height:1.35;letter-spacing:-.035em}.hero-intro{max-width:38rem;margin:20px 0;color:var(--muted);font-size:17px}.hero-links{display:flex;flex-wrap:wrap;gap:10px 18px}.hero-links a{display:inline-flex;align-items:center;min-height:44px}.hero-card{padding:24px;border:1px solid #416656;border-radius:12px;background:var(--dark);color:#eef5e5}.hero-card .eyebrow{margin:0 0 10px;color:#c5d8b7;font:12px/1.7 var(--mono);letter-spacing:.1em}.hero-card strong{display:block;color:var(--lime);font:24px/1.45 var(--mono)}.hero-card p{margin:10px 0 0;color:#d7e5d0}.content-section{padding-block:40px}.content-section+.content-section{border-top:1px solid var(--line)}.section-head{max-width:44rem;margin-bottom:20px}.section-head h2,.article-section>h2{margin:0 0 10px;font-size:28px;line-height:1.5;scroll-margin-top:100px}.section-head p{margin:0;color:var(--muted)}.article-section>p,.article-section>ul,.article-section>ol{max-width:44rem}.callout,.model-scope,.demo-disclaimer{max-width:44rem;padding:14px 16px;border-left:4px solid var(--green);background:var(--pale);border-radius:0 7px 7px 0}.callout.warning{border-color:#b47b25;background:#fbf4e7}.callout p,.model-scope p,.demo-disclaimer p{margin:0}.register-picker{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin:16px 0}.register-picker button,.scenario-buttons button{min-height:48px;padding:8px 10px;border:1px solid #b6c8aa;border-radius:6px;background:#fff;color:var(--green);font-weight:650}.register-picker button[aria-pressed=true],.scenario-buttons button[aria-pressed=true]{background:var(--green);border-color:var(--green);color:#fff}.register-display,.demo-panel{padding:22px;border:1px solid var(--line);border-radius:11px;background:#fff}.register-display h3{margin:0 0 8px;font:24px/1.4 var(--mono);color:var(--green)}.register-display p{max-width:44rem;margin:8px 0}.register-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.register-meta span{padding:4px 9px;border-radius:20px;background:var(--pale);font-size:13px}.table-wrap{max-width:100%;overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:14px;line-height:1.8}th,td{min-width:130px;padding:10px 12px;border:1px solid var(--line);text-align:left;vertical-align:top}th{background:var(--pale)}tr:nth-child(even){background:#fafcf7}code,.mono{font-family:var(--mono)}code{padding:2px 4px;border-radius:3px;background:#edf2e7;overflow-wrap:anywhere}.demo-controls{display:flex;align-items:end;flex-wrap:wrap;gap:12px 18px;margin-bottom:16px}.field{display:grid;gap:5px;min-width:180px}.field label,.check-label{font-weight:650}.field select{width:100%;padding:6px 10px;border:1px solid #93ab94;border-radius:5px;background:#fff;color:var(--ink)}.check-label{display:inline-flex;align-items:center;gap:9px;min-height:44px;padding:3px 8px}.check-label input{width:20px;height:20px;min-height:20px;accent-color:var(--green)}.scenario-buttons{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}.status-line{margin:10px 0;padding:12px 14px;border-radius:7px;background:#e9f0df}.status-line strong{color:var(--green)}.priority-table td:first-child{font-weight:650}.keeps-pending{color:#7b4d0e;font-weight:650}.can-activate{color:#22664f;font-weight:650}.mode-flow{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:16px 0}.mode-node{min-width:0;padding:14px;border:1px solid #b8c9ad;border-radius:8px;background:#fff}.mode-node strong{display:block;color:var(--green)}.mode-node small{display:block;color:var(--muted)}.mode-arrow{align-self:center;text-align:center;color:var(--green);font:20px var(--mono)}.source-list li{margin-block:9px}.footer{display:flex;justify-content:space-between;gap:18px;padding-block:28px 36px;margin-top:24px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+@media(max-width:760px){.hero{grid-template-columns:1fr;gap:22px}.register-picker{grid-template-columns:repeat(4,minmax(0,1fr))}.mode-flow{grid-template-columns:1fr}.mode-arrow{transform:rotate(90deg)}}@media(max-width:600px){.wrap{width:calc(100% - 40px)}.topbar-inner{display:block;padding-block:8px}.topbar nav{flex-wrap:nowrap;overflow-x:auto;white-space:nowrap;gap:8px}.topbar nav a{flex-shrink:0}.hero{padding-block:32px 26px}.hero-intro{font-size:16px}.content-section{padding-block:32px}.register-picker{grid-template-columns:repeat(3,minmax(0,1fr))}.register-display,.demo-panel{padding:16px}.field{width:100%}.footer{display:block}.footer a{display:inline-flex;align-items:center;min-height:44px;margin-top:8px}html{scroll-padding-top:120px}}@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style><style>
+/* Shared reading layer: keep this block identical in all standalone notes. */
+@media screen {
+:root{--paper:#fafbf8;--ink:#21382e;--muted:#526359;--line:#dce3d7;--green:#22664f;--pale:#eef2e9;--lime:#d5e7b3;--dark:#193e33}
+.notes-article{font-size:16px;line-height:1.9}
+.notes-article .wrap{width:min(1120px,calc(100% - 64px));max-width:none;padding-inline:0;margin-inline:auto}
+.notes-article .topbar{background:#fafbf8f5;z-index:10}
+.notes-article .topbar-inner{height:auto;min-height:68px;display:flex;align-items:center;justify-content:space-between;gap:24px;padding-block:0}
+.notes-article .brand{display:inline-flex;align-items:center;gap:10px;min-height:44px;margin:0;font-size:15px;font-weight:700;letter-spacing:0;color:var(--ink)}
+.notes-article .brandmark{display:grid;place-items:center;width:30px;height:30px;margin:0;border-radius:6px;background:var(--dark);color:#e0edcb;font:19px/1 var(--mono)}
+.notes-article .topbar nav{display:flex;align-items:center;gap:18px;margin:0;padding:0;width:auto;flex-wrap:nowrap}
+.notes-article .topbar nav a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:4px 3px;font-size:14px;font-weight:500;color:var(--muted);text-decoration:none;border-radius:4px}
+.notes-article .topbar nav a:hover,.notes-article .topbar nav a[aria-current="location"]{color:var(--green);background:var(--pale)}
+.notes-article .topbar nav a[aria-current="location"]{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:6px}
+.notes-article .hero{padding-block:48px 40px;gap:48px;grid-template-columns:1.12fr 1fr}
+.notes-article .hero h1{font-size:clamp(32px,3.6vw,44px);line-height:1.35;letter-spacing:-.035em;text-wrap:balance}
+.notes-article .hero h1 span{font-size:.78em;line-height:1.5;margin-top:8px}
+.notes-article .hero-intro{font-size:17px;line-height:1.9;max-width:32rem;margin-block:20px}
+.notes-article .hero>.hero-card,.notes-article .hero-flow,.notes-article .intro-map{box-shadow:none;border-radius:12px}
+.notes-article .hero .tag{font-size:12px;border-radius:4px;padding:4px 9px;margin:0 0 16px;line-height:1.7}
+.notes-article .hero>.hero-figure .map{transform:none;box-shadow:none}
+.notes-article .hero>div>.eyebrow{display:none}
+.notes-article .hero>.hero-card>.eyebrow,.notes-article .hero>.hero-flow>.eyebrow{display:block;font-size:12px;line-height:1.7}
+.notes-article .hero-links{gap:12px 22px;margin-top:24px}
+.notes-article .hero .text-link{display:inline-flex;align-items:center;min-height:44px;font-size:14px}
+.notes-article .hero figcaption,.notes-article .hero-figure figcaption,.notes-article .date-note{font-size:13px;line-height:1.8}
+.notes-article .hero-card p:last-child,.notes-article .hero-flow .small,.notes-article .intro-map>p:last-child{font-size:14px;line-height:1.85}
+.notes-article .hero-numbers span,.notes-article .hero-step small{font-size:13px}
+.notes-article h2{font-size:28px;line-height:1.5;text-wrap:balance}
+.notes-article .section-head p{font-size:15px;line-height:1.85}
+.notes-article .content-section,.notes-article .article-section{padding-block:52px}
+.notes-article .content-section+.content-section{padding-top:48px}
+.notes-article .note-section{scroll-margin-top:100px}
+.notes-article .note-section>summary{min-height:56px;font-size:18px;line-height:1.6}
+.notes-article .note-section>summary h2{font-size:20px;line-height:1.6}
+.notes-article .note-body{max-width:none;font-size:16px;line-height:1.95}
+.notes-article .note-body p,.notes-article .note-body li{font-size:16px;line-height:1.95}
+.notes-article .note-body>p,.notes-article .note-body>ul,.notes-article .note-body>ol,.notes-article .article-section>p,.notes-article .article-section>ul,.notes-article .article-section>ol{max-width:44rem;font-size:16px;line-height:1.95}
+.notes-article .note-body h3{font-size:21px;margin-block:28px 12px;scroll-margin-top:100px}
+.notes-article .note-body pre,.notes-article pre{font-size:14px;line-height:1.8}
+.notes-article .note-body table,.notes-article table{font-size:14px;line-height:1.8}
+.notes-article .note-body th,.notes-article .note-body td{font-size:14px;line-height:1.8}
+.notes-article .article-section>h2{font-size:28px}
+.notes-article .concept p,.notes-article .subnote p,.notes-article .risk p,.notes-article .monitor-step p,.notes-article .monitor-step ul,.notes-article .step-card p{font-size:15px;line-height:1.85}
+.notes-article .callout,.notes-article .model-scope,.notes-article .demo-disclaimer,.notes-article .version-card,.notes-article .version-card p{font-size:14px;line-height:1.85}
+.notes-article .source-list a,.notes-article .source-list span,.notes-article #plane-references~ul{font-size:14px;line-height:1.85}
+.notes-article #plane-overview~ul{max-width:none}
+.notes-article #plane-overview~ul li{font-size:15px;line-height:1.85}
+.notes-article .note-body .source-list{max-width:none}
+.notes-article .small,.notes-article .lab-note,.notes-article .lab-foot,.notes-article .lab-footer,.notes-article .clock-lab-foot,.notes-article .print-hint{font-size:13px;line-height:1.85}
+.notes-article .principle,.notes-article .principles span{font-size:13px;line-height:1.8}
+.notes-article .principles strong{font-size:15px}
+.notes-article .memory-motto,.notes-article .motto{background:var(--pale);color:var(--ink);border-radius:8px;text-align:left;padding:24px;margin-top:30px}
+.notes-article .memory-motto span,.notes-article .motto small{color:var(--muted);font-size:14px}
+.notes-article button,.notes-article .btn,.notes-article .notes-toolbar button{min-height:44px;min-width:44px;font-size:14px}
+.notes-article button,.notes-article .btn,.notes-article .topbar a,.notes-article summary,.notes-article .section-nav a,.notes-article .toc a{transition:background .18s,color .18s,border-color .18s,transform .18s}
+.notes-article button:enabled:hover{filter:brightness(1.06)}
+.notes-article button:enabled:active,.notes-article .btn:active{transform:translateY(1px)}
+.notes-article button:disabled{opacity:.58}
+.notes-article .graph-node:disabled,.notes-article .work-card:disabled{opacity:1}
+.notes-article :focus-visible{outline:3px solid #ad751d;outline-offset:4px}
+.notes-article .lab :focus-visible,.notes-article .clock-lab :focus-visible{outline-color:#f0cc80}
+.notes-article .toc a,.notes-article .section-nav a{display:inline-flex;align-items:center;min-height:44px;border-radius:5px;font-size:14px;padding:8px 12px}
+.notes-article .checklist label,.notes-article .clock-check{min-height:44px;font-size:14px;line-height:1.8}
+.notes-article .clock-field label,.notes-article .clock-controls small,.notes-article .clock-node small,.notes-article .clock-node span{font-size:13px;line-height:1.6}
+.notes-article .clock-current p,.notes-article .clock-candidate,.notes-article .clock-warnings{font-size:14px;line-height:1.8}
+.notes-article .clock-node strong,.notes-article .hero-numbers strong,.notes-article .metric strong{font-variant-numeric:tabular-nums}
+.notes-article .task-option strong,.notes-article .work-card strong{font-size:14px;line-height:1.65}
+.notes-article .task-option span,.notes-article .scope-buttons small,.notes-article .card-id,.notes-article .card-project,.notes-article .card-status,.notes-article .card-tags>span,.notes-article .lane-en{font-size:12px;line-height:1.6}
+.notes-article .scope-explanation,.notes-article .detail-copy>p,.notes-article .detail .acceptance,.notes-article .state-controls>p,.notes-article .board-heading p{font-size:14px;line-height:1.8}
+.notes-article .lane h4{font-size:14px;line-height:1.5;flex-wrap:wrap}
+.notes-article .lane-count{font-size:12px}
+.notes-article .lab .task-option{min-height:96px}
+.notes-article .skills-step-card dd,.notes-article .route-pane p,.notes-article .chooser-intro,.notes-article .permissions-pane>p{font-size:14px;line-height:1.85}
+.notes-article .skills-step-card dt,.notes-article .step-counter,.notes-article .permissions-pane small,.notes-article .permission-list span,.notes-article .graph-legend,.notes-article .graph-arrow-note{font-size:13px;line-height:1.8}
+.notes-article .ui-arrow{width:18px;height:18px;display:inline-block;vertical-align:middle;flex-shrink:0}
+.notes-article .selection-jump,.notes-article .choice-result{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;padding:10px 12px;border-radius:5px;font-size:13px;font-weight:600;line-height:1.6;text-decoration:none}
+.notes-article .selection-jump{background:#22664f;color:#fff}
+.notes-article .choice-result{color:#e2efca;border:1px solid #829873;background:#173e33;margin-top:7px}
+.notes-article .task-choice{min-width:0}
+.notes-article .task-choice .task-option{width:100%}
+.notes-article .task-option[aria-pressed="false"]+.choice-result{display:none}
+.notes-article #selected-skill,.notes-article #plane-selected-title{scroll-margin-top:128px}
+.notes-article footer,.notes-article .footer{font-size:13px;line-height:1.8}
+.notes-article footer a,.notes-article .footer a{display:inline-flex;align-items:center;min-height:44px}
+.notes-article .note-body p,.notes-article .hero-intro,.notes-article .article-section>p{text-wrap:pretty}
+@media(max-width:760px){
+.notes-article .wrap{width:calc(100% - 40px)}
+.notes-article .topbar-inner{flex-wrap:wrap;gap:0;padding-top:6px}
+.notes-article .brand{min-height:44px;font-size:15px}
+.notes-article .topbar nav{width:100%;gap:12px;overflow-x:auto;flex-wrap:nowrap;padding:0 0 4px;scrollbar-width:thin}
+.notes-article .topbar nav a{font-size:13px;flex-shrink:0;padding-inline:2px}
+.notes-article .hero{grid-template-columns:1fr;gap:28px;padding-block:32px}
+.notes-article .hero h1{font-size:32px;line-height:1.4}
+.notes-article .hero-intro{font-size:16px;max-width:none;margin-block:16px}
+.notes-article .hero-figure{max-width:500px}
+.notes-article .hero .tag{margin-bottom:12px}
+.notes-article .content-section,.notes-article .article-section{padding-block:36px}
+.notes-article .content-section+.content-section{padding-top:36px}
+.notes-article h2,.notes-article .article-section>h2{font-size:24px}
+.notes-article .section-head p{font-size:15px}
+.notes-article .note-section>summary{font-size:17px}
+.notes-article .note-section>summary h2{font-size:18px}
+.notes-article .note-body p,.notes-article .note-body li{font-size:16px}
+.notes-article .note-body pre,.notes-article pre{font-size:13px}
+.notes-article .note-body th,.notes-article .note-body td{font-size:14px}
+.notes-article .principles{grid-template-columns:1fr;gap:14px}
+.notes-article .principles strong{display:inline;margin-right:8px}
+.notes-article .principles span{display:inline}
+.notes-article .task-options{grid-template-columns:1fr 1fr;align-items:start}.notes-article .lab .task-option{min-height:76px;padding:12px}
+.notes-article .board{grid-template-columns:1fr 1fr}
+.notes-article .lane:last-child .lane-cards{display:flex}
+.notes-article .lane-cards{min-height:0}
+.notes-article .lane{padding:14px}
+.notes-article .lane-en{margin-bottom:10px}
+.notes-article .work-card{padding:14px}
+.notes-article .card-tags{gap:6px}
+.notes-article .lab-top{flex-wrap:wrap}
+.notes-article .lab-top .tag{white-space:normal}
+.notes-article .note-section,.notes-article .note-body h3,.notes-article .article-section,.notes-article .article-section>h3{scroll-margin-top:124px}
+}
+@media(max-width:370px){.notes-article .task-options,.notes-article .board{grid-template-columns:1fr}.notes-article .hero h1{font-size:30px}.notes-article .topbar nav{gap:8px}}
+}
+@media(prefers-reduced-motion:reduce){.notes-article *,.notes-article *::before,.notes-article *::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+</style>
+</head><body class="notes-article">
+<a class="skip" href="#main">跳到正文</a><header class="topbar"><div class="wrap topbar-inner"><a class="brand" href="../"><span class="brandmark" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span>嵌入式技术笔记</a><nav aria-label="笔记导航"><a href="../mcu/">返回分类</a><a href="#priority-demo">交互实验</a><a href="#register-map">完整笔记</a><a href="../?search=1">搜索笔记</a></nav></div></header>
+<main id="main" class="wrap">
+<section class="hero" id="overview"><div><p class="tag">Cortex-M · Armv7-M / M4 教学模型</p><h1>Cortex-M CPU 核心寄存器</h1><p class="hero-intro">从 R0 到 PC，再到状态、屏蔽和控制寄存器。先分清硬件寄存器的作用，再看函数调用、异常进入和栈选择怎样使用它们。</p><div class="hero-links"><a href="#register-explorer">点选寄存器</a><a href="#mask-registers">试算异常屏蔽</a><a href="#mode-simulator">查看 MSP / PSP</a><a href="./hardfault-stack-trace.html">继续：HardFault 栈回溯</a></div></div><aside class="hero-card"><p class="eyebrow">先记住三个别名</p><strong>R13 = SP<br>R14 = LR<br>R15 = PC</strong><p>SP、LR、PC 不是额外的一组寄存器，而是通用寄存器编号中的特殊用途别名。</p></aside></section>
+
+<section class="content-section article-section" id="register-map"><h2 id="register-map-title">一张图看懂寄存器组</h2><p>Armv7-M 的 Cortex-M3/M4 有 R0–R15 的 32 位核心寄存器视图。R0–R12 可作通用数据寄存器；R13、R14、R15 分别承担 SP、LR、PC 的架构角色。处理器架构定义这些寄存器的硬件语义；AAPCS32 另行规定函数调用时软件应怎样保存和传递值。</p><p class="model-scope">本文以 Armv7-M Cortex-M3/M4 为主。以下互动使用明示的 Cortex-M4 教学配置；它用于解释概念，不验证任何具体芯片、固件或 NVIC 配置。</p><div class="callout"><p><strong>不要混淆两层约定：</strong>“R0 是函数参数寄存器”来自过程调用约定；“R13 是栈指针”是处理器寄存器角色。编译器遵循 ABI，但硬件不会因 C 函数声明而替你决定每个通用寄存器的用途。</p></div><div class="table-wrap"><table><thead><tr><th>寄存器</th><th>核心语义</th><th>AAPCS32 调用约定</th></tr></thead><tbody><tr><td>R0–R3</td><td>通用寄存器</td><td>前四个整数参数通常经 R0–R3 传递；R0/R1 也可承载返回值。调用者保存。</td></tr><tr><td>R4–R8、R10–R11</td><td>通用寄存器</td><td>被调用者保存：函数若修改它们，返回前须恢复原值。</td></tr><tr><td>R9</td><td>通用寄存器</td><td>平台寄存器或被调用者保存，取决于平台和 PCS 变体；不能一概说成普通 scratch。</td></tr><tr><td>R12 / IP</td><td>通用寄存器 / 过程间临时寄存器</td><td>调用者保存的临时寄存器；链接器 veneer 也可能使用它。</td></tr><tr><td>R13 / SP</td><td>当前栈指针别名</td><td>指向当前活动栈；Cortex-M 有 MSP、PSP 两个栈指针。</td></tr><tr><td>R14 / LR</td><td>链接寄存器别名</td><td>普通子程序返回链接；异常入口时可能装入 EXC_RETURN。</td></tr><tr><td>R15 / PC</td><td>程序计数器别名</td><td>控制流寄存器，不是普通参数寄存器。</td></tr></tbody></table></div><p>调用规则见 <a href="https://github.com/ARM-software/abi-aa/blob/2025Q1/aapcs32/aapcs32.rst" target="_blank" rel="noreferrer">AAPCS32 §6.1.1</a>；硬件语义见 <a href="https://documentation-service.arm.com/static/5f2ac4ab60a93e65927bbdbf" target="_blank" rel="noreferrer">Arm Cortex-M4 Devices Generic User Guide，§2.1.3</a> 与 <a href="https://www.st.com/resource/en/programming_manual/pm0214-stm32-cortexm4-mcus-and-mpus-programming-manual-stmicroelectronics.pdf" target="_blank" rel="noreferrer">ST PM0214 Rev 10，§2.1.3</a>。</p></section>
+<section class="content-section article-section" id="register-explorer"><h2 id="register-explorer-title">点选寄存器：它现在代表什么？</h2><p>选择 R0–R15 或特殊寄存器。这里强调 Cortex-M4 的架构角色；是否有可选扩展仍要看芯片实现。</p><div class="register-picker" role="group" aria-label="选择一个核心寄存器"><button type="button" data-register="R0" aria-pressed="true">R0</button><button type="button" data-register="R1" aria-pressed="false">R1</button><button type="button" data-register="R2" aria-pressed="false">R2</button><button type="button" data-register="R3" aria-pressed="false">R3</button><button type="button" data-register="R4" aria-pressed="false">R4</button><button type="button" data-register="R5" aria-pressed="false">R5</button><button type="button" data-register="R6" aria-pressed="false">R6</button><button type="button" data-register="R7" aria-pressed="false">R7</button><button type="button" data-register="R8" aria-pressed="false">R8</button><button type="button" data-register="R9" aria-pressed="false">R9</button><button type="button" data-register="R10" aria-pressed="false">R10</button><button type="button" data-register="R11" aria-pressed="false">R11</button><button type="button" data-register="R12" aria-pressed="false">R12 / IP</button><button type="button" data-register="R13" aria-pressed="false">R13 / SP</button><button type="button" data-register="R14" aria-pressed="false">R14 / LR</button><button type="button" data-register="R15" aria-pressed="false">R15 / PC</button><button type="button" data-register="xPSR" aria-pressed="false">xPSR</button><button type="button" data-register="APSR" aria-pressed="false">APSR</button><button type="button" data-register="IPSR" aria-pressed="false">IPSR</button><button type="button" data-register="EPSR" aria-pressed="false">EPSR</button><button type="button" data-register="PRIMASK" aria-pressed="false">PRIMASK</button><button type="button" data-register="FAULTMASK" aria-pressed="false">FAULTMASK</button><button type="button" data-register="BASEPRI" aria-pressed="false">BASEPRI</button><button type="button" data-register="CONTROL" aria-pressed="false">CONTROL</button></div><div class="register-display" aria-live="polite" aria-atomic="true"><h3 id="register-name">R0</h3><p id="register-description">通用寄存器。AAPCS32 将 R0–R3 用作前四个整数参数寄存器和调用者保存的临时寄存器；R0 也承载常见的单字返回值。</p><div class="register-meta" id="register-meta"><span>通用寄存器</span><span>调用者保存</span></div></div><noscript><p>寄存器说明表和下方正文无需脚本即可阅读；点选器需要启用浏览器内置 JavaScript 才会更新说明。</p></noscript></section>
+<section class="content-section article-section" id="stack-link-pc"><h2 id="stack-link-pc-title">R13 / SP、R14 / LR、R15 / PC</h2><h3>R13 / SP：MSP 与 PSP</h3><p>R13 是当前 SP 的别名。Cortex-M 具备主栈指针 MSP 和进程栈指针 PSP；任一时刻由当前执行上下文使用其中一个。CONTROL.SPSEL 只选择 Thread mode 使用哪个栈：0 为 MSP，1 为 PSP。Handler mode 始终使用 MSP。</p><p>异常从 Thread 进入 Handler 时，处理器先把自动异常帧压入异常发生前正在使用的 Thread 栈。若 Thread 用 PSP，帧先写到 PSP；随后 Handler 在 MSP 上运行。不能只看 Handler 中的 SP 就认为它指向那份帧。</p><h3>R14 / LR：普通返回链接与 EXC_RETURN</h3><p>普通函数调用中，LR 保存返回链接。异常入口会把一个特殊的 EXC_RETURN 标记放进 LR，用来描述异常返回时的目标模式、栈和帧类型；它不是普通代码地址。刚进入异常时常见基本帧示例为 <code>0xFFFFFFF9</code>（返回 Thread / MSP）或 <code>0xFFFFFFFD</code>（返回 Thread / PSP）；嵌套异常返回 Handler 的示例为 <code>0xFFFFFFF1</code>。这些示例限定在 Armv7-M 的基本帧场景；带浮点扩展帧时 EXC_RETURN 还有其他状态位。C Handler 再调用函数后，活跃 LR 也可能被普通调用覆盖，编译器序言通常会保存需要保留的值。</p><h3>R15 / PC：当前执行位置和 Thumb</h3><p>在 Cortex-M4 常见的读 PC 情境中，读出的值通常是当前指令地址加 4；某些 PC-relative 计算还会先按字对齐，所以不是所有指令都能用一个固定偏移反推。Cortex-M 执行 Thumb 指令；对 BX/BLX 或会把目标写入 PC 的相关形式，目标最低位为 1 表示 Thumb 状态，分支时该状态位不作为实际取指地址的一部分。不要把这个最低位当作普通偶/奇字节地址来解释。</p><p>寄存器别名、栈选择与 EXC_RETURN 见 <a href="https://www.st.com/resource/en/programming_manual/pm0214-stm32-cortexm4-mcus-and-mpus-programming-manual-stmicroelectronics.pdf" target="_blank" rel="noreferrer">ST PM0214 Rev 10，§2.1.3、§2.3.5</a> 和 <a href="https://documentation-service.arm.com/static/5f2ac4ab60a93e65927bbdbf" target="_blank" rel="noreferrer">Arm Cortex-M4 Generic User Guide，§2.1.3、§2.3</a>。</p></section>
+
+<section class="content-section article-section" id="xpsr"><h2 id="xpsr-title">xPSR：APSR、IPSR、EPSR 的组合视图</h2><p>xPSR 是程序状态字的组合视图，由 APSR、IPSR、EPSR 的不重叠字段组成。调试异常帧时，栈中保存的 xPSR 还记录异常上下文；不要把三个视图当成三份互不相关的全宽寄存器。</p><div class="table-wrap"><table><thead><tr><th>视图</th><th>主要内容</th><th>阅读注意</th></tr></thead><tbody><tr><td>APSR</td><td>N、Z、C、V 条件标志；Q 饱和标志；DSP 扩展可带 GE 字段。</td><td>GE 等字段取决于已实现的指令扩展；M4 常有 DSP 扩展，但不要据此概括每个 Cortex-M。</td></tr><tr><td>IPSR</td><td>当前异常号；0 表示 Thread mode。</td><td>外部 IRQn 的异常号从 16 + IRQn 开始。通过普通软件状态寄存器接口读取；不能用 MSR 写入 IPSR。</td></tr><tr><td>EPSR</td><td>执行状态，例如 Thumb 状态，以及实现中存在的 IT/ICI 状态位。</td><td>不是通用可写寄存器；普通 MRS 读取 EPSR 视图时其位读为 0，MSR 对 EPSR 字段的写入会被忽略。调试时优先读取 xPSR 或异常栈帧。</td></tr></tbody></table></div><p>寄存器访问见 <a href="https://arm-software.github.io/CMSIS_6/main/Core/group__Core__Register__gr.html" target="_blank" rel="noreferrer">CMSIS-Core 6 Core Register Access</a>；字段与栈帧见 <a href="https://www.st.com/resource/en/programming_manual/pm0214-stm32-cortexm4-mcus-and-mpus-programming-manual-stmicroelectronics.pdf" target="_blank" rel="noreferrer">ST PM0214 Rev 10，§2.1.3、§2.3.5</a>。</p></section>
+<section class="content-section article-section" id="mask-registers"><h2 id="mask-registers-title">PRIMASK、FAULTMASK、BASEPRI：屏蔽激活，不是清 Pending</h2><div class="table-wrap"><table><thead><tr><th>寄存器</th><th>Armv7-M / Cortex-M3/M4 中置位后的作用</th><th>重要例外</th></tr></thead><tbody><tr><td>PRIMASK = 1</td><td>阻止所有可配置优先级异常的激活。</td><td>NMI 和 HardFault 不受 PRIMASK 屏蔽。</td></tr><tr><td>FAULTMASK = 1</td><td>阻止除 NMI 外所有异常激活，包括 HardFault。</td><td>异常返回时通常自动清除；从 NMI 返回时不按此规则自动清除。</td></tr><tr><td>BASEPRI = 0</td><td>关闭 BASEPRI 阈值屏蔽。</td><td>不代表解除 PRIMASK 或 FAULTMASK。</td></tr><tr><td>BASEPRI 非零</td><td>阻止优先级数值等于或低于（数值更大、更不紧急）阈值的可配置异常激活。</td><td>高于阈值的可配置异常仍可激活；NMI 和固定优先级 HardFault 不由 BASEPRI 屏蔽。</td></tr></tbody></table></div><p>这些寄存器控制“是否可以激活异常”，不会清除 NVIC 的 Pending 位，也不会结束已经在执行的 Handler。Pending 请求可能继续等待，直到它变得可激活或软件/外设按相应机制清除；已经 Active 的处理程序会继续运行。写入屏蔽状态需遵守特权限制。FAULTMASK 不能在 NMI 或 HardFault 的优先级下被有效置位。</p><p>同步故障、SVC、优先级仲裁、故障升级和 Lockup 有各自的异常规则；本交互把普通可配置优先级 IRQ 与固定优先级 NMI/HardFault 分开展示，不把某个 C 操作笼统说成必然触发 HardFault。</p><p>来源：<a href="https://www.st.com/resource/en/programming_manual/pm0214-stm32-cortexm4-mcus-and-mpus-programming-manual-stmicroelectronics.pdf" target="_blank" rel="noreferrer">ST PM0214 Rev 10，§2.1.3、§2.3.2、§4.3.5–4.3.7</a>；<a href="https://arm-software.github.io/CMSIS_6/main/Core/group__Core__Register__gr.html" target="_blank" rel="noreferrer">CMSIS-Core 6</a>。</p></section>
+<section class="content-section article-section" id="basepri-encoding"><h2 id="basepri-encoding-title">BASEPRI 的编码：4 个实现位的示例</h2><p>NVIC 优先级寄存器是左对齐的字节；具体芯片实现多少个高位由实现决定，未实现的低位读为 0、写入被忽略。数值越小，优先级越高；0 是最高的可配置优先级。BASEPRI 使用相同的编码方向，0 是“禁用 BASEPRI 阈值”，不是“屏蔽所有优先级”。</p><p>下面明确假设 <code>__NVIC_PRIO_BITS = 4</code>，并把四位全部用于抢占优先级、不给子优先级分位。这只是易读的演示配置，不是所有 M4 器件的默认值。逻辑优先级 5 要左移 4 位编码为 <code>0x50</code>；低四位不是硬件实现的优先级位。</p>
+<div class="demo-panel" id="priority-demo"><div class="demo-controls"><div class="field"><label for="basepri-level">BASEPRI 阈值（逻辑优先级）</label><select id="basepri-level"><option value="0">0 · 关闭阈值屏蔽</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5" selected>5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option></select></div><label class="check-label"><input id="primask-on" type="checkbox">PRIMASK = 1</label><label class="check-label"><input id="faultmask-on" type="checkbox">FAULTMASK = 1</label></div><p class="status-line" id="basepri-encoding-status" aria-live="polite">当前阈值为逻辑优先级 5，写入编码 <code>0x50</code>；逻辑 IRQ 优先级 5–15 被 BASEPRI 阈值阻止。</p><div class="callout" aria-live="polite"><strong>已在执行的异常（与 Pending 示例分开）</strong><p id="active-handler-state">IRQ（逻辑优先级 3）Handler 已是 Active；BASEPRI = 0x50 不会终止已激活的异常。</p></div><div class="table-wrap"><table class="priority-table"><thead><tr><th>待处理异常示例</th><th>当前屏蔽状态下</th><th>Pending</th></tr></thead><tbody id="priority-rows"></tbody></table></div><p class="status-line"><strong>已在执行的 Handler：</strong>继续运行；这些屏蔽位不会把它中止。</p></div>
+<p>特别留意：如果只实现高四位，直接向 BASEPRI 写原始值 <code>5</code> 会落在未实现的低位，读回有效阈值相当于 0；写入 CMSIS 原语 <code>__set_BASEPRI(5)</code> 也不是“逻辑优先级 5”。要从逻辑优先级构造编码，应使用设备/库约定的编码方式，或在确认实现位数后显式左移。</p><p>CMSIS 对实现位数和 NVIC 优先级访问的说明见 <a href="https://arm-software.github.io/CMSIS_6/main/Core/group__NVIC__gr.html" target="_blank" rel="noreferrer">CMSIS-Core NVIC</a>；ST 的优先级寄存器格式见 <a href="https://www.st.com/resource/en/programming_manual/pm0214-stm32-cortexm4-mcus-and-mpus-programming-manual-stmicroelectronics.pdf" target="_blank" rel="noreferrer">PM0214 Rev 10，§4.3.7</a>。</p></section>
+
+<section class="content-section article-section" id="control-register"><h2 id="control-register-title">CONTROL：Thread 特权级、栈选择和浮点上下文</h2><p>在 Cortex-M4 中，CONTROL.nPRIV 描述 Thread mode 的特权状态；CONTROL.SPSEL 选择 Thread mode 使用 MSP 还是 PSP。Handler mode 始终特权运行并使用 MSP。若实现了 FPU，CONTROL.FPCA 表示当前浮点上下文状态；它不是开启 FPU 的开关。</p><div class="table-wrap"><table><thead><tr><th>位</th><th>含义</th><th>边界</th></tr></thead><tbody><tr><td>nPRIV (bit 0)</td><td>0：Thread 特权；1：Thread 非特权。</td><td>Handler 始终特权。非特权 Thread 不能仅靠写 CONTROL 把自己升回特权；需由特权异常处理流程或复位改变。</td></tr><tr><td>SPSEL (bit 1)</td><td>0：Thread 使用 MSP；1：Thread 使用 PSP。</td><td>只决定 Thread 栈。Handler 当前栈始终是 MSP。</td></tr><tr><td>FPCA (bit 2)</td><td>FPU 实现中表示浮点上下文活动状态。</td><td>仅对带 FPU 的实现有意义，可影响异常浮点状态保存/延迟压栈；不启用 FPU。</td></tr></tbody></table></div><p>特权代码更改 CONTROL 后应紧接着执行 ISB，让后续指令按新的特权状态和 Thread 栈选择继续执行。常见次序为 <code>MSR CONTROL, Rn; ISB</code>。非特权 Thread 不能通过写 CONTROL 清除 nPRIV 来提升权限。</p></section>
+<section class="content-section article-section" id="mode-simulator"><h2 id="mode-simulator-title">交互：Thread / Handler 与 MSP / PSP</h2><p>选择异常到来前正在执行的情景。图中展示原上下文栈帧会落在哪里、Handler 从哪里运行，以及异常入口时 LR 中的 EXC_RETURN。EXC_RETURN 示例均以基本帧为前提。</p><div class="demo-panel" id="mode-demo"><div class="scenario-buttons" role="group" aria-label="选择执行情景"><button type="button" data-scenario="thread-msp" aria-pressed="false">Thread 使用 MSP</button><button type="button" data-scenario="thread-psp" aria-pressed="true">Thread 使用 PSP</button><button type="button" data-scenario="handler" aria-pressed="false">嵌套 Handler</button></div><div class="mode-flow" aria-live="polite"><div class="mode-node"><strong id="before-mode">异常前：Thread</strong><span id="before-stack">活动栈：PSP</span><small id="before-control">CONTROL.SPSEL = 1</small></div><div class="mode-arrow" aria-hidden="true">→</div><div class="mode-node"><strong>异常帧</strong><span id="frame-stack">压入 PSP</span><small>保存的是被中断上下文</small></div><div class="mode-arrow" aria-hidden="true">→</div><div class="mode-node"><strong>异常处理：Handler</strong><span>Handler 活动栈：MSP</span><small id="after-lr">入口 LR：EXC_RETURN = 0xFFFFFFFD</small></div></div><div class="demo-controls"><label class="check-label"><input id="thread-unprivileged" type="checkbox">Thread 为非特权（nPRIV = 1）</label><label class="check-label"><input id="fp-context-active" type="checkbox">可选 FPU：浮点上下文活动（FPCA）</label></div><p class="status-line" id="control-status" aria-live="polite">Thread 可用 CONTROL.SPSEL 选择 PSP；进入 Handler 后使用 MSP。异常帧先压入 PSP。</p></div><div class="callout warning"><p>Handler 的当前 SP 是 MSP，不等于 EXC_RETURN 所指向的异常帧地址。异常帧位于进入异常前被选择的栈；Handler 的函数序言还可能继续调整 MSP。针对故障现场做栈回溯时要另行根据 EXC_RETURN 和异常入口 SP 定位。<a href="./hardfault-stack-trace.html">查看 HardFault 栈回溯说明</a>。</p></div></section>
+<section class="content-section article-section" id="architecture-variants"><h2 id="architecture-variants-title">不要把所有 Cortex-M 当成同一套寄存器</h2><div class="table-wrap"><table><thead><tr><th>内核</th><th>架构轮廓</th><th>与本文相关的差异</th></tr></thead><tbody><tr><td>Cortex-M0</td><td>Armv6-M</td><td>有 PRIMASK；没有 BASEPRI、FAULTMASK；CONTROL.nPRIV 不支持（bit 0 保留）。</td></tr><tr><td>Cortex-M0+</td><td>Armv6-M</td><td>有 PRIMASK；没有 BASEPRI、FAULTMASK；特权/非特权支持取决于实现，不能假定每个 M0+ 都有 nPRIV。</td></tr><tr><td>Cortex-M23</td><td>Armv8-M Baseline</td><td>有 PRIMASK；没有 BASEPRI、FAULTMASK。不能照搬 M3/M4 的屏蔽控制。</td></tr><tr><td>Cortex-M3 / M4</td><td>Armv7-M / Armv7E-M</td><td>本文主要模型：PRIMASK、FAULTMASK、BASEPRI；M4 的 FPU 仍为可选。</td></tr><tr><td>Cortex-M7</td><td>Armv7E-M</td><td>具备 Mainline 屏蔽寄存器模型；FPU 配置可选，实际功能按实现核对。</td></tr><tr><td>Cortex-M33</td><td>Armv8-M Mainline</td><td>有 BASEPRI、FAULTMASK；安全扩展与 FPU 等可选配置会带来额外状态差异。</td></tr></tbody></table></div><p>M0/M0+ 差异见 <a href="https://documentation-service.arm.com/static/5ea6ce5e9931941038def8c1" target="_blank" rel="noreferrer">Arm Cortex-M0 Generic User Guide</a>、<a href="https://documentation-service.arm.com/static/5f04abc8dbdee951c1cdc9f7" target="_blank" rel="noreferrer">Arm Cortex-M0+ Generic User Guide</a>；M23/M33 的 Baseline/Mainline 区别见 <a href="https://documentation-service.arm.com/static/64b7f5c638511951cb79fc45" target="_blank" rel="noreferrer">Armv8-M 架构与程序员模型指南</a>。Armv7-M 与 Armv7E-M 的扩展边界见 <a href="https://support.arm.com/ddi0403/Introduction" target="_blank" rel="noreferrer">Armv7-M Architecture Reference Manual</a>。</p></section>
+<section class="content-section article-section" id="using-the-model"><h2 id="using-the-model-title">怎样把寄存器知识用于调试</h2><ol><li>先确认目标芯片具体 Cortex-M 内核、架构版本和可选 FPU/安全扩展。</li><li>按芯片参考手册、设备头文件中的 <code>__NVIC_PRIO_BITS</code> 与优先级分组核对实际 NVIC 配置。</li><li>在调试器中区分当前模式、活动 SP、入口时的 EXC_RETURN 与保存到异常帧中的 LR；不要把普通子程序 LR 当成异常返回标记。</li><li>用编译器对应 ABI/AAPCS 解释调用现场的 R0–R12 保存规则，而不是只凭寄存器编号猜 C 变量。</li></ol><p class="demo-disclaimer">交互器固定采用 4 个已实现优先级位的 Cortex-M4 教学模型。它不会读取目标设备，也不能验证启动代码、NVIC 分组、库宏或固件屏蔽效果；请把本机芯片手册、CMSIS 设备头文件和实机调试结果作为配置依据。</p></section>
+<section class="content-section article-section" id="sources"><h2 id="sources-title">官方资料</h2><ul class="source-list"><li><a href="https://documentation-service.arm.com/static/5f2ac4ab60a93e65927bbdbf" target="_blank" rel="noreferrer">Arm Cortex-M4 Devices Generic User Guide (DUI0553A)</a>：核心寄存器、异常模型、CONTROL、NVIC。</li><li><a href="https://documentation-service.arm.com/static/5ea823e69931941038df1af5" target="_blank" rel="noreferrer">Arm Cortex-M3 Devices Generic User Guide</a>：Armv7-M Cortex-M3 程序员模型与异常处理。</li><li><a href="https://documentation-service.arm.com/static/606dc36485368c4c2b1bf62f#page=532" target="_blank" rel="noreferrer">Armv7-M Architecture Reference Manual (DDI0403E.e)</a>：异常进入/返回与状态寄存器规则。</li><li><a href="https://github.com/ARM-software/abi-aa/blob/2025Q1/aapcs32/aapcs32.rst" target="_blank" rel="noreferrer">AAPCS32 §6.1.1</a>：R0–R12 的调用约定。</li><li><a href="https://arm-software.github.io/CMSIS_6/main/Core/group__Core__Register__gr.html" target="_blank" rel="noreferrer">CMSIS-Core 6 Core Register Access</a> 与 <a href="https://arm-software.github.io/CMSIS_6/main/Core/group__NVIC__gr.html" target="_blank" rel="noreferrer">NVIC</a>：寄存器访问、优先级表示。</li><li><a href="https://www.st.com/resource/en/programming_manual/pm0214-stm32-cortexm4-mcus-and-mpus-programming-manual-stmicroelectronics.pdf" target="_blank" rel="noreferrer">ST PM0214 Rev 10</a>：STM32 Cortex-M4 程序员模型、异常屏蔽、优先级字段与异常帧。</li><li><a href="https://documentation-service.arm.com/static/64b7f5c638511951cb79fc45" target="_blank" rel="noreferrer">Arm Introduction to Armv8-M Architecture and its Programmers Model</a>：Cortex-M23/M33 Baseline/Mainline 差异。</li></ul><p>本文仅使用公开 Arm、CMSIS、AAPCS32 和 ST 官方资料。模型解释用途与设备配置验证用途分开。</p></section>
+</main><footer class="footer wrap"><span>嵌入式技术笔记 · Cortex-M CPU 核心寄存器</span><a href="../mcu/">返回 MCU 笔记</a></footer>
+
+<script id="register-picker">
+(()=>{const facts={
+R0:['通用寄存器。AAPCS32 将 R0–R3 用作前四个整数参数寄存器和调用者保存的临时寄存器；R0 也承载常见的单字返回值。',['通用寄存器','调用者保存']],
+R1:['通用寄存器。与 R0–R3 一起传递前四个整数参数；R0/R1 也可配对承载返回值。',['通用寄存器','调用者保存']],
+R2:['通用寄存器。R0–R3 是参数与临时值寄存器，调用后调用者不能假定它仍保留原值。',['通用寄存器','调用者保存']],
+R3:['通用寄存器。R0–R3 是参数与临时值寄存器；编译器也会用它们保存短生命周期中间值。',['通用寄存器','调用者保存']],
+R4:['通用寄存器。AAPCS32 规定被调用函数若修改 R4，返回前须恢复。',['通用寄存器','被调用者保存']],
+R5:['通用寄存器。AAPCS32 规定被调用函数若修改 R5，返回前须恢复。',['通用寄存器','被调用者保存']],
+R6:['通用寄存器。AAPCS32 规定被调用函数若修改 R6，返回前须恢复。',['通用寄存器','被调用者保存']],
+R7:['通用寄存器。AAPCS32 规定被调用函数若修改 R7，返回前须恢复；工具链也可能将其用作帧指针。',['通用寄存器','被调用者保存']],
+R8:['通用寄存器。AAPCS32 规定被调用函数若修改 R8，返回前须恢复。',['通用寄存器','被调用者保存']],
+R9:['通用寄存器。R9 的 PCS 角色依平台约定而变：可能是平台寄存器，也可能按被调用者保存；不能一概当作临时寄存器。',['通用寄存器','平台约定相关']],
+R10:['通用寄存器。AAPCS32 规定被调用函数若修改 R10，返回前须恢复。',['通用寄存器','被调用者保存']],
+R11:['通用寄存器。AAPCS32 规定被调用函数若修改 R11，返回前须恢复；工具链可能另将它用作帧指针。',['通用寄存器','被调用者保存']],
+R12:['通用寄存器，也称 IP（intra-procedure-call scratch）。调用者保存；链接器 veneer 也可能使用它。',['通用寄存器','调用者保存']],
+R13:['SP 别名。实际活动栈指针是 MSP 或 PSP；CONTROL.SPSEL 选择 Thread mode 的栈。Handler mode 始终使用 MSP。',['SP','MSP / PSP']],
+R14:['LR 别名。普通函数调用时保存返回链接；异常入口时装入 EXC_RETURN。EXC_RETURN 是返回状态标记，不是普通函数地址。',['LR','函数返回 / 异常返回']],
+R15:['PC 别名。Cortex-M4 常见读值是当前指令地址加 4，某些 PC-relative 计算会先按字对齐。Thumb 分支目标最低位为 1 表示状态，不是普通地址位。',['PC','Thumb 指令集']],
+xPSR:['组合程序状态视图，由 APSR、IPSR、EPSR 的字段组合而来；调试异常时常检查硬件压栈的 xPSR。',['状态寄存器','组合视图']],
+APSR:['应用程序状态视图：条件标志包括 N、Z、C、V；Q 及 DSP 扩展 GE 等字段按实现而定。',['xPSR 字段','算术 / 条件标志']],
+IPSR:['异常状态视图：当前异常号，Thread mode 为 0；外部 IRQn 异常号为 16 + IRQn。普通 MSR 不能写入 IPSR。',['xPSR 字段','异常号']],
+EPSR:['执行状态视图：包括 Thumb 状态和实现中的 IT/ICI 信息。不是通用写寄存器；普通 MRS EPSR 视图读为 0，MSR 写入被忽略。',['xPSR 字段','执行状态']],
+PRIMASK:['Armv7-M 中置 1 会屏蔽可配置优先级异常的激活；NMI 和 HardFault 不受其屏蔽。它不会清 Pending，也不会终止 Active handler。',['异常屏蔽','NMI / HardFault 例外']],
+FAULTMASK:['Armv7-M 中置 1 会屏蔽 NMI 以外的异常，包括 HardFault；异常返回时通常自动清除，但从 NMI 返回例外。',['异常屏蔽','M0 / M23 不提供']],
+BASEPRI:['非零值按编码优先级设置激活阈值；数值等于或更大的可配置优先级会被阻止。0 关闭阈值屏蔽。四位示例中逻辑优先级 5 编码为 0x50。',['异常屏蔽','优先级阈值']],
+CONTROL:['nPRIV 表示 Thread 特权级；SPSEL 选择 Thread 使用 MSP/PSP；有 FPU 时 FPCA 表示浮点上下文状态。Handler 始终特权并使用 MSP。特权代码更改 CONTROL 后紧接 ISB。',['模式控制','FPCA 可选']]};
+const name=document.getElementById('register-name'),description=document.getElementById('register-description'),meta=document.getElementById('register-meta'),buttons=[...document.querySelectorAll('[data-register]')];buttons.forEach(button=>button.addEventListener('click',()=>{const key=button.dataset.register;buttons.forEach(item=>item.setAttribute('aria-pressed',String(item===button)));name.textContent=key;description.textContent=facts[key][0];meta.replaceChildren(...facts[key][1].map(label=>{const span=document.createElement('span');span.textContent=label;return span;}));}));})();
+</script>
+<script id="mask-demo">
+(()=>{
+  const level=document.getElementById('basepri-level');
+  const primask=document.getElementById('primask-on');
+  const faultmask=document.getElementById('faultmask-on');
+  const rows=document.getElementById('priority-rows');
+  const status=document.getElementById('basepri-encoding-status');
+  const activeState=document.getElementById('active-handler-state');
+  const examples=[
+    {name:'NMI',kind:'NMI'},
+    {name:'HardFault',kind:'HardFault'},
+    ...[0,3,4,5,8,15].map(priority=>({name:'IRQ（逻辑优先级 '+priority+'）',kind:'configurable',priority}))
+  ];
+  function render(){
+    const threshold=Number(level.value);
+    const encoded=(threshold<<4).toString(16).toUpperCase().padStart(2,'0');
+    status.textContent=threshold===0
+      ? '当前 BASEPRI = 0x00；BASEPRI 阈值屏蔽关闭。'
+      : '逻辑优先级 '+threshold+' 编码为 0x'+encoded+'；同级及更低紧急度的可配置优先级被阈值阻止。';
+    activeState.textContent='IRQ（逻辑优先级 3）Handler 已是 Active；BASEPRI = 0x'+encoded+' 不会终止已激活的异常。';
+    rows.replaceChildren(...examples.map(example=>{
+      const tr=document.createElement('tr');
+      const name=document.createElement('td');
+      const blocked=document.createElement('td');
+      const pending=document.createElement('td');
+      name.textContent=example.name;
+      let isBlocked;
+      if(example.kind==='NMI')isBlocked=false;
+      else if(faultmask.checked)isBlocked=true;
+      else if(example.kind==='HardFault')isBlocked=false;
+      else isBlocked=primask.checked||(threshold!==0&&example.priority>=threshold);
+      blocked.textContent=isBlocked?'当前不可激活：仍保持 Pending':'屏蔽位允许激活（仍须通过异常仲裁）';
+      blocked.className=isBlocked?'keeps-pending':'can-activate';
+      pending.textContent='Pending 保留';
+      pending.className='keeps-pending';
+      tr.append(name,blocked,pending);
+      return tr;
+    }));
+  }
+  level.addEventListener('change',render);
+  primask.addEventListener('change',render);
+  faultmask.addEventListener('change',render);
+  render();
+})();
+</script>
+<script id="mode-interaction">
+(()=>{const scenarios={'thread-msp':{before:'异常前：Thread',stack:'MSP',sel:'0',destination:'压入 MSP',lr:'0xFFFFFFF9',text:'Thread 原先使用 MSP；异常帧压入 MSP。进入 Handler 后，活动栈是 MSP。'},'thread-psp':{before:'异常前：Thread',stack:'PSP',sel:'1',destination:'压入 PSP',lr:'0xFFFFFFFD',text:'Thread 原先使用 PSP；异常帧先压入 PSP。进入 Handler 后，活动栈切换为 MSP。'},handler:{before:'异常前：Handler',stack:'MSP',sel:'Handler 固定 MSP',destination:'压入 MSP',lr:'0xFFFFFFF1',text:'嵌套异常发生在 Handler；被中断的 Handler 使用 MSP，嵌套异常帧压入 MSP。'}};const before=document.getElementById('before-mode'),beforeStack=document.getElementById('before-stack'),beforeControl=document.getElementById('before-control'),destination=document.getElementById('frame-stack'),afterLr=document.getElementById('after-lr'),status=document.getElementById('control-status'),nonpriv=document.getElementById('thread-unprivileged'),fpca=document.getElementById('fp-context-active'),buttons=[...document.querySelectorAll('[data-scenario]')];let current='thread-psp';function render(){const scenario=scenarios[current];before.textContent=scenario.before;beforeStack.textContent='活动栈：'+scenario.stack;beforeControl.textContent=current==='handler'?'Handler mode 总是使用 MSP':'CONTROL.SPSEL = '+scenario.sel;destination.textContent=scenario.destination;afterLr.textContent='入口 LR：EXC_RETURN = '+scenario.lr;const privilege=current==='handler'?'Handler 始终特权运行':(nonpriv.checked?'Thread 非特权（nPRIV = 1）':'Thread 特权（nPRIV = 0）'),floating=fpca.checked?'FPU 已实现时：FPCA 描述活动浮点上下文，不代表 FPU 已启用':'浮点上下文状态未选中；没有 FPU 时 FPCA 不适用';status.textContent=scenario.text+' '+privilege+'。'+floating+'。';}buttons.forEach(button=>button.addEventListener('click',()=>{current=button.dataset.scenario;buttons.forEach(item=>item.setAttribute('aria-pressed',String(item===button)));render();}));nonpriv.addEventListener('change',render);fpca.addEventListener('change',render);render();})();
+</script>
+<script id="note-deep-links">
+(()=>{function reveal(){let id;try{id=decodeURIComponent(window.location.hash.slice(1));}catch{return;}if(!id)return;const target=document.getElementById(id);if(!target)return;const details=target.closest('details');if(details)details.open=true;requestAnimationFrame(()=>target.scrollIntoView({block:'start'}));}window.addEventListener('hashchange',reveal);window.addEventListener('pageshow',reveal);reveal();})();
+</script>
+</body></html>
