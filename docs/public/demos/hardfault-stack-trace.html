@@ -353,7 +353,24 @@ updateFrame();
 })();
 </script>
 <script id="note-deep-links">
-function revealNoteHash(){let id;try{id=decodeURIComponent(window.location.hash.slice(1));}catch{return;}if(!id)return;const target=document.getElementById(id);if(!target)return;const section=target.closest('details');if(section)section.open=true;requestAnimationFrame(()=>target.scrollIntoView({block:'start'}));}
+function revealNoteHash(){
+  let id;
+  try{id=decodeURIComponent(window.location.hash.slice(1));}catch{return;}
+  if(!id)return;
+  const target=document.getElementById(id);
+  if(!target)return;
+  const caseMatch=/^case-([a-d])$/.exec(id);
+  if(caseMatch){
+    const choice=document.getElementById('snapshot-'+caseMatch[1]);
+    if(choice&&!choice.checked){
+      choice.checked=true;
+      choice.dispatchEvent(new Event('change',{bubbles:true}));
+    }
+  }
+  const section=target.closest('details');
+  if(section)section.open=true;
+  requestAnimationFrame(()=>target.scrollIntoView(caseMatch?{block:'start',behavior:'instant'}:{block:'start'}));
+}
 window.addEventListener('hashchange',revealNoteHash);
 window.addEventListener('pageshow',revealNoteHash);
 revealNoteHash();
