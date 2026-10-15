@@ -10,6 +10,8 @@ description: 从晶体、PLL 与时钟树开始，沿着时钟和数据路径理
 ## 已完成的交互笔记
 
 - [MCU 晶振与主频：从 8 MHz 到 168 MHz](./crystal-pll-clock.md)：用 STM32F407 的可调时钟树理解晶体、HSE/HSI、PLL、SYSCLK/HCLK/PCLK，以及供电、Flash、USB 与外设的限制。
+- [Cortex-M CPU 核心寄存器](./cortex-m-cpu-registers.md)：以 Armv7-M Cortex-M3/M4 为主，交互查看通用寄存器、xPSR、异常屏蔽与 CONTROL。
+- [产生 HardFault 后使用栈回溯分析异常代码](./hardfault-stack-trace.md)：根据 EXC_RETURN 和异常入口栈解析基本/扩展帧，核对 stacked PC 与真实构建证据。
 
 ## 后续方向
 
