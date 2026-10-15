@@ -16,8 +16,9 @@ const originalNotes = [
 assert.deepEqual(interactiveNotes.slice(0, originalNotes.length), originalNotes, 'The five original interactive routes and HTML sources must remain stable')
 assert.deepEqual(interactiveNotes.slice(originalNotes.length), [
   { path: 'mcu/cortex-m-cpu-registers.html', source: 'cortex-m-cpu-registers.html' },
-  { path: 'mcu/hardfault-stack-trace.html', source: 'hardfault-stack-trace.html' }
-], 'Both Cortex-M articles must be registered at their published routes')
+  { path: 'mcu/hardfault-stack-trace.html', source: 'hardfault-stack-trace.html' },
+  { path: 'debug/easylogger.html', source: 'easylogger.html' }
+], 'Both Cortex-M articles and EasyLogger must be registered after the stable original routes')
 
 for (const base of ['/', '/embedded-notes/']) {
   const origin = 'https://notes.example'
@@ -121,7 +122,8 @@ for (const note of interactiveNotes.slice(1)) {
     section.open = false; events.hashchange(); assert.equal(section.open, true)
     window.location.hash = '#%ZZ'; assert.doesNotThrow(events.pageshow)
   }
-  for (const href of ['../', note.path.startsWith('mcu/') ? '../mcu/' : '../tools/', '../?search=1']) assert.ok(article.includes('href="' + href + '"'), 'Missing hub link: ' + href)
+  const categoryHref = note.path.startsWith('mcu/') ? '../mcu/' : note.path.startsWith('debug/') ? '../debug/' : '../tools/'
+  for (const href of ['../', categoryHref, '../?search=1']) assert.ok(article.includes('href="' + href + '"'), 'Missing hub link: ' + href)
   assert.ok(!/<(?:script|iframe)[^>]+src=/i.test(article), 'Self-contained article must not load scripts or integrations')
   assert.ok(!/\b(?:fetch|XMLHttpRequest|WebSocket|localStorage|sessionStorage)\b/.test([...article.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)].map(match => match[1]).join('')), 'Teaching state stays in page memory')
 }
