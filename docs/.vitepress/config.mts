@@ -35,6 +35,7 @@ export default defineConfig({
         { text: 'MCU 晶振与主频：从 8 MHz 到 168 MHz', link: '/mcu/crystal-pll-clock.html' },
         { text: 'Cortex-M CPU 核心寄存器', link: '/mcu/cortex-m-cpu-registers.html' },
         { text: 'HardFault 栈回溯分析', link: '/mcu/hardfault-stack-trace.html' },
+        { text: 'EasyLogger：从第一行日志到可维护的固件诊断', link: '/debug/easylogger.html' },
         { text: 'Beads：任务依赖与就绪队列', link: '/tools/beads.html' },
         { text: 'Plane：项目协作与工作流', link: '/tools/plane.html' },
         { text: 'Matt Pocock Skills：AI 编程工作流', link: '/tools/matt-pocock-skills.html' }
@@ -45,7 +46,7 @@ export default defineConfig({
         { text: '工程工具与协作', link: '/tools/' },
         { text: 'MCU 基础与外设', link: '/mcu/' },
         { text: 'FreeRTOS · 规划中', link: '/freertos/' },
-        { text: '调试与实战 · 规划中', link: '/debug/' }
+        { text: '调试与实战', link: '/debug/' }
       ]}
     ],
     sidebar: [
@@ -68,9 +69,12 @@ export default defineConfig({
         { text: 'Cortex-M CPU 核心寄存器', link: '/mcu/cortex-m-cpu-registers.html' },
         { text: 'HardFault 栈回溯分析', link: '/mcu/hardfault-stack-trace.html' },
       ]},
+      { text: '调试与实战', items: [
+        { text: '分类总览', link: '/debug/' },
+        { text: 'EasyLogger 固件日志', link: '/debug/easylogger.html' }
+      ]},
       { text: '后续专题', collapsed: true, items: [
         { text: 'FreeRTOS · 规划中', link: '/freertos/' },
-        { text: '调试与实战 · 规划中', link: '/debug/' }
       ]}
     ],
     outline: { level: [2, 3], label: '本页目录' },
