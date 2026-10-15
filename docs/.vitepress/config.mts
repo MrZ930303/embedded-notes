@@ -33,6 +33,8 @@ export default defineConfig({
       { text: '交互笔记', items: [
         { text: 'MCU 堆栈原理与监测', link: '/c-memory/heap-stack.html' },
         { text: 'MCU 晶振与主频：从 8 MHz 到 168 MHz', link: '/mcu/crystal-pll-clock.html' },
+        { text: 'Cortex-M CPU 核心寄存器', link: '/mcu/cortex-m-cpu-registers.html' },
+        { text: 'HardFault 栈回溯分析', link: '/mcu/hardfault-stack-trace.html' },
         { text: 'Beads：任务依赖与就绪队列', link: '/tools/beads.html' },
         { text: 'Plane：项目协作与工作流', link: '/tools/plane.html' },
         { text: 'Matt Pocock Skills：AI 编程工作流', link: '/tools/matt-pocock-skills.html' }
@@ -62,7 +64,9 @@ export default defineConfig({
       ]},
       { text: 'MCU 基础与外设', items: [
         { text: '分类概览', link: '/mcu/' },
-        { text: 'MCU 晶振与主频', link: '/mcu/crystal-pll-clock.html' }
+        { text: 'MCU 晶振与主频', link: '/mcu/crystal-pll-clock.html' },
+        { text: 'Cortex-M CPU 核心寄存器', link: '/mcu/cortex-m-cpu-registers.html' },
+        { text: 'HardFault 栈回溯分析', link: '/mcu/hardfault-stack-trace.html' },
       ]},
       { text: '后续专题', collapsed: true, items: [
         { text: 'FreeRTOS · 规划中', link: '/freertos/' },
