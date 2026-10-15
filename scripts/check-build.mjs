@@ -51,6 +51,10 @@ const html=await readFile(path.join(root,'index.html'),'utf8')
 assert.ok(html.includes('嵌入式技术笔记'))
 assert.ok(html.includes(base+'c-memory/heap-stack.html'))
 assert.ok(html.includes('data-no-router'))
+assert.ok(html.includes('8 篇') && html.includes('4 个主题'), 'Home must describe eight articles across four active categories')
+const debugCategory = await readFile(path.join(root, 'debug/index.html'), 'utf8')
+assert.ok(debugCategory.includes(base + 'debug/easylogger.html'), 'Debug category must link to the full EasyLogger reader')
+assert.ok(!debugCategory.includes('这个分类尚未发布独立文章'), 'Debug must be an active category')
 assert.ok(files.some(p=>/hashmap\.json$/.test(p)))
 assert.ok(files.some(p=>/localSearchIndex/.test(p)), 'Local search index is missing')
 for (const note of interactiveNotes) {
@@ -91,7 +95,8 @@ const queries = {
   'tools/matt-pocock-skills.html': ['Matt', 'Skills', 'tdd', 'GLOSSARY', '技能', '规格'],
   'mcu/crystal-pll-clock.html': ['晶体', '晶振', 'PLL', 'VCO', 'HSE', 'SYSCLK', '等待周期', '168'],
   'mcu/cortex-m-cpu-registers.html': ['R13', 'BASEPRI', 'CONTROL', 'EXC_RETURN'],
-  'mcu/hardfault-stack-trace.html': ['HardFault', 'EXC_RETURN', 'CFSR', 'MMFAR', 'BFAR', 'LSPACT', 'STKERR', 'Fault Reports']
+  'mcu/hardfault-stack-trace.html': ['HardFault', 'EXC_RETURN', 'CFSR', 'MMFAR', 'BFAR', 'LSPACT', 'STKERR', 'Fault Reports'],
+  'debug/easylogger.html': ['EasyLogger', 'Mutex', 'SEGGER_RTT_SetFlagsUpBuffer', 'NOINIT', 'MicroLIB', 'pendingWrite', 'LeakSanitizer']
 }
 for (const [article, terms] of Object.entries(queries)) {
   for (const query of terms) {
@@ -125,6 +130,22 @@ for (const [query, anchor] of Object.entries(hardFaultSearchTargets)) {
   assert.ok(results.some(result => result.id.startsWith(base + 'mcu/hardfault-stack-trace.html#' + anchor)), 'Search result must open the matching HardFault section: ' + query + ' -> ' + anchor)
 }
 assert.equal(search.search('zzzxxyyunknownquery').length, 0)
+const easyLoggerSearchTargets = {
+  '编译删除': 'filter-lab',
+  'LOG_LVL': 'filter-lab',
+  'Existing Session': 'keil-port',
+  'elog_port_output_lock': 'task-mutex',
+  'portYIELD_FROM_ISR': 'isr-events',
+  'HAL_UART_Transmit_DMA': 'dma-lifetime',
+  pendingWrite: 'rtt-lab',
+  '173.6': 'uart-lab',
+  'frame_valid': 'fault-record',
+  'SEGGER_RTT_SetFlagsUpBuffer': 'corrections',
+  LeakSanitizer: 'validation-limits'
+}
+for (const [query, anchor] of Object.entries(easyLoggerSearchTargets)) {
+  assert.ok(search.search(query).some(result => result.id.startsWith(base + 'debug/easylogger.html#' + anchor)), 'Search must open the matching EasyLogger section: ' + query + ' -> ' + anchor)
+}
 for (const excluded of ['C51', '8051', 'ML51']) assert.equal(search.search(excluded).length, 0, 'Excluded architecture search result: ' + excluded)
 console.log('PASS: generated Chinese/English/API full-text search, client tokenizer serialization and empty-result query.')
 
