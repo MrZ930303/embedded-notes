@@ -89,7 +89,9 @@ const queries = {
   'tools/beads.html': ['Beads', '依赖', '就绪', 'Dolt', 'claim', '认领'],
   'tools/plane.html': ['Plane', '周期', '模块', '工作空间', 'AGPL', 'Cancelled'],
   'tools/matt-pocock-skills.html': ['Matt', 'Skills', 'tdd', 'GLOSSARY', '技能', '规格'],
-  'mcu/crystal-pll-clock.html': ['晶体', '晶振', 'PLL', 'VCO', 'HSE', 'SYSCLK', '等待周期', '168']
+  'mcu/crystal-pll-clock.html': ['晶体', '晶振', 'PLL', 'VCO', 'HSE', 'SYSCLK', '等待周期', '168'],
+  'mcu/cortex-m-cpu-registers.html': ['R13', 'BASEPRI', 'CONTROL', 'EXC_RETURN'],
+  'mcu/hardfault-stack-trace.html': ['HardFault', 'EXC_RETURN', 'CFSR', 'MMFAR', 'BFAR', 'LSPACT', 'STKERR', 'Fault Reports']
 }
 for (const [article, terms] of Object.entries(queries)) {
   for (const query of terms) {
@@ -97,6 +99,30 @@ for (const [article, terms] of Object.entries(queries)) {
     assert.ok(results.length > 0, 'Search returned no results: ' + query)
     assert.ok(results.some(r => r.id.startsWith(base + article)), 'Missing article result: ' + article + ': ' + query)
   }
+}
+const registerSearchTargets = {
+  R13: 'stack-link-pc-title',
+  BASEPRI: 'mask-registers-title',
+  CONTROL: 'control-register-title',
+  EXC_RETURN: 'stack-link-pc-title'
+}
+for (const [query, anchor] of Object.entries(registerSearchTargets)) {
+  const results = search.search(query)
+  assert.ok(results.some(result => result.id.startsWith(base + 'mcu/cortex-m-cpu-registers.html#' + anchor)), 'Search result must open the matching register section: ' + query + ' -> ' + anchor)
+}
+const hardFaultSearchTargets = {
+  HardFault: 'overview',
+  EXC_RETURN: 'decode-exc-return',
+  CFSR: 'fault-status-masks',
+  MMFAR: 'fault-status-masks',
+  BFAR: 'fault-status-masks',
+  LSPACT: 'case-b',
+  STKERR: 'case-d',
+  'Fault Reports': 'match-the-firmware-build'
+}
+for (const [query, anchor] of Object.entries(hardFaultSearchTargets)) {
+  const results = search.search(query)
+  assert.ok(results.some(result => result.id.startsWith(base + 'mcu/hardfault-stack-trace.html#' + anchor)), 'Search result must open the matching HardFault section: ' + query + ' -> ' + anchor)
 }
 assert.equal(search.search('zzzxxyyunknownquery').length, 0)
 for (const excluded of ['C51', '8051', 'ML51']) assert.equal(search.search(excluded).length, 0, 'Excluded architecture search result: ' + excluded)
