@@ -4,6 +4,21 @@ import { readFile } from 'node:fs/promises'
 import { createInteractiveNoteGuard, isInteractiveNote } from '../docs/.vitepress/theme/interactive-routing.mjs'
 import { readInteractiveNote, interactiveNoteDevPlugin, interactiveNotes } from './interactive-note.mjs'
 
+const registerNote = 'mcu/cortex-m-cpu-registers.html'
+assert.ok(interactiveNotes.some(note => note.path === registerNote && note.source === 'cortex-m-cpu-registers.html'), 'Register note must be registered at its published route')
+const originalNotes = [
+  { path: 'c-memory/heap-stack.html', source: 'stack-heap.html' },
+  { path: 'tools/beads.html', source: 'beads.html' },
+  { path: 'tools/plane.html', source: 'plane.html' },
+  { path: 'tools/matt-pocock-skills.html', source: 'matt-pocock-skills.html' },
+  { path: 'mcu/crystal-pll-clock.html', source: 'crystal-pll-clock.html' }
+]
+assert.deepEqual(interactiveNotes.slice(0, originalNotes.length), originalNotes, 'The five original interactive routes and HTML sources must remain stable')
+assert.deepEqual(interactiveNotes.slice(originalNotes.length), [
+  { path: 'mcu/cortex-m-cpu-registers.html', source: 'cortex-m-cpu-registers.html' },
+  { path: 'mcu/hardfault-stack-trace.html', source: 'hardfault-stack-trace.html' }
+], 'Both Cortex-M articles must be registered at their published routes')
+
 for (const base of ['/', '/embedded-notes/']) {
   const origin = 'https://notes.example'
   const events = []
@@ -147,3 +162,42 @@ console.log('PASS: identical scoped reading theme, consistent navigation, 16px/4
 for (const paper of ['#fafbf8', '#ffffff', '#e7ede1']) assert.ok(contrast('#ad751d', paper) >= 3, 'Focus ring must contrast with Plane light panels')
 assert.match(planeArticle, /\.notes-article \.scope-picker :focus-visible,\.notes-article \.board :focus-visible,\.notes-article \.detail :focus-visible\{outline-color:#ad751d\}/)
 console.log('PASS: Plane light-panel focus ring override and at least 3:1 contrast against page, control and lane surfaces.')
+
+const registerArticle = await readInteractiveNote(registerNote)
+const registerMarkdown = await readFile(new URL('../docs/mcu/cortex-m-cpu-registers.md', import.meta.url), 'utf8')
+for (const [label, source] of [['interactive CONTROL reference', registerArticle], ['searchable CONTROL reference', registerMarkdown]]) {
+  assert.ok(source.includes('MSR CONTROL'), `${label} must explain how software writes CONTROL`)
+  assert.ok(source.includes('ISB'), `${label} must explain the instruction synchronization after CONTROL changes`)
+}
+assert.ok(registerArticle.includes('id="active-handler-state"'), 'priority demo must show the already-active IRQ priority 3 Handler separately')
+assert.ok(registerArticle.includes('已在执行的异常（与 Pending 示例分开）'), 'active Handler must be visibly separated from pending exceptions')
+const priorityController = registerArticle.match(/<script id="mask-demo">([\s\S]*?)<\/script>/)
+assert.ok(priorityController, 'priority model must expose its user-facing controller')
+const priorityControls = {
+  'basepri-level': { value: '5', listeners: {}, addEventListener(event, callback) { this.listeners[event] = callback }, dispatch(event) { this.listeners[event]?.({ target: this }) } },
+  'primask-on': { checked: false, listeners: {}, addEventListener(event, callback) { this.listeners[event] = callback }, dispatch(event) { this.listeners[event]?.({ target: this }) } },
+  'faultmask-on': { checked: false, listeners: {}, addEventListener(event, callback) { this.listeners[event] = callback }, dispatch(event) { this.listeners[event]?.({ target: this }) } },
+  'priority-rows': { children: [], replaceChildren(...children) { this.children = children } },
+  'basepri-encoding-status': { textContent: '' },
+  'active-handler-state': { textContent: '' }
+}
+const priorityDocument = {
+  getElementById(id) {
+    assert.ok(priorityControls[id], `unexpected priority demo element ${id}`)
+    return priorityControls[id]
+  },
+  createElement(tag) {
+    return { tagName: tag, textContent: '', className: '', children: [], append(...children) { this.children.push(...children) } }
+  }
+}
+vm.runInNewContext(priorityController[1], { document: priorityDocument })
+assert.match(priorityControls['active-handler-state'].textContent, /IRQ.*3.*Active.*BASEPRI = 0x50/)
+const priority3Row = priorityControls['priority-rows'].children.find(row => row.children[0].textContent === 'IRQ（逻辑优先级 3）')
+assert.ok(priority3Row, 'priority 3 must be a visible new-activation example beside the separate active Handler')
+assert.equal(priority3Row.children[1].className, 'can-activate', 'priority 3 is above the logical BASEPRI threshold 5')
+priorityControls['primask-on'].checked = true
+priorityControls['primask-on'].dispatch('change')
+priorityControls['faultmask-on'].checked = true
+priorityControls['faultmask-on'].dispatch('change')
+assert.match(priorityControls['active-handler-state'].textContent, /IRQ.*3.*Active.*BASEPRI = 0x50/, 'masking new activations must not terminate the separate already-active priority 3 Handler')
+console.log('PASS: CONTROL writes include ISB guidance; BASEPRI priority 3 activation and separate active Handler behavior are covered.')
