@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#fafbf8"><meta name="description" content="用四个教学实验理解 EasyLogger 等级过滤、RTT 环形缓冲、FreeRTOS 中断优先级与 UART DMA 带宽；梳理 Cortex-M、Keil 与 J-Link 日志移植边界。"><title>EasyLogger：从第一行日志到可维护的固件诊断 · 嵌入式技术笔记</title><link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<style>
+:root{--paper:#fafbf8;--ink:#21382e;--muted:#526359;--line:#dce3d7;--green:#22664f;--pale:#eef2e9;--lime:#d5e7b3;--dark:#193e33;--mono:Consolas,ui-monospace,monospace}*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:100px}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.9 system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}a{color:var(--green);text-underline-offset:4px;overflow-wrap:anywhere}button,input,select{font:inherit;min-height:44px}button,select{cursor:pointer}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #b47b25;outline-offset:3px}.wrap{width:min(1120px,calc(100% - 64px));margin-inline:auto}.skip{position:absolute;top:-90px;left:16px;z-index:20;padding:8px 12px;background:#fff}.skip:focus{top:8px}.topbar{position:sticky;top:0;z-index:10;background:#fafbf8f5;border-bottom:1px solid var(--line)}.topbar-inner{min-height:68px;display:flex;align-items:center;justify-content:space-between;gap:24px}.brand{display:inline-flex;align-items:center;gap:10px;min-height:44px;color:var(--ink);font-weight:700;text-decoration:none}.brandmark{display:grid;place-items:center;width:30px;height:30px;border-radius:6px;background:var(--dark);color:#e0edcb;font:19px/1 var(--mono)}nav{display:flex;align-items:center;gap:12px;flex-wrap:wrap}nav a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:4px 8px;color:var(--muted);text-decoration:none;border-radius:4px}nav a:hover{background:var(--pale);color:var(--green)}.hero{display:grid;grid-template-columns:1.1fr .9fr;align-items:center;gap:42px;padding-block:48px 38px}.hero .tag{display:inline-block;margin:0 0 16px;padding:4px 9px;border:1px solid var(--line);border-radius:4px;color:var(--green);font-size:12px}.hero h1{margin:0;font-size:clamp(32px,3.6vw,44px);line-height:1.35;letter-spacing:-.035em}.hero-intro{max-width:38rem;margin:20px 0;color:var(--muted);font-size:17px}.hero-links{display:flex;flex-wrap:wrap;gap:10px 18px}.hero-links a{display:inline-flex;align-items:center;min-height:44px}.hero-card{padding:24px;border:1px solid #416656;border-radius:12px;background:var(--dark);color:#eef5e5}.hero-card .eyebrow{margin:0 0 10px;color:#c5d8b7;font:12px/1.7 var(--mono);letter-spacing:.1em}.hero-card strong{display:block;color:var(--lime);font:24px/1.45 var(--mono)}.hero-card p{margin:10px 0 0;color:#d7e5d0}.content-section{padding-block:40px}.content-section+.content-section{border-top:1px solid var(--line)}.section-head{max-width:44rem;margin-bottom:20px}.section-head h2,.article-section>h2{margin:0 0 10px;font-size:28px;line-height:1.5;scroll-margin-top:100px}.section-head p{margin:0;color:var(--muted)}.article-section>p,.article-section>ul,.article-section>ol{max-width:44rem}.callout,.model-scope,.demo-disclaimer{max-width:44rem;padding:14px 16px;border-left:4px solid var(--green);background:var(--pale);border-radius:0 7px 7px 0}.callout.warning{border-color:#b47b25;background:#fbf4e7}.callout p,.model-scope p,.demo-disclaimer p{margin:0}.demo-panel{padding:22px;border:1px solid var(--line);border-radius:11px;background:#fff}.table-wrap{max-width:100%;overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:14px;line-height:1.8}th,td{min-width:130px;padding:10px 12px;border:1px solid var(--line);text-align:left;vertical-align:top}th{background:var(--pale)}tr:nth-child(even){background:#fafcf7}code,.mono{font-family:var(--mono)}code{padding:2px 4px;border-radius:3px;background:#edf2e7;overflow-wrap:anywhere}.demo-controls{display:flex;align-items:end;flex-wrap:wrap;gap:12px 18px;margin-bottom:16px}.field{display:grid;gap:5px;min-width:min(340px,100%)}.field label,.check-label{font-weight:650}.field select{width:100%;padding:6px 10px;border:1px solid #93ab94;border-radius:5px;background:#fff;color:var(--ink)}.check-label{display:inline-flex;align-items:center;gap:9px;min-height:44px;padding:3px 8px}.check-label input{width:20px;height:20px;min-height:20px;accent-color:var(--green)}.status-line{margin:10px 0;padding:12px 14px;border-radius:7px;background:#e9f0df}.status-line strong{color:var(--green)}.footer{display:flex;justify-content:space-between;gap:18px;padding-block:28px 36px;margin-top:24px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+@media(max-width:760px){.hero{grid-template-columns:1fr;gap:22px}}@media(max-width:600px){.wrap{width:calc(100% - 40px)}.topbar-inner{display:block;padding-block:8px}.topbar nav{flex-wrap:nowrap;overflow-x:auto;white-space:nowrap;gap:8px}.topbar nav a{flex-shrink:0}.hero{padding-block:32px 26px}.hero-intro{font-size:16px}.content-section{padding-block:32px}.demo-panel{padding:16px}.field{width:100%}.footer{display:block}.footer a{display:inline-flex;align-items:center;min-height:44px;margin-top:8px}html{scroll-padding-top:120px}}@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+<style>
+/* Shared reading layer: keep this block identical in all standalone notes. */
+@media screen {
+:root{--paper:#fafbf8;--ink:#21382e;--muted:#526359;--line:#dce3d7;--green:#22664f;--pale:#eef2e9;--lime:#d5e7b3;--dark:#193e33}
+.notes-article{font-size:16px;line-height:1.9}
+.notes-article .wrap{width:min(1120px,calc(100% - 64px));max-width:none;padding-inline:0;margin-inline:auto}
+.notes-article .topbar{background:#fafbf8f5;z-index:10}
+.notes-article .topbar-inner{height:auto;min-height:68px;display:flex;align-items:center;justify-content:space-between;gap:24px;padding-block:0}
+.notes-article .brand{display:inline-flex;align-items:center;gap:10px;min-height:44px;margin:0;font-size:15px;font-weight:700;letter-spacing:0;color:var(--ink)}
+.notes-article .brandmark{display:grid;place-items:center;width:30px;height:30px;margin:0;border-radius:6px;background:var(--dark);color:#e0edcb;font:19px/1 var(--mono)}
+.notes-article .topbar nav{display:flex;align-items:center;gap:18px;margin:0;padding:0;width:auto;flex-wrap:nowrap}
+.notes-article .topbar nav a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:4px 3px;font-size:14px;font-weight:500;color:var(--muted);text-decoration:none;border-radius:4px}
+.notes-article .topbar nav a:hover,.notes-article .topbar nav a[aria-current="location"]{color:var(--green);background:var(--pale)}
+.notes-article .topbar nav a[aria-current="location"]{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:6px}
+.notes-article .hero{padding-block:48px 40px;gap:48px;grid-template-columns:1.12fr 1fr}
+.notes-article .hero h1{font-size:clamp(32px,3.6vw,44px);line-height:1.35;letter-spacing:-.035em;text-wrap:balance}
+.notes-article .hero h1 span{font-size:.78em;line-height:1.5;margin-top:8px}
+.notes-article .hero-intro{font-size:17px;line-height:1.9;max-width:32rem;margin-block:20px}
+.notes-article .hero>.hero-card,.notes-article .hero-flow,.notes-article .intro-map{box-shadow:none;border-radius:12px}
+.notes-article .hero .tag{font-size:12px;border-radius:4px;padding:4px 9px;margin:0 0 16px;line-height:1.7}
+.notes-article .hero>.hero-figure .map{transform:none;box-shadow:none}
+.notes-article .hero>div>.eyebrow{display:none}
+.notes-article .hero>.hero-card>.eyebrow,.notes-article .hero>.hero-flow>.eyebrow{display:block;font-size:12px;line-height:1.7}
+.notes-article .hero-links{gap:12px 22px;margin-top:24px}
+.notes-article .hero .text-link{display:inline-flex;align-items:center;min-height:44px;font-size:14px}
+.notes-article .hero figcaption,.notes-article .hero-figure figcaption,.notes-article .date-note{font-size:13px;line-height:1.8}
+.notes-article .hero-card p:last-child,.notes-article .hero-flow .small,.notes-article .intro-map>p:last-child{font-size:14px;line-height:1.85}
+.notes-article .hero-numbers span,.notes-article .hero-step small{font-size:13px}
+.notes-article h2{font-size:28px;line-height:1.5;text-wrap:balance}
+.notes-article .section-head p{font-size:15px;line-height:1.85}
+.notes-article .content-section,.notes-article .article-section{padding-block:52px}
+.notes-article .content-section+.content-section{padding-top:48px}
+.notes-article .note-section{scroll-margin-top:100px}
+.notes-article .note-section>summary{min-height:56px;font-size:18px;line-height:1.6}
+.notes-article .note-section>summary h2{font-size:20px;line-height:1.6}
+.notes-article .note-body{max-width:none;font-size:16px;line-height:1.95}
+.notes-article .note-body p,.notes-article .note-body li{font-size:16px;line-height:1.95}
+.notes-article .note-body>p,.notes-article .note-body>ul,.notes-article .note-body>ol,.notes-article .article-section>p,.notes-article .article-section>ul,.notes-article .article-section>ol{max-width:44rem;font-size:16px;line-height:1.95}
+.notes-article .note-body h3{font-size:21px;margin-block:28px 12px;scroll-margin-top:100px}
+.notes-article .note-body pre,.notes-article pre{font-size:14px;line-height:1.8}
+.notes-article .note-body table,.notes-article table{font-size:14px;line-height:1.8}
+.notes-article .note-body th,.notes-article .note-body td{font-size:14px;line-height:1.8}
+.notes-article .article-section>h2{font-size:28px}
+.notes-article .concept p,.notes-article .subnote p,.notes-article .risk p,.notes-article .monitor-step p,.notes-article .monitor-step ul,.notes-article .step-card p{font-size:15px;line-height:1.85}
+.notes-article .callout,.notes-article .model-scope,.notes-article .demo-disclaimer,.notes-article .version-card,.notes-article .version-card p{font-size:14px;line-height:1.85}
+.notes-article .source-list a,.notes-article .source-list span,.notes-article #plane-references~ul{font-size:14px;line-height:1.85}
+.notes-article #plane-overview~ul{max-width:none}
+.notes-article #plane-overview~ul li{font-size:15px;line-height:1.85}
+.notes-article .note-body .source-list{max-width:none}
+.notes-article .small,.notes-article .lab-note,.notes-article .lab-foot,.notes-article .lab-footer,.notes-article .clock-lab-foot,.notes-article .print-hint{font-size:13px;line-height:1.85}
+.notes-article .principle,.notes-article .principles span{font-size:13px;line-height:1.8}
+.notes-article .principles strong{font-size:15px}
+.notes-article .memory-motto,.notes-article .motto{background:var(--pale);color:var(--ink);border-radius:8px;text-align:left;padding:24px;margin-top:30px}
+.notes-article .memory-motto span,.notes-article .motto small{color:var(--muted);font-size:14px}
+.notes-article button,.notes-article .btn,.notes-article .notes-toolbar button{min-height:44px;min-width:44px;font-size:14px}
+.notes-article button,.notes-article .btn,.notes-article .topbar a,.notes-article summary,.notes-article .section-nav a,.notes-article .toc a{transition:background .18s,color .18s,border-color .18s,transform .18s}
+.notes-article button:enabled:hover{filter:brightness(1.06)}
+.notes-article button:enabled:active,.notes-article .btn:active{transform:translateY(1px)}
+.notes-article button:disabled{opacity:.58}
+.notes-article .graph-node:disabled,.notes-article .work-card:disabled{opacity:1}
+.notes-article :focus-visible{outline:3px solid #ad751d;outline-offset:4px}
+.notes-article .lab :focus-visible,.notes-article .clock-lab :focus-visible{outline-color:#f0cc80}
+.notes-article .toc a,.notes-article .section-nav a{display:inline-flex;align-items:center;min-height:44px;border-radius:5px;font-size:14px;padding:8px 12px}
+.notes-article .checklist label,.notes-article .clock-check{min-height:44px;font-size:14px;line-height:1.8}
+.notes-article .clock-field label,.notes-article .clock-controls small,.notes-article .clock-node small,.notes-article .clock-node span{font-size:13px;line-height:1.6}
+.notes-article .clock-current p,.notes-article .clock-candidate,.notes-article .clock-warnings{font-size:14px;line-height:1.8}
+.notes-article .clock-node strong,.notes-article .hero-numbers strong,.notes-article .metric strong{font-variant-numeric:tabular-nums}
+.notes-article .task-option strong,.notes-article .work-card strong{font-size:14px;line-height:1.65}
+.notes-article .task-option span,.notes-article .scope-buttons small,.notes-article .card-id,.notes-article .card-project,.notes-article .card-status,.notes-article .card-tags>span,.notes-article .lane-en{font-size:12px;line-height:1.6}
+.notes-article .scope-explanation,.notes-article .detail-copy>p,.notes-article .detail .acceptance,.notes-article .state-controls>p,.notes-article .board-heading p{font-size:14px;line-height:1.8}
+.notes-article .lane h4{font-size:14px;line-height:1.5;flex-wrap:wrap}
+.notes-article .lane-count{font-size:12px}
+.notes-article .lab .task-option{min-height:96px}
+.notes-article .skills-step-card dd,.notes-article .route-pane p,.notes-article .chooser-intro,.notes-article .permissions-pane>p{font-size:14px;line-height:1.85}
+.notes-article .skills-step-card dt,.notes-article .step-counter,.notes-article .permissions-pane small,.notes-article .permission-list span,.notes-article .graph-legend,.notes-article .graph-arrow-note{font-size:13px;line-height:1.8}
+.notes-article .ui-arrow{width:18px;height:18px;display:inline-block;vertical-align:middle;flex-shrink:0}
+.notes-article .selection-jump,.notes-article .choice-result{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;padding:10px 12px;border-radius:5px;font-size:13px;font-weight:600;line-height:1.6;text-decoration:none}
+.notes-article .selection-jump{background:#22664f;color:#fff}
+.notes-article .choice-result{color:#e2efca;border:1px solid #829873;background:#173e33;margin-top:7px}
+.notes-article .task-choice{min-width:0}
+.notes-article .task-choice .task-option{width:100%}
+.notes-article .task-option[aria-pressed="false"]+.choice-result{display:none}
+.notes-article #selected-skill,.notes-article #plane-selected-title{scroll-margin-top:128px}
+.notes-article footer,.notes-article .footer{font-size:13px;line-height:1.8}
+.notes-article footer a,.notes-article .footer a{display:inline-flex;align-items:center;min-height:44px}
+.notes-article .note-body p,.notes-article .hero-intro,.notes-article .article-section>p{text-wrap:pretty}
+@media(max-width:760px){
+.notes-article .wrap{width:calc(100% - 40px)}
+.notes-article .topbar-inner{flex-wrap:wrap;gap:0;padding-top:6px}
+.notes-article .brand{min-height:44px;font-size:15px}
+.notes-article .topbar nav{width:100%;gap:12px;overflow-x:auto;flex-wrap:nowrap;padding:0 0 4px;scrollbar-width:thin}
+.notes-article .topbar nav a{font-size:13px;flex-shrink:0;padding-inline:2px}
+.notes-article .hero{grid-template-columns:1fr;gap:28px;padding-block:32px}
+.notes-article .hero h1{font-size:32px;line-height:1.4}
+.notes-article .hero-intro{font-size:16px;max-width:none;margin-block:16px}
+.notes-article .hero-figure{max-width:500px}
+.notes-article .hero .tag{margin-bottom:12px}
+.notes-article .content-section,.notes-article .article-section{padding-block:36px}
+.notes-article .content-section+.content-section{padding-top:36px}
+.notes-article h2,.notes-article .article-section>h2{font-size:24px}
+.notes-article .section-head p{font-size:15px}
+.notes-article .note-section>summary{font-size:17px}
+.notes-article .note-section>summary h2{font-size:18px}
+.notes-article .note-body p,.notes-article .note-body li{font-size:16px}
+.notes-article .note-body pre,.notes-article pre{font-size:13px}
+.notes-article .note-body th,.notes-article .note-body td{font-size:14px}
+.notes-article .principles{grid-template-columns:1fr;gap:14px}
+.notes-article .principles strong{display:inline;margin-right:8px}
+.notes-article .principles span{display:inline}
+.notes-article .task-options{grid-template-columns:1fr 1fr;align-items:start}.notes-article .lab .task-option{min-height:76px;padding:12px}
+.notes-article .board{grid-template-columns:1fr 1fr}
+.notes-article .lane:last-child .lane-cards{display:flex}
+.notes-article .lane-cards{min-height:0}
+.notes-article .lane{padding:14px}
+.notes-article .lane-en{margin-bottom:10px}
+.notes-article .work-card{padding:14px}
+.notes-article .card-tags{gap:6px}
+.notes-article .lab-top{flex-wrap:wrap}
+.notes-article .lab-top .tag{white-space:normal}
+.notes-article .note-section,.notes-article .note-body h3,.notes-article .article-section,.notes-article .article-section>h3{scroll-margin-top:124px}
+}
+@media(max-width:370px){.notes-article .task-options,.notes-article .board{grid-template-columns:1fr}.notes-article .hero h1{font-size:30px}.notes-article .topbar nav{gap:8px}}
+}
+@media(prefers-reduced-motion:reduce){.notes-article *,.notes-article *::before,.notes-article *::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+</style>
+<style>
+main{padding-bottom:32px}.toc{display:flex;flex-wrap:wrap;border-block:1px solid var(--line);padding:12px 0;gap:4px}.article-section{border-bottom:1px solid var(--line)}.article-section>h2{scroll-margin-top:135px}details{max-width:54rem;border:1px solid var(--line);border-radius:8px;padding:12px 18px;margin:20px 0;background:#fff}summary{cursor:pointer;font-weight:700;min-height:44px;display:list-item}details p{max-width:44rem}.lab{border:1px solid #8ba38f;border-radius:12px;padding:24px;margin-top:24px;background:#f3f6ee}.lab-head{margin-top:0}.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:16px}.control{display:grid;gap:5px;align-content:start;min-width:0}.control input,.control select{width:100%;border:1px solid #869d8b;border-radius:5px;background:#fff;color:var(--ink);padding:7px 10px}.actions{display:flex;flex-wrap:wrap;gap:12px;margin:18px 0}button{border:1px solid var(--green);border-radius:6px;background:var(--green);color:#fff;padding:8px 16px}button.secondary{background:white;color:var(--green)}.result{background:#fff;padding:14px 16px;border-left:4px solid var(--green);border-radius:5px;white-space:pre-wrap;overflow-wrap:anywhere;min-height:70px;font-variant-numeric:tabular-nums}.flow{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}.flow span{padding:9px 12px;border:1px solid var(--line);background:#fff;border-radius:6px;flex:1;min-width:110px}.flow span.done{background:#d8e9c6;border-color:#527a50}.flow span.stop{background:#f8e3c3;border-color:#ae761c}.meter{height:24px;position:relative;overflow:hidden;background:#dce3d7;border:1px solid #8ba38f;border-radius:5px;margin:14px 0}.meter>span{display:block;background:#22664f;height:100%;width:0}.meter-label{font:14px/1.8 var(--mono);overflow-wrap:anywhere}.rtt-ring{display:flex;gap:3px;flex-wrap:wrap;margin:15px 0}.ring-cell{width:16px;height:24px;background:#fff;border:1px solid #829580;border-radius:2px}.ring-cell.used{background:#22664f}.ring-cell.reserved{background:repeating-linear-gradient(45deg,#d8d8d8,#d8d8d8 3px,#fff 3px,#fff 6px)}.priority-grid{display:flex;flex-wrap:wrap;gap:4px;margin:16px 0}.priority-grid span{padding:6px;min-width:36px;text-align:center;border:1px solid #8ba38f;border-radius:4px}.priority-grid .forbidden{background:#f8e3c3}.priority-grid .eligible{background:#d8e9c6}.priority-grid .selected{outline:3px solid #21382e;outline-offset:1px}.reading-map{display:grid;gap:10px}.reading-map div{border:1px solid #708774;border-radius:6px;padding:12px}.reading-map strong{font:18px/1.5 var(--mono);color:#d5e7b3}.reading-map small{display:block;color:#d7e5d0}pre{max-width:100%;overflow:auto;padding:18px;background:#193e33;color:#eef5e5;border-radius:8px;white-space:pre}pre code{background:none;color:inherit;padding:0}.source{font-size:14px;color:var(--muted)}.source a{overflow-wrap:anywhere}.notes-article .lab :focus-visible{outline-color:#ad751d}.legend{font-size:13px;color:var(--muted)}.footer{flex-wrap:wrap}.noscript-note{border:2px solid #ae761c;padding:16px}.checklist li{margin:9px 0}@media(max-width:600px){.lab{padding:16px}.hero-card{padding:18px}.flow span{min-width:100px}details{padding:12px}.result{padding:12px}pre{font-size:13px}}@media print{.topbar,.skip,.toc,.actions{display:none}.wrap{width:100%}.hero{display:block}.hero-card{color:#000;background:#fff}.hero-card strong,.hero-card small{color:#000}details,.lab{break-inside:auto}details{border-color:#999}a{color:#000}pre{white-space:pre-wrap;background:#eee;color:#000}.article-section{padding-block:20px}.content-section{padding-block:20px}}
+</style></head><body class="notes-article">
+<a class="skip" href="#main">跳到正文</a>
+<header class="topbar"><div class="wrap topbar-inner"><a class="brand" href="../"><span class="brandmark" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span>嵌入式技术笔记</a><nav aria-label="笔记导航"><a href="../debug/">返回分类</a><a href="#filter-lab">交互实验</a><a href="#quick-start">完整笔记</a><a href="../?search=1">搜索笔记</a></nav></div></header>
+<main id="main" class="wrap">
+<section class="hero" aria-labelledby="easylogger-title"><div><p class="tag">固件诊断 / Cortex-M / FreeRTOS</p><h1 id="easylogger-title">EasyLogger：<br>从第一行日志到可维护的固件诊断</h1><p class="hero-intro">日志不只是“把字符发出去”。先决定哪些事件值得记录，再把格式、并发和传输分开管理。用四个能动手的实验，看清日志消失、阻塞和拥塞的原因。</p><p class="date-note">适用：STM32 / GD32 的 Cortex-M、Keil MDK、FreeRTOS、J-Link。本文不涵盖 GD32 RISC-V 型号。</p><div class="hero-links"><a href="#filter-lab">试一条日志</a><a href="#keil-port">查看移植清单</a><a href="#validation-limits">先看验证边界</a></div></div><aside class="hero-card" aria-label="三个层次"><p class="eyebrow">ONE LOG · THREE LAYERS</p><div class="reading-map"><div><strong>printf → 文本</strong><small>把参数格式化为字符</small></div><div><strong>EasyLogger → 规则</strong><small>等级、标签、格式、过滤与共享缓冲</small></div><div><strong>RTT / UART → 通道</strong><small>复制到 RAM 或排队发到串口</small></div></div><p>EasyLogger 可以使用 RTT。两者各管一层。</p></aside></section>
+<nav class="toc" aria-label="文章目录"><a href="#quick-start">快速结论</a><a href="#logging-layers">日志分层</a><a href="#transport-choice">选择通道</a><a href="#filter-lab">等级过滤</a><a href="#keil-port">Keil 移植</a><a href="#task-mutex">Mutex 与断言</a><a href="#isr-events">ISR 事件</a><a href="#isr-lab">优先级实验</a><a href="#dma-lifetime">DMA 寿命</a><a href="#rtt-lab">RTT 缓冲实验</a><a href="#uart-lab">UART 带宽</a><a href="#fault-record">故障现场</a><a href="#production">量产验收</a><a href="#corrections">易错点</a><a href="#validation-limits">验证边界</a><a href="#references">官方来源</a></nav>
+<noscript><p class="noscript-note">正文和可展开笔记仍可阅读。四个教学模拟需要 JavaScript，当前结果不代表真实硬件状态。</p></noscript>
+<section class="article-section" aria-labelledby="quick-start"><h2 id="quick-start">先记住这条最小路线</h2><p>入门先采用<strong>同步 EasyLogger + FreeRTOS Mutex + RTT SKIP</strong>。正常任务调用 <code>log_e / log_w / log_i / log_d</code>，EasyLogger 管格式，项目的 <code>elog_port_output</code> 把文本交给 RTT。先不启用额外异步或缓冲模块，减少需要同时理解的状态。</p><div class="callout"><p>这里“同步”表示调用任务完成格式化和向 RTT 复制；不表示 J-Link 已取走，也不表示 PC 已保存文件。普通日志接口只供正常任务调用。</p></div><p>由调度器启动后的初始化任务完成 <code>AppLog_Init</code>，再创建或放行会打印的业务任务。若需要上电早期记录，另做严格单写者的最小启动通道。ISR、故障处理和实时性要求严格的路径采用独立的有界事件记录。</p><p>临时看一个变量或很小的单任务程序，<code>printf</code> 可以够用；多模块、多人维护、要切换量产等级的固件，更适合统一日志入口。业务模块不直接绑定发送硬件，更换 RTT/UART 时主要调整移植层。</p></section>
+<section class="article-section" aria-labelledby="logging-layers"><h2 id="logging-layers">printf、日志策略与传输各管什么</h2><p><code>printf</code> 将参数按格式串变成文本，再交给 C 运行库输出。EasyLogger 在这之外提供等级、模块标签、统一格式和过滤。RTT 或 UART 则负责传输。换成 EasyLogger 并不会免去字符串格式化的 CPU、栈与 RAM 成本；浮点支持和体积还取决于工具链，库宣传的占用并非整个工程的占用。</p><div class="flow" aria-label="一条普通日志的处理路径"><span>源代码调用</span><span>编译期宏筛选</span><span>参数求值</span><span>运行等级 / TAG</span><span>共享缓冲格式化</span><span>关键词筛选</span><span>后端写入</span></div><p>关键词通常检查<strong>已经格式化</strong>的文本，不能当成完全免去格式化的前置开关。运行时不输出，也未必省去函数实参的求值。不要把业务行为写在日志参数里，例如 <code>log_d("n=%u", ++counter)</code>；编译关闭日志可能让这个自增也消失。</p><details><summary>为什么参数求值值得单独强调</summary><p>编译期宏可以把整次普通 <code>log_x</code> 调用删掉；保留下来的函数调用，参数表达式在进入函数前已经求值。因此先执行必要业务操作、保存结果，再记录结果。下面实验只增加虚拟计数，不执行用户输入的 C 表达式。RAW 与 hexdump 的路径另行审查。</p></details><p class="source">来源：<a href="https://github.com/armink/EasyLogger/blob/master/easylogger/inc/elog.h">等级宏与接口 elog.h</a>、<a href="https://github.com/armink/EasyLogger/blob/master/easylogger/src/elog.c">格式化与过滤 elog.c</a>。</p></section>
+<section class="article-section" aria-labelledby="transport-choice"><h2 id="transport-choice">开发常用 RTT，维修与工装按需 UART DMA</h2><div class="table-wrap"><table><thead><tr><th>选择</th><th>适合的场景</th><th>需要接受的约束</th></tr></thead><tbody><tr><td>J-Link RTT</td><td>开发时通过调试接口访问 MCU RAM 缓冲，不额外占用 UART</td><td>主机要消费缓冲；非阻塞也可能丢日志；部分目标只能使用会暂停 CPU 的 Stop Mode</td></tr><tr><td>UART DMA</td><td>串口工装、产品测试、现场维修，不要求长期接 J-Link</td><td>线路带宽有限；必须管理队列、DMA 缓冲寿命、错误与缓存一致性</td></tr></tbody></table></div><p>RTT 常见背景访问不必为每个字符停 CPU，但不能承诺“完全不影响运行”。RTT、SWO/ITM 和半主机是不同机制；能看 SWO 的工具不代表支持 RTT。DMA 省去逐字节搬运的一部分 CPU 工作，格式化、复制、排队、启动、回调与缓存维护仍有成本。</p><p>两条通道都不是历史数据库。没有接收与持久化机制，旧日志通常无法事后找回。RTT 写入成功只说明进入 RAM；UART DMA 启动成功也不等于传输和记录已经完成。</p><details><summary>RTT 三种满缓冲策略，先选 SKIP</summary><ul><li><strong>SKIP：</strong>本次写入放不下就整次不写，不覆盖最旧消息；适合普通开发日志，同时统计未完整接收次数。</li><li><strong>TRIM：</strong>尽量写入能容纳的部分，舍弃尾部。接收文本可能半行，UTF-8 也可能截在多字节字符中间。</li><li><strong>BLOCK：</strong>等待空位。主机停止消费可能无限等待，不能放在必须持续运行的业务路径。</li></ul><p>完整性单位是“一次写入”，不保证跨多次调用的长文本或 hexdump 完整。环形缓冲保留一个字节区分空与满，物理 2048 字节实际可用 2047 字节。“非阻塞”仅指 RTT 写入不等主机，整条日志仍可能有格式化、Mutex 等待和短临界区。</p></details><p class="source">来源：<a href="https://kb.segger.com/RTT">SEGGER RTT 工作方式与模式</a>、<a href="https://github.com/SEGGERMicro/RTT">官方 RTT 源码</a>。</p></section>
+<section class="article-section" aria-labelledby="filter-lab"><h2 id="filter-lab">实验一：为什么日志没有出现</h2><p>等级数值越小越严重：ASSERT=0、ERROR=1、WARN=2、INFO=3、DEBUG=4、VERBOSE=5。普通宏先同时受全局编译上限 C 与文件 <code>LOG_LVL</code> 上限 F 限制，再受运行上限 R 限制。</p><div class="lab"><h3 class="lab-head">等级过滤器</h3><p class="demo-disclaimer">教学模拟，不连接真实硬件。每按一次生成一条虚拟记录；RAW / hexdump 不纳入模型。</p><div class="controls">
+<div class="control"><label for="filter-C">全局编译上限 C</label><select id="filter-C"></select></div><div class="control"><label for="filter-F">文件 LOG_LVL 上限 F</label><select id="filter-F"></select></div><div class="control"><label for="filter-R">运行等级上限 R</label><select id="filter-R"></select></div><div class="control"><label for="filter-L">消息等级 L</label><select id="filter-L"></select></div><div class="control"><label for="filter-tag">消息 TAG</label><input id="filter-tag" value="sensor" maxlength="80"></div><div class="control"><label for="filter-tag-query">TAG 包含筛选（空为全部）</label><input id="filter-tag-query" maxlength="80"></div><div class="control"><label for="filter-keyword">格式化后关键词（空为全部）</label><input id="filter-keyword" maxlength="80"></div></div><div class="actions"><button id="filter-run" type="button">生成一条日志</button><button id="filter-reset" class="secondary" type="button">重置实验</button></div><div id="filter-flow" class="flow" aria-label="当前日志流程"></div><p id="filter-count">参数求值虚拟计数：0</p><div id="filter-result" class="result" role="status" aria-live="polite">请选择条件，再生成一条日志。</div><p class="lab-note">试试 C=WARN、R=VERBOSE、L=INFO：运行放宽无法恢复编译删除。再设 C=DEBUG、F=VERBOSE、R=ERROR、L=DEBUG：不输出，但参数计数增加。</p></div></section>
+<section class="article-section" aria-labelledby="keil-port"><h2 id="keil-port">Keil 移植：先保证源码和配置来自同一套</h2><p>从官方项目取源码并固定版本、保留许可证。EasyLogger 通常加入 <code>elog.c</code>、<code>elog_utils.c</code> 与项目自己的 <code>elog_port.c</code>；使用匹配版本的 <code>elog.h</code> 与唯一生效的 <code>elog_cfg.h</code>。RTT 加入 <code>SEGGER_RTT.c</code>、完整匹配头文件和配置副本 <code>SEGGER_RTT_Conf.h</code>；当前官方目录还包括 <code>RTT/SEGGER_RTT_ConfDefaults.h</code>，不能混搭版本。</p><details open><summary>最小配置清单：先使用 C 实现</summary><p>以下是<strong>教学配置片段</strong>，分属 EasyLogger 与 RTT 各自配置文件，需按下载版本核实；并非可直接编译的板级工程。</p><pre><code>/* elog_cfg.h：关闭额外异步和缓冲模块 */
+#define ELOG_LINE_BUF_SIZE 256
+
+/* SEGGER_RTT_Conf.h：必须对相关编译单元一致生效 */
+#define BUFFER_SIZE_UP 2048
+#define SEGGER_RTT_MODE_DEFAULT SEGGER_RTT_MODE_NO_BLOCK_SKIP
+#define RTT_USE_ASM 0</code></pre><p>若启用优化汇编，应加入适配工具链的 <code>SEGGER_RTT_ASM_ARMv7M.S</code> 并验证链接；AC5 与 AC6 配置不能一概视为相同。直接从 EasyLogger 调 RTT 不需要重定向 <code>fputc/_write</code>，也不要求开启半主机、ITM 或专门启用 MicroLIB。</p></details><details><summary>Include Paths、FreeRTOS 与锁配置</summary><ul><li>Include Paths 加入组件、EasyLogger、RTT、配置目录、CMSIS 与 FreeRTOS。检查预处理结果，避免厂家包同名文件遮蔽工程配置。</li><li>启用所需 C99 支持，确认 <code>snprintf/vsnprintf</code> 可用，实测任务栈和浮点负载。</li><li>静态 Mutex 方案要求 <code>configUSE_MUTEXES=1</code>、<code>configSUPPORT_STATIC_ALLOCATION=1</code>。查询调度器状态要求 <code>INCLUDE_xTaskGetSchedulerState=1</code>。<code>portMAX_DELAY</code> 真正无限等待通常还需 <code>INCLUDE_vTaskSuspend=1</code>。</li><li>Idle / Timer 静态内存要求依内核版本和配置补齐。</li><li>保留官方 RTT 锁实现，检查最终 <code>SEGGER_RTT_LOCK/UNLOCK</code> 展开；它可能仅屏蔽部分中断，高于阈值的 ISR 不能据此并发写同一缓冲。带缓存内核还需核实控制块和数据可见性。</li></ul></details><details><summary>J-Link RTT Viewer 没有输出时按什么顺序查</summary><p>Keil Debug 选 J-LINK/J-TRACE Cortex，按芯片配置 SWD，先确认下载并运行，再开 RTT Viewer。Keil 已占用 J-Link 时可用 Existing Session。</p><ol><li>检查编译开关、初始化与启动，再检查等级过滤。</li><li>确认目标程序真的运行，而非停在断点或异常中。</li><li>确认 <code>_SEGGER_RTT</code> 的 RAM 地址、调试访问能力与缓冲是否已满。</li><li>检查缓存、低功耗和目标支持的访问模式。</li></ol></details><p class="source">来源：<a href="https://github.com/armink/EasyLogger/blob/master/docs/zh/port/kernel.md">EasyLogger 内核移植</a>、<a href="https://github.com/SEGGERMicro/RTT/blob/main/RTT/SEGGER_RTT_ConfDefaults.h">RTT 默认配置</a>、<a href="https://kb.segger.com/Keil_MDK-ARM">Keil MDK-ARM</a>、<a href="https://kb.segger.com/J-Link_RTT_Viewer">RTT Viewer</a>。</p></section>
+<section class="article-section" aria-labelledby="task-mutex"><h2 id="task-mutex">Mutex、Assert 和 HardFault 是三件事</h2><p><strong>Mutex 是任务间轮流使用共享资源的“钥匙”。</strong>任务 A 持有日志锁，B 就等待；A 释放后 B 才使用同一缓冲。EasyLogger 的共享格式化缓冲要求锁覆盖<strong>格式化过程</strong>，不能只锁最后的 <code>SEGGER_RTT_Write</code>。直接绕过日志库写 RTT 的模块还要遵守 RTT 自身并发规则。</p><p>FreeRTOS 优先级继承可缓解部分优先级反转，但不能消除死锁，也不会自动保证固定最大等待时间。业务持有其他锁时再打印，可能形成循环锁依赖；严格时延任务应使用有界事件、汇总与限频。</p><div class="callout warning"><p>普通日志不要用于 ISR、HardFault、栈溢出钩子、关中断临界区、调度器挂起区或日志自己的回调。时间戳、输出和断言处理回调不能再调用普通日志。</p></div><details><summary>为什么“拿不到锁就直接返回”并不成立</summary><p><code>elog_port_output_lock</code> 返回 <code>void</code>。如果获取锁失败后从这个回调直接返回，日志核心仍可能继续改写共享缓冲，造成并发破坏。需要丢弃或有界等待时，必须在入口或架构层设计完整失败路径。初始化后保持格式与过滤稳定最易理解；运行修改同样需要同步。</p><p>仅判断 <code>xTaskGetSchedulerState()==taskSCHEDULER_RUNNING</code> 不代表当前不是 ISR：中断可以发生在调度器运行期间。ISR 不能获取或释放 Mutex，等待为零也不合法。<code>xSemaphoreTakeFromISR/GiveFromISR</code> 适用于相应二值/计数信号量，不能拿来操作 Mutex。</p></details><details><summary>断言表达“必须成立”；可预期故障需要正常处理</summary><p>Assert 用于检查资源创建成功、状态符合约定等程序员假设。队列满、设备断线通常是需要处理的业务故障。先执行操作、保存结果，再检查；不要把拿锁等副作用藏进 <code>configASSERT</code>，否则关闭断言可能连操作也删除。关闭断言后仍须有失败处理。</p><pre><code>/* 教学顺序：先做操作，再检查结果；失败分支也须实现 */
+result = CreateRequiredResource();
+if (result == NULL) {
+    IndependentFailurePath(); /* 不依赖日志锁的项目处理 */
+    return;
+}
+configASSERT(result != NULL);</code></pre><p>这些名称是伪代码，未提供对应板级实现。EasyLogger 默认断言处理可能再次打印，实际接入应换成独立路径。HardFault 是硬件异常，关闭软件断言不会修复非法访问、损坏的栈或错误上下文。开发期可停住调试，量产要有自己的安全处置与恢复策略。</p></details><p class="source">来源：<a href="https://github.com/FreeRTOS/FreeRTOS-Kernel/blob/main/include/semphr.h">FreeRTOS 信号量与 Mutex 约束</a>、<a href="https://github.com/FreeRTOS/FreeRTOS-Kernel-Book/blob/main/ch12.md">FreeRTOS 调试与断言</a>、<a href="https://github.com/armink/EasyLogger/blob/master/easylogger/inc/elog.h">EasyLogger 断言接口</a>。</p></section>
+<section class="article-section" aria-labelledby="isr-events"><h2 id="isr-events">ISR 只记轻量事件，让任务解释</h2><div class="flow" aria-label="中断事件记录流程"><span>识别并处理中断源</span><span>固定长度事件</span><span>非等待投递</span><span>任务取出并格式化</span></div><p>事件可包含 id、source、value，使用按值复制的短记录。不要把指向 ISR 局部变量的指针交给稍后执行的任务。队列在启用中断前创建，满时只统计丢失，不能等待；是否 <code>portYIELD_FROM_ISR</code> 按唤醒信息与具体端口规则处理。</p><details><summary>高频 ISR 与 volatile 的边界</summary><p>高频输入捕获或严格实时中断可只维护计数、标志或预分配环形缓冲。<code>volatile</code> 不等于原子性：多个 ISR 递增、任务读后清零、多字快照都须明确同步。微秒级时序用硬件捕获、周期计数或逻辑分析仪测量，不靠大量文本推断。</p></details><p class="source">来源：<a href="https://www.freertos.org/Documentation/02-Kernel/03-Supported-devices/04-Demos/ARM-Cortex/RTOS-Cortex-M3-M4">FreeRTOS Cortex-M3/M4 中断优先级说明</a>。</p></section>
+<section class="article-section" aria-labelledby="isr-lab"><h2 id="isr-lab">实验二：这个 IRQ 能调用 FromISR 吗</h2><p><strong>NVIC 数值越小越紧急；FreeRTOS 任务优先级数值越大越高。</strong>两者方向相反。即使 IRQ 落在允许范围，也只允许适用的 FromISR 接口，仍不能用 Mutex 或普通任务接口。</p><div class="lab"><h3 class="lab-head">ISR 优先级检查器</h3><p class="demo-disclaimer">教学模拟，不连接真实硬件。固定前提：典型 Cortex-M3/M4/M7 FreeRTOS 端口，所有实现位都用于抢占优先级。</p><div class="controls"><div class="control"><label for="isr-bits">实现位数 b（1..8）</label><input id="isr-bits" type="number" min="1" max="8" step="1" value="4"></div><div class="control"><label for="isr-threshold">逻辑阈值 T（必须非零）</label><input id="isr-threshold" type="number" min="1" max="15" step="1" value="5"></div><div class="control"><label for="isr-priority">IRQ 逻辑优先级 P</label><input id="isr-priority" type="number" min="0" max="15" step="1" value="4"></div></div><div id="isr-scale" class="priority-grid" aria-label="中断优先级分区"></div><div id="isr-result" class="result" role="status" aria-live="polite"></div><p class="lab-note">P&lt;T 更紧急，禁止所有 FreeRTOS API，包含 FromISR。寄存器阈值 = T &lt;&lt; (8-b)。实际分组、器件实现位数与驱动参数编码必须核实，此处不生成通用初始化代码。</p></div></section>
+<section class="article-section" aria-labelledby="dma-lifetime"><h2 id="dma-lifetime">UART DMA 的关键：谁拥有这段内存</h2><p>不能把 EasyLogger 的共享日志指针传给 <code>HAL_UART_Transmit_DMA</code> 后立即返回：DMA 还没读完，下一条日志可能覆盖那块内存。正确方向是<strong>复制到发送队列拥有的存储 → 单一发送者启动 DMA → 完成后才释放存储</strong>。</p><div class="flow" aria-label="DMA 存储所有权"><span>日志共享缓冲</span><span>复制到队列槽位</span><span>DMA 持有槽位</span><span>完成 / 错误处理后释放</span></div><details><summary>从教学流程到可用后端还缺什么</summary><ul><li>定义复制入队接口、满队列策略、过长记录处理、多生产者同步和丢失计数。</li><li>明确 BUSY、启动失败、完成及错误回调的存储归属，处理环形回绕；回调不能调用普通日志。</li><li>确认 DMA 内存对外设可达，带 D-cache 器件按厂商要求清理缓存并对齐。</li><li>停止或复位前的 flush 必须有时间上限。</li></ul><p>打开 EasyLogger 异步宏不会自动解决这些问题。它通常仍先在调用方格式化，再决定哪些等级入缓冲，部分高严重度日志可能仍同步输出；异步也不自动代表 ISR 安全。</p></details><p class="source">来源：<a href="https://github.com/armink/EasyLogger/blob/master/easylogger/src/elog_async.c">EasyLogger 异步实现</a>。DMA 可达性、缓存与 HAL 细节须查目标芯片及驱动文档。</p></section>
+<section class="article-section" aria-labelledby="rtt-lab"><h2 id="rtt-lab">实验三：RTT 空间满时发生了什么</h2><p>环形缓冲是暂存区，不能无限蓄积。这里显式显示物理容量、保留字节、已用空间与读写指针。每次主机读取只消费当时已有字节，再让等待写入继续；模拟不尝试保存文本或还原被截断的字符。</p><div class="lab"><h3 class="lab-head">RTT 环形缓冲实验</h3><p class="demo-disclaimer">教学模拟，不连接真实硬件。输入按 TextEncoder 的 UTF-8 字节计数；实际固件编码由工程决定。</p><div class="controls"><div class="control"><label for="rtt-capacity">物理容量 N（2..4096 字节）</label><input id="rtt-capacity" type="number" min="2" max="4096" step="1" value="32"></div><div class="control"><label for="rtt-mode">满缓冲模式</label><select id="rtt-mode"><option>SKIP</option><option>TRIM</option><option>BLOCK</option></select></div><div class="control"><label for="rtt-text">本次写入文本（最多 16384 码元）</label><input id="rtt-text" maxlength="16384" value="12345678901234567890"></div><div class="control"><label for="rtt-read-count">主机请求读取字节（0..1000000）</label><input id="rtt-read-count" type="number" min="0" max="1000000" step="1" value="8"></div><div class="control"><label for="rtt-connected">主机连接状态</label><select id="rtt-connected"><option value="yes">连接并允许手动消费</option><option value="no">断开，不消费</option></select></div></div><div class="actions"><button id="rtt-write" type="button">写入一次</button><button id="rtt-read" type="button">主机读取</button><button id="rtt-reset" type="button" class="secondary">重置缓冲</button></div><div id="rtt-ring" class="rtt-ring" role="img" aria-label="缓冲占用"></div><div id="rtt-result" class="result" role="status" aria-live="polite"></div><p class="lab-note">绿色为已用，斜线为保留的一个字节。大容量时按比例缩略；指针以数值为准。修改容量或模式会重建空缓冲；BLOCK 等待期间禁止同一发送者再次写入及改配置，可读取、断开、重连或重置。</p><p class="lab-note">重置会放弃等待写入；不是固件超时机制。BLOCK 无主机消费可一直等待。成功只表示写入 RAM；“主机已取走”也不等于文件已保存。</p></div></section>
+<section class="article-section" aria-labelledby="uart-lab"><h2 id="uart-lab">实验四：DMA 很快，线路装得下吗</h2><p>8N1 每个有效字节在线路上占 10 位。115200 baud 的理论有效速率只有 11520 byte/s。启动 DMA 的 CPU 用时与整条数据的线路发送时间是两件事。</p><div class="lab"><h3 class="lab-head">UART 带宽估算器</h3><p class="demo-disclaimer">教学模拟，不连接真实硬件。固定 8N1 连续平均模型，忽略协议空闲、DMA 边界与调度开销。</p><div class="controls"><div class="control"><label for="uart-baud">波特率 baud（正数）</label><input id="uart-baud" type="number" min="1" value="115200"></div><div class="control"><label for="uart-bytes">每条字节数 B（正数）</label><input id="uart-bytes" type="number" min="1" value="100"></div><div class="control"><label for="uart-frequency">每秒条数 f（可为零）</label><input id="uart-frequency" type="number" min="0" value="200"></div><div class="control"><label for="uart-buffer">空缓存 Q（字节，可为零）</label><input id="uart-buffer" type="number" min="0" value="2048"></div></div><div class="meter" aria-hidden="true"><span id="uart-load"></span></div><p class="legend">图条以线路 100% 容量为上限；超过部分以数值与过载文字表示。</p><div id="uart-result" class="result" role="status" aria-live="polite"></div><p class="lab-note">需求=B×f；理论速率=baud/10；单条线路时间=B×10000/baud 毫秒；占用率=需求/理论速率。持续超载时，近似填满时间=Q/(需求-理论速率)。平均可容纳仍可能因突发溢出。</p></div></section>
+<section class="article-section" aria-labelledby="fault-record"><h2 id="fault-record">HardFault 用独立通道保存最小现场</h2><p>故障时任务栈、MSP、调度器和共享缓冲都可能已坏，处理入口不要依赖 <code>log_e</code>、FreeRTOS Mutex、动态内存或普通 Flash 驱动。先记录 EXC_RETURN、MSP/PSP 和可用故障寄存器，确认帧可读后才读取；保存到独立保留区，安全处置或复位，下次启动再验证解释。</p><details><summary>异常帧不是“随便读 SP[6]”</summary><p>Handler 中的 LR / EXC_RETURN 与异常帧内 LR 不同。对有效的原始 Cortex-M4 硬件帧，核心 PC 位于 <code>SP+0x18</code>；FP 扩展不会把核心帧移到 <code>+0x48</code>。不能无条件读取原始 <code>SP[6]</code>，是因为必须确认 SP 的含义、有效 RAM、对齐、整个帧可读性、地址加法溢出，以及入栈是否成功。FPU 扩展和延迟压栈仍需按内核规则检查。</p><p><code>STKERR / MSTKERR / LSPERR</code> 等可能意味着现场不可靠；BFAR/MMFAR 结合有效位解释；非精确 BusFault 的 PC 不一定指向致错指令。M0/M0+ 不能套用完整 M4 故障寄存器模型。</p><p>即使待检 SP 合法，普通 C 处理函数自身也要有健康栈。MSP 已坏可能在检查前再次 fault。高可靠入口需要工具链与内核特定的最小汇编、独立紧急栈与反汇编审查；本文不提供假称跨 AC5/AC6 通用的处理器。</p></details><details><summary>保留记录需要完整的提交与恢复协议</summary><p>记录可包含 magic、版本、长度、固件构建 ID、序号、frame_valid、寄存器与校验。先标无效，写字段和校验，最后提交有效标记；启动验证后再使用。</p><p>保留 RAM 依赖正确段和 Scatter File 的 UNINIT 配置，启动程序、Bootloader、ECC 初始化与复位类型都不能覆盖它；<strong>NOINIT / UNINIT 不等于掉电保存</strong>。缓存与复位保持性必须实测。故障中写 Flash 要专门的失效设计，更稳妥的默认路线是可靠最小记录先保留，恢复后再持久化。</p><p>分析必须匹配当次构建的 AXF/ELF、Map、源码和编译选项，不能拿重新编译后的地址表猜测。</p></details><p class="source">来源：<a href="https://www.st.com/resource/en/programming_manual/pm0214-stm32-cortexm4-mcus-and-mpus-programming-manual-stmicroelectronics.pdf">ST PM0214 Cortex-M4 手册</a>、<a href="https://www.keil.com/appnotes/files/apnt209.pdf">Keil AN209 故障分析</a>、<a href="https://www.keil.com/support/man/docs/uv4/uv4_dg_adsld.asp">Keil Scatter Loading</a>。继续阅读站内<a href="../mcu/hardfault-stack-trace.html">HardFault 与异常栈帧笔记</a>。</p></section>
+<section class="article-section" aria-labelledby="production"><h2 id="production">量产时保留重要事件，控制噪声与风险</h2><div class="table-wrap"><table><thead><tr><th>构建</th><th>建议策略</th></tr></thead><tbody><tr><td>DEBUG</td><td>保留常用等级；VERBOSE 临时打开并限频</td></tr><tr><td>TEST</td><td>记录构建 ID、复位原因和关键事件，便于测试归因</td></tr><tr><td>RELEASE</td><td>以 ERROR/WARN 为主，INFO 按需；编译关闭大量 DEBUG/VERBOSE</td></tr></tbody></table></div><p>运行过滤无法恢复已编译删除的日志。RAW 和直接底层输出单独审查。日志不得包含密钥、密码、令牌或不必要个人数据；维修接口应有适当权限。</p><details><summary>历史事件更适合有结构的二进制记录</summary><p>重要历史可用固定长度记录保存事件 ID、时间基准、参数、次数、序号、构建 ID 和校验。做异常持续判定、恢复事件、限频、磨损控制和掉电恢复，不要每次循环都写 Flash。</p><p>看门狗重启后读取复位原因，应忠实写“上次复位原因为看门狗”，不要伪造一条复位前已经成功保存的事件。</p></details><h3>人工硬件验收清单</h3><p>以下是待执行的项目检查项，页面交互不会自动让它们通过。</p><ul class="checklist"><li>两个以上真实任务并发打印，检查行内容、锁范围与顺序。</li><li>断开主机后业务仍运行，丢弃计数增长；验证 BLOCK 不会误用在关键路径。</li><li>长行、浮点和峰值负载下测任务栈及最坏延迟。</li><li>队列满不等待，核对真实 NVIC 优先级、分组及 FromISR 使用。</li><li>DMA BUSY、错误、回绕与缓存路径，槽位始终有明确所有者。</li><li>安全环境中注入故障，核对复位保持、校验和匹配构建符号。</li><li>审查量产字符串与敏感数据，归档对应符号文件和配置。</li></ul></section>
+<section class="article-section" aria-labelledby="corrections"><h2 id="corrections">容易照抄错的地方</h2><ul><li>本次核对的官方 <code>ElogErrCode</code> 只定义 <code>ELOG_NO_ERR</code>；不要照抄未定义的 <code>ELOG_ERR</code>。</li><li>当前 RTT 接口名是 <code>SEGGER_RTT_SetFlagsUpBuffer</code>，不是 <code>SEGGER_RTT_SetFlags</code>；配置需对相关编译单元一致。</li><li>RTT 非阻塞不等于整条日志无等待，也不等于不丢日志。</li><li>调度器运行不等于当前不是 ISR；异步日志不等于 ISR 安全。</li><li>DMA 指针必须活到传输完成，共享日志缓冲不能直接异步借出。</li><li>断言是软件条件检查，HardFault 是硬件异常；两者不能混为一种错误处理。</li><li>保留 RAM 不是掉电存储，故障 C 函数不能假设自己的栈健康。</li></ul></section>
+<section class="article-section" aria-labelledby="validation-limits"><h2 id="validation-limits">读这篇笔记时，请保留这些验证边界</h2><p>四个实验只演示确定规则，不连接目标、不测硬件时序，也不证明板级接口可用。配置片段和伪代码仅用于解释，本页没有完整板级工程或参考代码下载。</p><details><summary>研究阶段的主机烟雾测试证明了什么</summary><p>研究阶段曾在云端用官方 EasyLogger / RTT C 源码和模拟 CMSIS / FreeRTOS，检查 DEBUG / RELEASE 的基础格式化、编译过滤、长行输出上限和满缓冲计数，ASan / UBSan 烟雾测试通过；LeakSanitizer 因环境限制关闭。</p><p>这只对应研究参考实现；本页新写的教学片段不能继承那次测试结论。没有在 Keil、AC5/AC6、真实 FreeRTOS 并发或目标硬件验证。</p></details><p>网页浏览器的窄视口验收也只是桌面视口模拟，不能称为真实手机或真实硬件测试。使用前应完成上面的项目验收清单。</p></section>
+<section class="article-section" aria-labelledby="references"><h2 id="references">官方源码与版本定位</h2><p>完整源码请从官方项目获取，固定提交、匹配配置和许可证后再移植。下列 2026-10-15 分支 HEAD 只作本次来源定位，不是先前研究烟测的源码快照，也未据此重新做硬件或主机 C 测试。</p><ul class="source-list"><li><a href="https://github.com/armink/EasyLogger">EasyLogger 官方项目</a> · <a href="https://github.com/armink/EasyLogger/tree/806328e131836662fa83dd43364a53f699fd76ac">master 固定提交 806328e</a>。<a href="https://github.com/armink/EasyLogger/blob/master/docs/zh/port/kernel.md">内核移植说明</a>、<a href="https://github.com/armink/EasyLogger/blob/master/easylogger/inc/elog.h">elog.h</a>、<a href="https://github.com/armink/EasyLogger/blob/master/easylogger/src/elog.c">elog.c</a>、<a href="https://github.com/armink/EasyLogger/blob/master/easylogger/src/elog_async.c">elog_async.c</a>。</li><li><a href="https://github.com/SEGGERMicro/RTT">SEGGER RTT 官方项目</a> · <a href="https://github.com/SEGGERMicro/RTT/tree/4d8feab3150f86f37a9d323ddc88d6cdf5673072">main 固定提交 4d8feab</a>。<a href="https://kb.segger.com/RTT">RTT 知识库</a>、<a href="https://github.com/SEGGERMicro/RTT/blob/main/RTT/SEGGER_RTT_ConfDefaults.h">ConfDefaults</a>、<a href="https://kb.segger.com/Keil_MDK-ARM">Keil 集成</a>、<a href="https://kb.segger.com/J-Link_RTT_Viewer">RTT Viewer</a>。</li><li><a href="https://github.com/FreeRTOS/FreeRTOS-Kernel/tree/8be86d4a24fd4091f8f4192018423ab590f408db">FreeRTOS Kernel main 固定提交 8be86d4</a>。<a href="https://github.com/FreeRTOS/FreeRTOS-Kernel/blob/main/include/semphr.h">Mutex / 信号量接口</a>、<a href="https://www.freertos.org/Documentation/02-Kernel/03-Supported-devices/04-Demos/ARM-Cortex/RTOS-Cortex-M3-M4">Cortex-M 中断规则</a>、<a href="https://github.com/FreeRTOS/FreeRTOS-Kernel-Book/blob/main/ch12.md">断言与调试</a>。</li><li><a href="https://www.st.com/resource/en/programming_manual/pm0214-stm32-cortexm4-mcus-and-mpus-programming-manual-stmicroelectronics.pdf">ST PM0214</a>、<a href="https://www.keil.com/appnotes/files/apnt209.pdf">Keil AN209</a>、<a href="https://www.keil.com/support/man/docs/uv4/uv4_dg_adsld.asp">Scatter Loading</a>。</li></ul></section>
+</main><footer class="wrap footer"><span>嵌入式技术笔记 · 理解规则，再到目标上验证。</span><a href="../debug/">返回调试分类</a><a href="../">全部笔记</a><a href="#easylogger-title">回到开头</a></footer>
+<script id="easylogger-models">
+(() => {
+  'use strict';
+  const integer = (v,min,max) => typeof v === 'number' && Number.isSafeInteger(v) && v >= min && v <= max;
+  const requireValue = (ok,message) => { if (!ok) throw new RangeError(message); };
+  const filter = (v,counter=0) => {
+    requireValue(['C','F','R','L'].every(k=>integer(v[k],0,5)) && integer(counter,0,Number.MAX_SAFE_INTEGER-1),'等级必须为 0..5 的整数');
+    if(v.L>v.C || v.L>v.F) return {stage:'compiled-out',counter,text:''};
+    counter++;
+    if(v.L>v.R) return {stage:'runtime',counter,text:''};
+    const tag=String(v.tag??'app');
+    if(!tag.includes(String(v.tagQuery||''))) return {stage:'tag',counter,text:''};
+    const text='['+['ASSERT','ERROR','WARN','INFO','DEBUG','VERBOSE'][v.L]+']['+tag+'] 模拟记录 n='+counter;
+    if(!text.includes(String(v.keyword||''))) return {stage:'keyword',counter,text};
+    return {stage:'output',counter,text};
+  };
+  const createRTT = (capacity,mode) => {
+    requireValue(integer(capacity,2,4096),'物理容量必须是 2..4096 的整数');
+    requireValue(['SKIP','TRIM','BLOCK'].includes(mode),'未知缓冲模式');
+    let used=0,readPointer=0,writePointer=0,pending=0,incomplete=0,lostBytes=0,acceptedTotal=0,hostRead=0,connected=true;
+    const accept = n => {used+=n;writePointer=(writePointer+n)%capacity;acceptedTotal+=n;};
+    const snapshot = () => ({capacity,mode,used,free:capacity-1-used,readPointer,writePointer,pending,incomplete,lostBytes,acceptedTotal,hostRead,connected});
+    return {
+      snapshot,
+      setConnected(value) {requireValue(typeof value==='boolean','连接状态无效');connected=value;},
+      write(text) {
+        requireValue(typeof text==='string' && text.length<=16384,'文本最长 16384 个 UTF-16 码元');
+        requireValue(pending===0,'当前发送者仍在等待，不能再次写入');
+        const length=new TextEncoder().encode(text).length,free=capacity-1-used;
+        const accepted=mode==='SKIP' && length>free ? 0 : Math.min(length,free);
+        accept(accepted);
+        if(accepted<length) {if(mode==='BLOCK') pending=length-accepted;else {incomplete++;lostBytes+=length-accepted;}}
+        return {length,accepted,...snapshot()};
+      },
+      read(requested) {
+        requireValue(integer(requested,0,1000000),'读取量必须是 0..1000000 的整数');
+        if(!connected) return {read:0,...snapshot()};
+        const read=Math.min(requested,used); used-=read;readPointer=(readPointer+read)%capacity;hostRead+=read;
+        const resumed=Math.min(pending,capacity-1-used);accept(resumed);pending-=resumed;
+        return {read,...snapshot()};
+      }
+    };
+  };
+  const isr = ({bits,threshold,priority}) => {
+    requireValue(integer(bits,1,8),'实现位数须为 1..8 的整数');
+    const max=2**bits-1;
+    requireValue(integer(threshold,1,max)&&integer(priority,0,max),'阈值须非零，IRQ 须处于实现位数范围');
+    return {register:threshold*2**(8-bits),allowed:priority>=threshold,max};
+  };
+  const uart = ({baud,bytes,frequency,buffer}) => {
+    requireValue([baud,bytes,frequency,buffer].every(v=>typeof v==='number'&&Number.isFinite(v)&&v>=0)&&baud>0&&bytes>0,'输入须有限且非负，波特率与每条字节数须为正');
+    const rate=baud/10,demand=bytes*frequency,lineMs=bytes*10000/baud,occupancy=demand/rate;
+    const overloaded=demand>rate,fillSeconds=overloaded?buffer/(demand-rate):null;
+    requireValue(rate>0&&[rate,demand,lineMs,occupancy,occupancy*100].every(Number.isFinite)&&(!overloaded||Number.isFinite(fillSeconds)),'数值过大或过小，无法可靠估算');
+    return {rate,demand,lineMs,occupancy,overloaded,fillSeconds};
+  };
+  window.EasyLoggerModels={filter,createRTT,isr,uart};
+})();
+</script>
+<script id="easylogger-controller">
+(() => {
+  'use strict';
+  const M=window.EasyLoggerModels,$=id=>document.getElementById(id);
+  const number = id => { const raw=$(id).value.trim();if(!raw) throw new RangeError('请填写所有数值');return Number(raw); };
+  const text = (id,value) => {$(id).textContent=value;};
+  const bind=(ids,event,fn)=>ids.forEach(id=>$(id).addEventListener(event,fn));
+  const item = (label,className='') => {const node=document.createElement('span');node.textContent=label;node.className=className;return node;};
+  const failure=(id,error)=>text(id,'输入无效：'+error.message);
+  const names=['ASSERT','ERROR','WARN','INFO','DEBUG','VERBOSE'];
+  for(const key of ['C','F','R','L']) {
+    for(let i=0;i<names.length;i++) {const opt=document.createElement('option');opt.value=String(i);opt.textContent=names[i]+' = '+i;$('filter-'+key).append(opt);}
+  }
+  let counter=0;
+  const resetFilter = () => {
+    for(const [key,value] of Object.entries({C:4,F:5,R:3,L:4})) $('filter-'+key).value=String(value);
+    $('filter-tag').value='sensor';$('filter-tag-query').value='';$('filter-keyword').value='';counter=0;
+    text('filter-count','参数求值虚拟计数：0');text('filter-result','请选择条件，再生成一条日志。');$('filter-flow').replaceChildren();
+  };
+  $('filter-run').addEventListener('click',()=>{
+    try {
+      const input={};for(const key of ['C','F','R','L']) input[key]=number('filter-'+key);
+      input.tag=$('filter-tag').value;input.tagQuery=$('filter-tag-query').value;input.keyword=$('filter-keyword').value;
+      const r=M.filter(input,counter);counter=r.counter;text('filter-count','参数求值虚拟计数：'+counter);
+      const labels=['编译宏筛选','参数已求值','运行等级','TAG 筛选','格式化文本','关键词筛选','写入后端'];
+      const stopped={ 'compiled-out':0,runtime:2,tag:3,keyword:5,output:7 }[r.stage];
+      $('filter-flow').replaceChildren(...labels.map((label,i)=>item(label,i<stopped?'done':i===stopped?'stop':'')));
+      const outcomes={'compiled-out':'编译删除，参数不求值。运行过滤不能恢复它。',runtime:'参数已求值，运行时不输出：超过运行等级上限。',tag:'参数已求值，TAG 不包含筛选字符串；未进入格式化。',keyword:'参数已求值并格式化，关键词不匹配；不写入后端。',output:'通过过滤，模拟写入后端。'};
+      text('filter-result',outcomes[r.stage]+(r.text?'\n格式化文本：'+r.text:''));
+    } catch(error) {failure('filter-result',error);$('filter-flow').replaceChildren();}
+  });
+  $('filter-reset').addEventListener('click',resetFilter);resetFilter();
+  let ring;
+  const renderRing=(message='')=>{
+    const s=ring.snapshot(),waiting=s.pending>0;
+    $('rtt-write').disabled=waiting;$('rtt-capacity').disabled=waiting;$('rtt-mode').disabled=waiting;
+    text('rtt-result',(message?message+'\n':'')+'物理 '+s.capacity+'，有效 '+(s.capacity-1)+'，已用 '+s.used+'，空闲 '+s.free+' 字节。\n读指针 '+s.readPointer+'，写指针 '+s.writePointer+'；BLOCK 等待 '+s.pending+' 字节。\n未完整写入 '+s.incomplete+' 次；丢失 '+s.lostBytes+' 字节；累计进入 RAM '+s.acceptedTotal+' 字节；主机已取走 '+s.hostRead+' 字节。\n'+(waiting?'本次模拟调用尚未返回；可等待主机读取或重置取消。':'当前发送者可发起下一次写入。')+(s.connected?' 主机已连接。':' 主机断开，无消费、无自动超时。')+' 文件保存状态未知。');
+    const count=Math.min(s.capacity,128),cells=[];
+    for(let i=0;i<count;i++) {
+      const index=Math.floor(i*s.capacity/count),distance=(index-s.readPointer+s.capacity)%s.capacity;
+      cells.push(item('', 'ring-cell '+(distance<s.used?'used':distance===s.capacity-1?'reserved':'')));
+    }
+    $('rtt-ring').replaceChildren(...cells);$('rtt-ring').setAttribute('aria-label','物理 '+s.capacity+' 字节，有效 '+(s.capacity-1)+'，已用 '+s.used+'，空闲 '+s.free+'，等待 '+s.pending);
+  };
+  const resetRing=()=>{
+    try {
+      const next=M.createRTT(number('rtt-capacity'),$('rtt-mode').value);next.setConnected($('rtt-connected').value==='yes');ring=next;renderRing('空缓冲已重建；之前的记录和等待写入已放弃。');
+    } catch(error) {failure('rtt-result',error);}
+  };
+  $('rtt-mode').value='SKIP';$('rtt-connected').value='yes';resetRing();
+  bind(['rtt-capacity','rtt-mode'],'change',()=>{if(!ring?.snapshot().pending) resetRing();});
+  $('rtt-reset').addEventListener('click',resetRing);
+  $('rtt-write').addEventListener('click',()=>{
+    try {
+      // Revalidate configuration even if an invalid value was entered without a change event.
+      if(number('rtt-capacity')!==ring.snapshot().capacity||$('rtt-mode').value!==ring.snapshot().mode) {if(ring.snapshot().pending) throw new RangeError('等待期间不能修改配置');resetRing();}
+      if(number('rtt-capacity')!==ring.snapshot().capacity||$('rtt-mode').value!==ring.snapshot().mode) return;
+      const r=ring.write($('rtt-text').value);renderRing('本次 UTF-8 '+r.length+' 字节；本次立即接收 '+r.accepted+' 字节。');
+    } catch(error) {failure('rtt-result',error);}
+  });
+  $('rtt-read').addEventListener('click',()=>{try {const r=ring.read(number('rtt-read-count'));renderRing('主机本次取走 '+r.read+' 字节。');}catch(error){failure('rtt-result',error);}});
+  $('rtt-connected').addEventListener('change',()=>{ring.setConnected($('rtt-connected').value==='yes');renderRing();});
+  const renderISR=()=>{
+    try {
+      const bits=number('isr-bits'),threshold=number('isr-threshold'),priority=number('isr-priority');
+      const r=M.isr({bits,threshold,priority});$('isr-threshold').max=r.max;$('isr-priority').max=r.max;
+      text('isr-result','寄存器阈值：0x'+r.register.toString(16).toUpperCase().padStart(2,'0')+'；IRQ '+priority+'。\n'+(r.allowed?'可调用适用 FromISR API 的优先级范围；仍禁止 Mutex 和普通任务 API。':'比阈值更紧急：禁止所有 FreeRTOS API，包含 FromISR。'));
+      const cells=[];for(let p=0;p<=r.max;p++) cells.push(item(String(p),(p<threshold?'forbidden':'eligible')+(p===priority?' selected':'')));
+      $('isr-scale').replaceChildren(...cells);$('isr-scale').setAttribute('aria-label','0 到 '+(threshold-1)+' 禁止 FreeRTOS API；'+threshold+' 到 '+r.max+' 可用适用 FromISR；当前 '+priority);
+    } catch(error) {failure('isr-result',error);$('isr-scale').replaceChildren();}
+  };
+  bind(['isr-bits','isr-threshold','isr-priority'],'input',renderISR);renderISR();
+  const renderUART=()=>{
+    try {
+      const r=M.uart({baud:number('uart-baud'),bytes:number('uart-bytes'),frequency:number('uart-frequency'),buffer:number('uart-buffer')});
+      text('uart-result','理论 '+r.rate.toFixed(2)+' byte/s；需求 '+r.demand.toFixed(2)+' byte/s。\n单条线路时间 '+r.lineMs.toFixed(2)+' ms；占用 '+(r.occupancy*100).toFixed(1)+'%。\n'+(r.overloaded?'持续超载：连续平均模型下，空缓存约 '+r.fillSeconds.toFixed(3)+' 秒填满。':'平均速率可容纳，突发仍可能溢出。'));
+      $('uart-load').style.width=(Math.min(1,r.occupancy)*100)+'%';$('uart-load').style.background=r.overloaded?'#9a5818':'#22664f';
+    } catch(error) {failure('uart-result',error);$('uart-load').style.width='0%';}
+  };
+  bind(['uart-baud','uart-bytes','uart-frequency','uart-buffer'],'input',renderUART);renderUART();
+})();
+</script>
+<script id="note-deep-links">
+(() => {
+  const reveal = () => {
+    let id;try{id=decodeURIComponent(window.location.hash.slice(1));}catch{return;}
+    if(!id) return;
+    const target=document.getElementById(id);if(!target) return;
+    let panel=target.closest('details');
+    while(panel) {panel.open=true;panel=panel.parentElement?.closest?.('details')||null;}
+    target.closest('section')?.querySelectorAll?.('details').forEach(detail=>{detail.open=true;});
+    requestAnimationFrame(()=>target.scrollIntoView({block:'start'}));
+  };
+  window.addEventListener('hashchange',reveal);window.addEventListener('pageshow',reveal);reveal();
+})();
+</script>
+<script id="note-print">
+(() => {
+  let previous;
+  window.addEventListener('beforeprint',()=>{
+    if(previous) return;
+    previous=[...document.querySelectorAll('details')].map(panel=>[panel,panel.open]);
+    previous.forEach(([panel])=>{panel.open=true;});
+  });
+  window.addEventListener('afterprint',()=>{previous?.forEach(([panel,open])=>{panel.open=open;});previous=undefined;});
+})();
+</script>
+
+</body></html>
