@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#fafbf8">
+<meta name="description" content="从 Cortex-M3/M4 的 EXC_RETURN 与异常入口栈解析 HardFault 硬件帧，核对 stacked PC 和可选 M4F 浮点扩展帧。">
+<title>HardFault 后的 Cortex-M 异常栈回溯分析 · 嵌入式技术笔记</title>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<style>
+:root{--paper:#fafbf8;--ink:#21382e;--muted:#526359;--line:#dce3d7;--green:#22664f;--pale:#eef2e9;--lime:#d5e7b3;--dark:#193e33;--mono:Consolas,ui-monospace,monospace}*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:100px}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.9 system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}a{color:var(--green);text-underline-offset:4px;overflow-wrap:anywhere}button,input,select{font:inherit;min-height:44px}button,select{cursor:pointer}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #b47b25;outline-offset:3px}.wrap{width:min(1120px,calc(100% - 64px));margin-inline:auto}.skip{position:absolute;top:-90px;left:16px;z-index:20;padding:8px 12px;background:#fff}.skip:focus{top:8px}.topbar{position:sticky;top:0;z-index:10;background:#fafbf8f5;border-bottom:1px solid var(--line)}.topbar-inner{min-height:68px;display:flex;align-items:center;justify-content:space-between;gap:24px}.brand{display:inline-flex;align-items:center;gap:10px;min-height:44px;color:var(--ink);font-weight:700;text-decoration:none}.brandmark{display:grid;place-items:center;width:30px;height:30px;border-radius:6px;background:var(--dark);color:#e0edcb;font:19px/1 var(--mono)}nav{display:flex;align-items:center;gap:12px;flex-wrap:wrap}nav a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:4px 8px;color:var(--muted);text-decoration:none;border-radius:4px}nav a:hover{background:var(--pale);color:var(--green)}.hero{display:grid;grid-template-columns:1.1fr .9fr;align-items:center;gap:42px;padding-block:48px 38px}.hero .tag{display:inline-block;margin:0 0 16px;padding:4px 9px;border:1px solid var(--line);border-radius:4px;color:var(--green);font-size:12px}.hero h1{margin:0;font-size:clamp(32px,3.6vw,44px);line-height:1.35;letter-spacing:-.035em}.hero-intro{max-width:38rem;margin:20px 0;color:var(--muted);font-size:17px}.hero-links{display:flex;flex-wrap:wrap;gap:10px 18px}.hero-links a{display:inline-flex;align-items:center;min-height:44px}.hero-card{padding:24px;border:1px solid #416656;border-radius:12px;background:var(--dark);color:#eef5e5}.hero-card .eyebrow{margin:0 0 10px;color:#c5d8b7;font:12px/1.7 var(--mono);letter-spacing:.1em}.hero-card strong{display:block;color:var(--lime);font:24px/1.45 var(--mono)}.hero-card p{margin:10px 0 0;color:#d7e5d0}.content-section{padding-block:40px}.content-section+.content-section{border-top:1px solid var(--line)}.section-head{max-width:44rem;margin-bottom:20px}.section-head h2,.article-section>h2{margin:0 0 10px;font-size:28px;line-height:1.5;scroll-margin-top:100px}.section-head p{margin:0;color:var(--muted)}.article-section>p,.article-section>ul,.article-section>ol{max-width:44rem}.callout,.model-scope,.demo-disclaimer{max-width:44rem;padding:14px 16px;border-left:4px solid var(--green);background:var(--pale);border-radius:0 7px 7px 0}.callout.warning{border-color:#b47b25;background:#fbf4e7}.callout p,.model-scope p,.demo-disclaimer p{margin:0}.demo-panel{padding:22px;border:1px solid var(--line);border-radius:11px;background:#fff}.table-wrap{max-width:100%;overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:14px;line-height:1.8}th,td{min-width:130px;padding:10px 12px;border:1px solid var(--line);text-align:left;vertical-align:top}th{background:var(--pale)}tr:nth-child(even){background:#fafcf7}code,.mono{font-family:var(--mono)}code{padding:2px 4px;border-radius:3px;background:#edf2e7;overflow-wrap:anywhere}.demo-controls{display:flex;align-items:end;flex-wrap:wrap;gap:12px 18px;margin-bottom:16px}.field{display:grid;gap:5px;min-width:min(340px,100%)}.field label,.check-label{font-weight:650}.field select{width:100%;padding:6px 10px;border:1px solid #93ab94;border-radius:5px;background:#fff;color:var(--ink)}.check-label{display:inline-flex;align-items:center;gap:9px;min-height:44px;padding:3px 8px}.check-label input{width:20px;height:20px;min-height:20px;accent-color:var(--green)}.status-line{margin:10px 0;padding:12px 14px;border-radius:7px;background:#e9f0df}.status-line strong{color:var(--green)}.footer{display:flex;justify-content:space-between;gap:18px;padding-block:28px 36px;margin-top:24px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+@media(max-width:760px){.hero{grid-template-columns:1fr;gap:22px}}@media(max-width:600px){.wrap{width:calc(100% - 40px)}.topbar-inner{display:block;padding-block:8px}.topbar nav{flex-wrap:nowrap;overflow-x:auto;white-space:nowrap;gap:8px}.topbar nav a{flex-shrink:0}.hero{padding-block:32px 26px}.hero-intro{font-size:16px}.content-section{padding-block:32px}.demo-panel{padding:16px}.field{width:100%}.footer{display:block}.footer a{display:inline-flex;align-items:center;min-height:44px;margin-top:8px}html{scroll-padding-top:120px}}@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+<style>
+/* Shared reading layer: keep this block identical in all standalone notes. */
+@media screen {
+:root{--paper:#fafbf8;--ink:#21382e;--muted:#526359;--line:#dce3d7;--green:#22664f;--pale:#eef2e9;--lime:#d5e7b3;--dark:#193e33}
+.notes-article{font-size:16px;line-height:1.9}
+.notes-article .wrap{width:min(1120px,calc(100% - 64px));max-width:none;padding-inline:0;margin-inline:auto}
+.notes-article .topbar{background:#fafbf8f5;z-index:10}
+.notes-article .topbar-inner{height:auto;min-height:68px;display:flex;align-items:center;justify-content:space-between;gap:24px;padding-block:0}
+.notes-article .brand{display:inline-flex;align-items:center;gap:10px;min-height:44px;margin:0;font-size:15px;font-weight:700;letter-spacing:0;color:var(--ink)}
+.notes-article .brandmark{display:grid;place-items:center;width:30px;height:30px;margin:0;border-radius:6px;background:var(--dark);color:#e0edcb;font:19px/1 var(--mono)}
+.notes-article .topbar nav{display:flex;align-items:center;gap:18px;margin:0;padding:0;width:auto;flex-wrap:nowrap}
+.notes-article .topbar nav a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:4px 3px;font-size:14px;font-weight:500;color:var(--muted);text-decoration:none;border-radius:4px}
+.notes-article .topbar nav a:hover,.notes-article .topbar nav a[aria-current="location"]{color:var(--green);background:var(--pale)}
+.notes-article .topbar nav a[aria-current="location"]{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:6px}
+.notes-article .hero{padding-block:48px 40px;gap:48px;grid-template-columns:1.12fr 1fr}
+.notes-article .hero h1{font-size:clamp(32px,3.6vw,44px);line-height:1.35;letter-spacing:-.035em;text-wrap:balance}
+.notes-article .hero h1 span{font-size:.78em;line-height:1.5;margin-top:8px}
+.notes-article .hero-intro{font-size:17px;line-height:1.9;max-width:32rem;margin-block:20px}
+.notes-article .hero>.hero-card,.notes-article .hero-flow,.notes-article .intro-map{box-shadow:none;border-radius:12px}
+.notes-article .hero .tag{font-size:12px;border-radius:4px;padding:4px 9px;margin:0 0 16px;line-height:1.7}
+.notes-article .hero>.hero-figure .map{transform:none;box-shadow:none}
+.notes-article .hero>div>.eyebrow{display:none}
+.notes-article .hero>.hero-card>.eyebrow,.notes-article .hero>.hero-flow>.eyebrow{display:block;font-size:12px;line-height:1.7}
+.notes-article .hero-links{gap:12px 22px;margin-top:24px}
+.notes-article .hero .text-link{display:inline-flex;align-items:center;min-height:44px;font-size:14px}
+.notes-article .hero figcaption,.notes-article .hero-figure figcaption,.notes-article .date-note{font-size:13px;line-height:1.8}
+.notes-article .hero-card p:last-child,.notes-article .hero-flow .small,.notes-article .intro-map>p:last-child{font-size:14px;line-height:1.85}
+.notes-article .hero-numbers span,.notes-article .hero-step small{font-size:13px}
+.notes-article h2{font-size:28px;line-height:1.5;text-wrap:balance}
+.notes-article .section-head p{font-size:15px;line-height:1.85}
+.notes-article .content-section,.notes-article .article-section{padding-block:52px}
+.notes-article .content-section+.content-section{padding-top:48px}
+.notes-article .note-section{scroll-margin-top:100px}
+.notes-article .note-section>summary{min-height:56px;font-size:18px;line-height:1.6}
+.notes-article .note-section>summary h2{font-size:20px;line-height:1.6}
+.notes-article .note-body{max-width:none;font-size:16px;line-height:1.95}
+.notes-article .note-body p,.notes-article .note-body li{font-size:16px;line-height:1.95}
+.notes-article .note-body>p,.notes-article .note-body>ul,.notes-article .note-body>ol,.notes-article .article-section>p,.notes-article .article-section>ul,.notes-article .article-section>ol{max-width:44rem;font-size:16px;line-height:1.95}
+.notes-article .note-body h3{font-size:21px;margin-block:28px 12px;scroll-margin-top:100px}
+.notes-article .note-body pre,.notes-article pre{font-size:14px;line-height:1.8}
+.notes-article .note-body table,.notes-article table{font-size:14px;line-height:1.8}
+.notes-article .note-body th,.notes-article .note-body td{font-size:14px;line-height:1.8}
+.notes-article .article-section>h2{font-size:28px}
+.notes-article .concept p,.notes-article .subnote p,.notes-article .risk p,.notes-article .monitor-step p,.notes-article .monitor-step ul,.notes-article .step-card p{font-size:15px;line-height:1.85}
+.notes-article .callout,.notes-article .model-scope,.notes-article .demo-disclaimer,.notes-article .version-card,.notes-article .version-card p{font-size:14px;line-height:1.85}
+.notes-article .source-list a,.notes-article .source-list span,.notes-article #plane-references~ul{font-size:14px;line-height:1.85}
+.notes-article #plane-overview~ul{max-width:none}
+.notes-article #plane-overview~ul li{font-size:15px;line-height:1.85}
+.notes-article .note-body .source-list{max-width:none}
+.notes-article .small,.notes-article .lab-note,.notes-article .lab-foot,.notes-article .lab-footer,.notes-article .clock-lab-foot,.notes-article .print-hint{font-size:13px;line-height:1.85}
+.notes-article .principle,.notes-article .principles span{font-size:13px;line-height:1.8}
+.notes-article .principles strong{font-size:15px}
+.notes-article .memory-motto,.notes-article .motto{background:var(--pale);color:var(--ink);border-radius:8px;text-align:left;padding:24px;margin-top:30px}
+.notes-article .memory-motto span,.notes-article .motto small{color:var(--muted);font-size:14px}
+.notes-article button,.notes-article .btn,.notes-article .notes-toolbar button{min-height:44px;min-width:44px;font-size:14px}
+.notes-article button,.notes-article .btn,.notes-article .topbar a,.notes-article summary,.notes-article .section-nav a,.notes-article .toc a{transition:background .18s,color .18s,border-color .18s,transform .18s}
+.notes-article button:enabled:hover{filter:brightness(1.06)}
+.notes-article button:enabled:active,.notes-article .btn:active{transform:translateY(1px)}
+.notes-article button:disabled{opacity:.58}
+.notes-article .graph-node:disabled,.notes-article .work-card:disabled{opacity:1}
+.notes-article :focus-visible{outline:3px solid #ad751d;outline-offset:4px}
+.notes-article .lab :focus-visible,.notes-article .clock-lab :focus-visible{outline-color:#f0cc80}
+.notes-article .toc a,.notes-article .section-nav a{display:inline-flex;align-items:center;min-height:44px;border-radius:5px;font-size:14px;padding:8px 12px}
+.notes-article .checklist label,.notes-article .clock-check{min-height:44px;font-size:14px;line-height:1.8}
+.notes-article .clock-field label,.notes-article .clock-controls small,.notes-article .clock-node small,.notes-article .clock-node span{font-size:13px;line-height:1.6}
+.notes-article .clock-current p,.notes-article .clock-candidate,.notes-article .clock-warnings{font-size:14px;line-height:1.8}
+.notes-article .clock-node strong,.notes-article .hero-numbers strong,.notes-article .metric strong{font-variant-numeric:tabular-nums}
+.notes-article .task-option strong,.notes-article .work-card strong{font-size:14px;line-height:1.65}
+.notes-article .task-option span,.notes-article .scope-buttons small,.notes-article .card-id,.notes-article .card-project,.notes-article .card-status,.notes-article .card-tags>span,.notes-article .lane-en{font-size:12px;line-height:1.6}
+.notes-article .scope-explanation,.notes-article .detail-copy>p,.notes-article .detail .acceptance,.notes-article .state-controls>p,.notes-article .board-heading p{font-size:14px;line-height:1.8}
+.notes-article .lane h4{font-size:14px;line-height:1.5;flex-wrap:wrap}
+.notes-article .lane-count{font-size:12px}
+.notes-article .lab .task-option{min-height:96px}
+.notes-article .skills-step-card dd,.notes-article .route-pane p,.notes-article .chooser-intro,.notes-article .permissions-pane>p{font-size:14px;line-height:1.85}
+.notes-article .skills-step-card dt,.notes-article .step-counter,.notes-article .permissions-pane small,.notes-article .permission-list span,.notes-article .graph-legend,.notes-article .graph-arrow-note{font-size:13px;line-height:1.8}
+.notes-article .ui-arrow{width:18px;height:18px;display:inline-block;vertical-align:middle;flex-shrink:0}
+.notes-article .selection-jump,.notes-article .choice-result{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;padding:10px 12px;border-radius:5px;font-size:13px;font-weight:600;line-height:1.6;text-decoration:none}
+.notes-article .selection-jump{background:#22664f;color:#fff}
+.notes-article .choice-result{color:#e2efca;border:1px solid #829873;background:#173e33;margin-top:7px}
+.notes-article .task-choice{min-width:0}
+.notes-article .task-choice .task-option{width:100%}
+.notes-article .task-option[aria-pressed="false"]+.choice-result{display:none}
+.notes-article #selected-skill,.notes-article #plane-selected-title{scroll-margin-top:128px}
+.notes-article footer,.notes-article .footer{font-size:13px;line-height:1.8}
+.notes-article footer a,.notes-article .footer a{display:inline-flex;align-items:center;min-height:44px}
+.notes-article .note-body p,.notes-article .hero-intro,.notes-article .article-section>p{text-wrap:pretty}
+@media(max-width:760px){
+.notes-article .wrap{width:calc(100% - 40px)}
+.notes-article .topbar-inner{flex-wrap:wrap;gap:0;padding-top:6px}
+.notes-article .brand{min-height:44px;font-size:15px}
+.notes-article .topbar nav{width:100%;gap:12px;overflow-x:auto;flex-wrap:nowrap;padding:0 0 4px;scrollbar-width:thin}
+.notes-article .topbar nav a{font-size:13px;flex-shrink:0;padding-inline:2px}
+.notes-article .hero{grid-template-columns:1fr;gap:28px;padding-block:32px}
+.notes-article .hero h1{font-size:32px;line-height:1.4}
+.notes-article .hero-intro{font-size:16px;max-width:none;margin-block:16px}
+.notes-article .hero-figure{max-width:500px}
+.notes-article .hero .tag{margin-bottom:12px}
+.notes-article .content-section,.notes-article .article-section{padding-block:36px}
+.notes-article .content-section+.content-section{padding-top:36px}
+.notes-article h2,.notes-article .article-section>h2{font-size:24px}
+.notes-article .section-head p{font-size:15px}
+.notes-article .note-section>summary{font-size:17px}
+.notes-article .note-section>summary h2{font-size:18px}
+.notes-article .note-body p,.notes-article .note-body li{font-size:16px}
+.notes-article .note-body pre,.notes-article pre{font-size:13px}
+.notes-article .note-body th,.notes-article .note-body td{font-size:14px}
+.notes-article .principles{grid-template-columns:1fr;gap:14px}
+.notes-article .principles strong{display:inline;margin-right:8px}
+.notes-article .principles span{display:inline}
+.notes-article .task-options{grid-template-columns:1fr 1fr;align-items:start}.notes-article .lab .task-option{min-height:76px;padding:12px}
+.notes-article .board{grid-template-columns:1fr 1fr}
+.notes-article .lane:last-child .lane-cards{display:flex}
+.notes-article .lane-cards{min-height:0}
+.notes-article .lane{padding:14px}
+.notes-article .lane-en{margin-bottom:10px}
+.notes-article .work-card{padding:14px}
+.notes-article .card-tags{gap:6px}
+.notes-article .lab-top{flex-wrap:wrap}
+.notes-article .lab-top .tag{white-space:normal}
+.notes-article .note-section,.notes-article .note-body h3,.notes-article .article-section,.notes-article .article-section>h3{scroll-margin-top:124px}
+}
+@media(max-width:370px){.notes-article .task-options,.notes-article .board{grid-template-columns:1fr}.notes-article .hero h1{font-size:30px}.notes-article .topbar nav{gap:8px}}
+}
+@media(prefers-reduced-motion:reduce){.notes-article *,.notes-article *::before,.notes-article *::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+</style>
+<style>
+.article-section{scroll-margin-top:100px}.article-section>p,.article-section>ul,.article-section>ol{max-width:44rem;font-size:16px;line-height:1.95}.article-section h3{max-width:44rem;font-size:21px;line-height:1.55}.frame-table{max-width:52rem}.frame-table td:first-child{font-weight:650}.frame-table td:nth-child(2){white-space:nowrap;font-family:var(--mono)}.frame-table td:last-child{min-width:220px}.notes-article pre{max-width:100%;overflow-x:auto}.demo-result{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:16px 0}.demo-result>div{padding:12px;border:1px solid var(--line);border-radius:7px;background:#fafcf8}.demo-result dt{color:var(--muted);font-size:13px}.demo-result dd{margin:2px 0 0;font-weight:700}.demo-scope{margin-top:14px}.frame-row[hidden]{display:none}.source-list li{margin-block:9px}.local-note{color:var(--muted);font-size:14px}.frame-warning{margin-top:16px}.note-link{font-weight:650}@media(max-width:600px){.demo-result{grid-template-columns:1fr}.frame-table{font-size:13px}.frame-table th,.frame-table td{min-width:0;padding:8px}.frame-table td:last-child{min-width:150px}}
+</style>
+<style>
+.snapshot-chooser{min-width:0;margin:14px 0;padding:0;border:0}.snapshot-chooser legend{margin-bottom:8px;font-weight:700}
+.snapshot-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-block:16px}
+.snapshot-choice{display:flex;align-items:flex-start;gap:10px;min-height:56px;padding:12px;border:1px solid var(--line);border-radius:7px;background:#fff;cursor:pointer;font-size:16px;line-height:1.5}
+.snapshot-choice:focus-within{outline:3px solid #8eb69e;outline-offset:2px}
+.snapshot-choice input{width:18px;height:18px;margin:3px 0 0;flex:0 0 auto;accent-color:#245b49}
+.snapshot-panel[hidden]{display:none}
+.snapshot-panel{margin-top:18px;padding:20px;border:1px solid var(--line);border-radius:8px;background:#fff}
+.snapshot-panel h3{margin-top:0}
+.snapshot-raw{overflow:auto;padding:14px;border:1px solid var(--line);border-radius:6px;background:#f5f7f3;font:14px/1.75 var(--mono);white-space:pre-wrap;overflow-wrap:anywhere}
+.snapshot-conclusion{margin:14px 0;padding:14px;border-left:3px solid #5d856d;background:#f4f8f2}
+.snapshot-conclusion p:last-child{margin-bottom:0}
+.snapshot-limits{color:var(--muted)}
+.fault-registers td:first-child{white-space:nowrap;font-family:var(--mono)}
+@media(max-width:600px){.snapshot-options{grid-template-columns:1fr}.snapshot-panel{padding:14px}.snapshot-raw{font-size:13px}}
+</style>
+</head>
+<body class="notes-article">
+<a class="skip" href="#main">跳到正文</a>
+<header class="topbar"><div class="wrap topbar-inner"><a class="brand" href="../"><span class="brandmark" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span>嵌入式技术笔记</a><nav aria-label="笔记导航"><a href="../mcu/">返回分类</a><a href="#frame-lab">交互实验</a><a href="#fault-snapshots">四个虚构案例</a><a href="#workflow">完整笔记</a><a href="../?search=1">搜索笔记</a></nav></div></header>
+<main id="main" class="wrap">
+<section class="hero"><div><p class="tag">Armv7-M · Cortex-M3/M4 教学</p><h1 id="overview">HardFault 后的 Cortex-M 异常栈回溯分析</h1><p class="hero-intro">从异常入口的 EXC_RETURN 找到硬件压栈所用的 MSP 或 PSP，按帧偏移读取 stacked PC，再用与固件匹配的反汇编核验指令。</p><div class="hero-links"><a href="#workflow">按步骤分析</a><a href="#frame-lab">交互查看偏移</a><a class="note-link" href="cortex-m-cpu-registers.html">继续看 Cortex-M CPU 寄存器</a></div></div><aside class="hero-card"><p class="eyebrow">先确认帧基址</p><strong>EXC_RETURN → SP</strong><p>Handler LR 是异常返回标记；被打断上下文的 LR 保存在硬件帧内。M4F 扩展帧的 PC 仍在帧基址 +0x18。</p></aside></section>
+
+<section class="content-section article-section" id="workflow"><div class="section-head"><h2 id="preserve-fault-context">先保留现场，再判断是否能解帧</h2><p>分析顺序要让每个结论都能回到现场证据。</p></div><ol><li><strong>冻结现场并记下固件身份。</strong>在清除 sticky Fault 状态或继续运行前，记录 HFSR、CFSR 及 MMFAR/BFAR 原值、调试器显示的寄存器和正在运行的构建标识。</li><li><strong>先判断状态和地址是否有效。</strong>MMFAR 仅在 CFSR.MMARVALID=1 时、BFAR 仅在 CFSR.BFARVALID=1 时代表本次有效地址；VALID 为 0 时，读到的值可能是旧值。HFSR.FORCED 要继续检查 CFSR；HFSR.VECTTBL 是向量读取相关线索。</li><li><strong>确认硬件帧是否可信。</strong>若出现栈压入/弹出错误、栈越界或不可读，停止从该帧解释 PC/LR。不要换用另一条栈凑值。</li><li><strong>由异常入口 EXC_RETURN 选栈和帧类型。</strong>先分清 Handler LR 与 stacked LR，再从异常入口选中的 MSP/PSP 帧基址解帧；不要用 Handler CONTROL.SPSEL 或 C handler 序言之后的当前 SP 推断。</li><li><strong>按确定的帧偏移读取核心字段。</strong>PC 固定位于帧基址 +0x18；扩展 FP 状态不会把核心字段向后移。</li><li><strong>核对匹配构建中的机器码。</strong>只有源码、AXF/ELF、map、符号和反汇编对应实际运行的同一固件，PC 才能映射到有证据的指令。</li></ol><aside class="callout warning"><p>这篇文章只解释架构帧和证据边界。模拟器不会连接目标板、读取真实 RAM、写入寄存器或判定真实固件根因。</p></aside></section>
+
+<section class="content-section article-section" id="decode-exc-return"><div class="section-head"><h2>从异常入口 EXC_RETURN 选择栈</h2><p>对 Armv7-M Cortex-M3/M4 的返回标记，重点看 bit 2、bit 3 和 bit 4。</p></div><p>处理器在异常进入时把被打断上下文的核心寄存器压栈，并将 <code>EXC_RETURN</code> 放入 Handler LR。它不是被打断上下文的普通 LR。基本硬件帧中的 stacked LR 位于帧基址 <code>+0x14</code>。</p><div class="table-wrap"><table><thead><tr><th>EXC_RETURN 位</th><th>选择含义</th></tr></thead><tbody><tr><td>bit 2</td><td><code>0</code>：MSP；<code>1</code>：PSP。</td></tr><tr><td>bit 3</td><td><code>0</code>：返回 Handler 模式；<code>1</code>：返回 Thread 模式。</td></tr><tr><td>bit 4</td><td><code>1</code>：基本帧；<code>0</code>：包含 FP 扩展区的扩展帧（需有相应 FPU 扩展）。</td></tr></tbody></table></div><p>Thread 模式可使用 MSP 或 PSP。进入 Handler 后处理器使用 MSP；若被打断的 Thread 选择了 PSP，硬件帧仍压在 PSP 上。因此，Handler 当前 MSP、Handler 的 CONTROL.SPSEL 和异常入口所选栈不能混为一谈。</p><p>典型基本帧标记为 <code>0xFFFFFFF1</code>（Handler/MSP）、<code>0xFFFFFFF9</code>（Thread/MSP）和 <code>0xFFFFFFFD</code>（Thread/PSP）；具备 FPU 时可见对应扩展帧标记 <code>0xFFFFFFE1</code>、<code>0xFFFFFFE9</code>、<code>0xFFFFFFED</code>。这些值帮助读位，不代替对真实异常入口上下文的确认。</p></section>
+
+<section class="content-section article-section" id="basic-exception-frame"><div class="section-head"><h2>基本硬件帧的字段偏移</h2><p>表内偏移均相对异常入口时所选 MSP/PSP 上的硬件帧基址。</p></div><div class="table-wrap frame-table"><table><thead><tr><th>字段</th><th>偏移</th><th>含义</th></tr></thead><tbody><tr><td>R0</td><td>+0x00</td><td>被打断上下文的 R0。</td></tr><tr><td>R1</td><td>+0x04</td><td>被打断上下文的 R1。</td></tr><tr><td>R2</td><td>+0x08</td><td>被打断上下文的 R2。</td></tr><tr><td>R3</td><td>+0x0C</td><td>被打断上下文的 R3。</td></tr><tr><td>R12</td><td>+0x10</td><td>被打断上下文的 R12。</td></tr><tr><td>stacked LR</td><td>+0x14</td><td>被打断上下文保存的 LR，不是 Handler LR 中的 EXC_RETURN。</td></tr><tr><td>stacked PC</td><td>+0x18</td><td>被打断上下文保存的 PC。地址在帧基址 +0x18。</td></tr><tr><td>xPSR</td><td>+0x1C</td><td>被打断上下文保存的 xPSR，bit 9 可指示对齐填充。</td></tr></tbody></table></div><p>基本帧为 <code>0x20</code> 字节。硬件帧不包含编译器或 RTOS 另外保存的 R4–R11、S16–S31 等软件上下文；具体软件保存布局要按对应工具链和异常路径独立核对。</p></section>
+
+<section class="content-section article-section" id="extended-fp-frame"><div class="section-head"><h2>Cortex-M4F 扩展帧仍从同一帧基址开始</h2><p>FPU 是可选实现；bit 4 标出扩展帧时，先按 Armv7-M 帧算法定位 frameptr。</p></div><p>Armv7-M ARM 的 <code>PushStack()</code> / <code>PopStack()</code> 先确定完整帧大小，再以扩展帧起点作为 <code>frameptr</code>。核心帧仍在起点：R0 <code>+0x00</code>、stacked LR <code>+0x14</code>、stacked PC <code>+0x18</code>、xPSR <code>+0x1C</code>。</p><div class="table-wrap frame-table"><table><thead><tr><th>FP 扩展字段</th><th>偏移</th><th>说明</th></tr></thead><tbody><tr><td>S0</td><td>+0x20</td><td>FP 扩展区第一个字。</td></tr><tr><td>S1</td><td>+0x24</td><td>每个单精度寄存器槽递增 4 字节。</td></tr><tr><td>S2–S14</td><td>+0x28 至 +0x58</td><td>连续的单精度寄存器槽。</td></tr><tr><td>S15</td><td>+0x5C</td><td>FP 扩展区最后一个 S 寄存器槽。</td></tr><tr><td>FPSCR</td><td>+0x60</td><td>浮点状态和控制寄存器槽。</td></tr><tr><td>保留字</td><td>+0x64</td><td>扩展帧保留槽。</td></tr></tbody></table></div><p>完整 FP 扩展帧为 <code>0x68</code> 字节。不要因 EXC_RETURN bit 4 为 0 而先跳过 <code>0x48</code> 再读 PC：扩展帧的 stacked PC 仍是帧基址 <code>+0x18</code>，不是 <code>SP+0x48</code>。帧基址必须来自硬件异常入口所选栈，而不是 C handler prologue 后已经变化的当前 SP。</p></section>
+
+<section class="content-section article-section" id="alignment-and-lazy-stacking"><div class="section-head"><h2>对齐填充、可选 FPU 与懒惰保存</h2><p>帧字段偏移与完整帧后的对齐字是两件事。</p></div><p><code>CCR.STKALIGN</code> 影响异常入口的 8 字节对齐。若本次压栈产生额外的 4 字节对齐填充，stacked xPSR bit 9 标记该情况。填充位于完整硬件帧之外，不改变 PC 等字段相对帧基址的偏移；恢复异常前 SP 时再根据标记计入这个字。缺少本次 xPSR 或栈证据时，不推测填充是否存在。</p><p>FPU 状态还可能使用 lazy stacking：FP 槽被预留，但实际写入推迟。<code>FPCCR.LSPACT</code> 是 bit 0；<code>FPCAR</code> 帮助定位待保存的浮点上下文。预留空间不证明 S0–S15 或 FPSCR 已保存了有效现场值。还需确认目标是否实现 FPU，并核实控制/状态值采集时点。</p><aside class="callout"><p>R4–R11 和 S16–S31 可能在 RTOS 或编译器的软件保存区中，但它们不是这里列出的硬件异常帧字段。</p></aside></section>
+
+<section class="content-section article-section" id="frame-model"><div class="section-head"><h2>帧偏移速览</h2><p>这是硬件帧布局，不显示栈内实际值。</p></div><div class="table-wrap frame-table"><table><thead><tr><th>字段</th><th>相对帧基址</th><th>本页模型显示</th></tr></thead><tbody><tr><td>R0</td><td>+0x00</td><td>地址公式，不读取 RAM。</td></tr><tr><td>R1</td><td>+0x04</td><td>地址公式，不读取 RAM。</td></tr><tr><td>R2</td><td>+0x08</td><td>地址公式，不读取 RAM。</td></tr><tr><td>R3</td><td>+0x0C</td><td>地址公式，不读取 RAM。</td></tr><tr><td>R12</td><td>+0x10</td><td>地址公式，不读取 RAM。</td></tr><tr><td>stacked LR</td><td>+0x14</td><td>地址公式，不读取 RAM。</td></tr><tr><td>stacked PC</td><td>+0x18</td><td>地址公式，不读取 RAM。</td></tr><tr><td>xPSR</td><td>+0x1C</td><td>地址公式，不读取 RAM。</td></tr><tr class="frame-row" data-fp="true"><td>S0</td><td>+0x20</td><td>仅扩展帧有此槽。</td></tr><tr class="frame-row" data-fp="true"><td>S1–S15</td><td>+0x24–+0x5C</td><td>每项 4 字节。</td></tr><tr class="frame-row" data-fp="true"><td>FPSCR</td><td>+0x60</td><td>仅扩展帧有此槽。</td></tr><tr class="frame-row" data-fp="true"><td>保留字</td><td>+0x64</td><td>扩展帧末尾槽。</td></tr></tbody></table></div></section>
+
+<section class="content-section article-section" id="frame-lab"><div class="section-head"><h2>交互查看 EXC_RETURN 与帧偏移</h2><p>选择架构示意标记，观察返回模式、所选异常栈和帧大小如何对应。</p></div><div class="demo-panel"><div class="demo-controls"><div class="field"><label for="exc-return">EXC_RETURN（异常入口时的 Handler LR）</label><select id="exc-return"><option value="FFFFFFF1">0xFFFFFFF1 · Handler / MSP / 基本帧</option><option value="FFFFFFF9" selected>0xFFFFFFF9 · Thread / MSP / 基本帧</option><option value="FFFFFFFD">0xFFFFFFFD · Thread / PSP / 基本帧</option><option value="FFFFFFE1">0xFFFFFFE1 · Handler / MSP / 扩展 FP 帧</option><option value="FFFFFFE9">0xFFFFFFE9 · Thread / MSP / 扩展 FP 帧</option><option value="FFFFFFED">0xFFFFFFED · Thread / PSP / 扩展 FP 帧</option></select></div><label class="check-label"><input id="stack-align-pad" type="checkbox"> 当前 stacked xPSR[9] = 1（存在对齐填充）</label></div><dl class="demo-result" aria-live="polite"><div><dt>返回模式</dt><dd id="return-mode">Thread</dd></div><div><dt>异常入口所选栈</dt><dd id="entry-stack">MSP</dd></div><div><dt>帧类型与帧长度</dt><dd id="frame-kind">基本帧 · 0x20 B</dd></div><div><dt>异常前 SP 的恢复关系</dt><dd id="restored-sp">帧基址 + 0x20</dd></div></dl><p id="frame-base" class="status-line"><strong>帧基址：</strong>异常入口 MSP 的原始硬件帧起点；其地址值未提供，模型不读取内存。</p><div class="table-wrap frame-table"><table><thead><tr><th>字段</th><th>帧内偏移</th><th>地址关系</th><th>内存值</th></tr></thead><tbody>
+<tr data-frame-field data-offset="+0x00"><td>R0</td><td>+0x00</td><td data-address>异常入口 MSP +0x00</td><td>未提供</td></tr><tr data-frame-field data-offset="+0x04"><td>R1</td><td>+0x04</td><td data-address>异常入口 MSP +0x04</td><td>未提供</td></tr><tr data-frame-field data-offset="+0x08"><td>R2</td><td>+0x08</td><td data-address>异常入口 MSP +0x08</td><td>未提供</td></tr><tr data-frame-field data-offset="+0x0C"><td>R3</td><td>+0x0C</td><td data-address>异常入口 MSP +0x0C</td><td>未提供</td></tr><tr data-frame-field data-offset="+0x10"><td>R12</td><td>+0x10</td><td data-address>异常入口 MSP +0x10</td><td>未提供</td></tr><tr data-frame-field data-offset="+0x14"><td>stacked LR</td><td>+0x14</td><td data-address>异常入口 MSP +0x14</td><td>未提供</td></tr><tr data-frame-field data-offset="+0x18"><td>stacked PC</td><td>+0x18</td><td data-address>异常入口 MSP +0x18</td><td>未提供</td></tr><tr data-frame-field data-offset="+0x1C"><td>xPSR</td><td>+0x1C</td><td data-address>异常入口 MSP +0x1C</td><td>未提供</td></tr><tr class="frame-row" data-fp="true" data-frame-field data-offset="+0x20"><td>S0</td><td>+0x20</td><td data-address>异常入口 MSP +0x20</td><td>未提供，lazy 状态未知</td></tr><tr class="frame-row" data-fp="true" data-frame-field data-offset="+0x24"><td>S1</td><td>+0x24</td><td data-address>异常入口 MSP +0x24</td><td>未提供，lazy 状态未知</td></tr><tr class="frame-row" data-fp="true" data-frame-field data-offset="+0x28"><td>S2</td><td>+0x28</td><td data-address>异常入口 MSP +0x28</td><td>未提供，lazy 状态未知</td></tr><tr class="frame-row" data-fp="true" data-frame-field data-offset="+0x2C"><td>S3</td><td>+0x2C</td><td data-address>异常入口 MSP +0x2C</td><td>未提供，lazy 状态未知</td></tr><tr class="frame-row" data-fp="true" data-frame-field data-offset="+0x30"><td>S4</td><td>+0x30</td><td data-address>异常入口 MSP +0x30</td><td>未提供，lazy 状态未知</td></tr><tr class="frame-row" data-fp="true" data-frame-field data-offset="+0x34"><td>S5</td><td>+0x34</td><td data-address>异常入口 MSP +0x34</td><td>未提供，lazy 状态未知</td></tr><tr class="frame-row" data-fp="true" data-frame-field data-offset="+0x38"><td>S6</td><td>+0x38</td><td data-address>异常入口 MSP +0x38</td><td>未提供，lazy 状态未知</td></tr><tr class="frame-row" data-fp="true" data-frame-field data-offset="+0x3C"><td>S7</td><td>+0x3C</td><td data-address>异常入口 MSP +0x3C</td><td>未提供，lazy 状态未知</td></tr><tr class="frame-row" data-fp="true" data-frame-field data-offset="+0x40"><td>S8</td><td>+0x40</td><td data-address>异常入口 MSP +0x40</td><td>未提供，lazy 状态未知</td></tr><tr class="frame-row" data-fp="true" data-frame-field data-offset="+0x44"><td>S9</td><td>+0x44</td><td data-address>异常入口 MSP +0x44</td><td>未提供，lazy 状态未知</td></tr><tr class="frame-row" data-fp="true" data-frame-field data-offset="+0x48"><td>S10</td><td>+0x48</td><td data-address>异常入口 MSP +0x48</td><td>未提供，lazy 状态未知</td></tr><tr class="frame-row" data-fp="true" data-frame-field data-offset="+0x4C"><td>S11</td><td>+0x4C</td><td data-address>异常入口 MSP +0x4C</td><td>未提供，lazy 状态未知</td></tr><tr class="frame-row" data-fp="true" data-frame-field data-offset="+0x50"><td>S12</td><td>+0x50</td><td data-address>异常入口 MSP +0x50</td><td>未提供，lazy 状态未知</td></tr><tr class="frame-row" data-fp="true" data-frame-field data-offset="+0x54"><td>S13</td><td>+0x54</td><td data-address>异常入口 MSP +0x54</td><td>未提供，lazy 状态未知</td></tr><tr class="frame-row" data-fp="true" data-frame-field data-offset="+0x58"><td>S14</td><td>+0x58</td><td data-address>异常入口 MSP +0x58</td><td>未提供，lazy 状态未知</td></tr><tr class="frame-row" data-fp="true" data-frame-field data-offset="+0x5C"><td>S15</td><td>+0x5C</td><td data-address>异常入口 MSP +0x5C</td><td>未提供，lazy 状态未知</td></tr><tr class="frame-row" data-fp="true" data-frame-field data-offset="+0x60"><td>FPSCR</td><td>+0x60</td><td data-address>异常入口 MSP +0x60</td><td>未提供，lazy 状态未知</td></tr><tr class="frame-row" data-fp="true" data-frame-field data-offset="+0x64"><td>保留字</td><td>+0x64</td><td data-address>异常入口 MSP +0x64</td><td>未提供</td></tr>
+</tbody></table></div><p id="model-status" class="status-line" role="status">当前选择基本帧。Handler C 序言后变化的当前 SP 不参与帧基址推断。</p><aside class="demo-disclaimer demo-scope"><p>示意模型只显示 EXC_RETURN 位解释与偏移关系，不含真实栈值，不会访问目标或诊断固件。</p></aside></div></section>
+
+<section class="content-section article-section" id="fault-snapshots">
+  <div class="section-head">
+    <h2 id="four-fault-snapshots">四个固定的虚构现场</h2>
+    <p>逐项核对输入、能支持的解释和证据边界。选择只切换本页预置文字，不连接目标板、不读 RAM，也不修改故障寄存器。</p>
+  </div>
+  <p>下列快照是教学数据，不代表真实 STM32/GD32 测试，也不是固件配置校验器。分析顺序是先保留现场与固件身份，再读 HFSR/CFSR，确认异常帧可信后才把 stacked PC 对照同一构建产物。</p>
+  <fieldset class="snapshot-chooser">
+    <legend>选择一个教学快照</legend>
+    <div class="snapshot-options">
+      <label class="snapshot-choice" for="snapshot-a"><input id="snapshot-a" type="radio" name="hardfault-snapshot" value="A" data-status="案例 A：精确 BusFault；所给证据支持将 PC 映射到一次无响应的数据访问。" checked><span><strong>A · 精确 BusFault</strong><br>有效 BFAR 与 LDR 地址吻合</span></label>
+      <label class="snapshot-choice" for="snapshot-b"><input id="snapshot-b" type="radio" name="hardfault-snapshot" value="B" data-status="案例 B：DIVBYZERO UsageFault 经 FORCED 升级；扩展帧 PC 仍在入口 PSP 加 0x18。"><span><strong>B · M4F 除零与 lazy FP</strong><br>扩展帧、对齐填充与待保存 FP 状态</span></label>
+      <label class="snapshot-choice" for="snapshot-c"><input id="snapshot-c" type="radio" name="hardfault-snapshot" value="C" data-status="案例 C：IMPRECISERR 是延迟写错误；NOP、旧 BFAR 和栈扫描候选不能定位肇事写指令。"><span><strong>C · 非精确写错误</strong><br>stacked PC 与旧 BFAR 都有限制</span></label>
+      <label class="snapshot-choice" for="snapshot-d"><input id="snapshot-d" type="radio" name="hardfault-snapshot" value="D" data-status="案例 D：STKERR 且 PSP 选中的帧不可读；stacked PC 未知，不回退到 MSP。"><span><strong>D · 异常入栈失败</strong><br>帧不可读，拒绝猜测 PC</span></label>
+    </div>
+  </fieldset>
+  <p class="status-line" id="hardfault-snapshot-status" role="status" aria-live="polite" aria-atomic="true">案例 A：精确 BusFault；所给证据支持将 PC 映射到一次无响应的数据访问。</p>
+
+  <article class="snapshot-panel" data-hardfault-panel="A" aria-labelledby="case-a">
+    <h3 id="case-a">案例 A：精确数据访问错误</h3>
+    <pre class="snapshot-raw"><code>Target Cortex-M3
+EXC_RETURN FFFFFFF9
+MSP 20001000; PSP 20004000
+HFSR 40000000; CFSR 00008200; BFAR 60000004
+R0 60000000; R1/R2/R3/R12 0
+stacked LR 08002019; stacked PC 08001234; xPSR 01000000
+AXF at 08001234: LDR r1,[r0,#4]
+60000004 has no response</code></pre>
+    <div class="snapshot-conclusion">
+      <p><strong>可证到哪一步：</strong><code>FFFFFFF9</code> 选择 Thread/MSP 基本帧。若给出的 MSP 是异常入口帧基址，stacked PC 字段地址为 <code>20001018</code>，值为 <code>08001234</code>。<code>CFSR=00008200</code> 同时置 <code>BFSR.PRECISERR</code> 与 <code>BFARVALID</code>；有效 BFAR <code>60000004</code> 与 <code>R0 + 4</code> 及同版 AXF 中的 <code>LDR r1,[r0,#4]</code> 相符。题设说该地址无响应，因此这条指令的访问与精确 BusFault 证据吻合。</p>
+      <p class="snapshot-limits"><strong>不能据此断言：</strong>数据没有说明 <code>R0</code> 为什么指向该地址，也没有证明更上游的指针或内存破坏原因。不要把原因扩展成“访问地址 0 总会 HardFault”之类的通则。</p>
+    </div>
+  </article>
+
+  <article class="snapshot-panel" data-hardfault-panel="B" aria-labelledby="case-b" hidden>
+    <h3 id="case-b">案例 B：M4F 扩展帧、除零与 lazy FP</h3>
+    <pre class="snapshot-raw"><code>Target Cortex-M4F
+EXC_RETURN FFFFFFED
+MSP 20007000; PSP 20002000
+HFSR 40000000; CFSR 02000000
+CCR 00000210; FPCCR C0000019; FPCAR 20002020
+R0 3C; R1/R2/R3/R12 0
+stacked LR 08004101; stacked PC 08003420; xPSR 01000200
+AXF at 08003420: UDIV r2,r0,r1; DIV_0_TRP on; R1 0
+pre-exception PSP 2000206C</code></pre>
+    <div class="snapshot-conclusion">
+      <p><strong>可证到哪一步：</strong><code>FFFFFFED</code> 选择 Thread/PSP 扩展 FP 帧。核心帧没有因 FP 扩展搬移：stacked PC 位于入口 PSP <code>20002000 + 0x18 = 20002018</code>，其中给定值为 <code>08003420</code>。不要加 <code>0x48</code> 再找 PC。<code>CFSR=02000000</code> 置 <code>UFSR.DIVBYZERO</code>；给定同版 AXF 的整数指令 <code>UDIV r2,r0,r1</code>、<code>R1=0</code> 与 <code>CCR=00000210</code> 中开启的 <code>DIV_0_TRP</code> 相符，<code>HFSR.FORCED</code> 表明该可配置 UsageFault 已升级。<code>xPSR=01000200</code> 的 bit 9 为 1；扩展帧 <code>0x68</code> 字节加 4 字节对齐填充为 <code>0x6C</code>，与给定的异常前 PSP <code>2000206C</code> 对应。</p>
+      <p><code>FPCCR=C0000019</code> 的 <code>LSPACT</code> bit 0 为 1，<code>FPCAR=20002020</code> 是给定的 FP 保存区地址。lazy 状态下预留槽位不等于 S0–S15/FPSCR 已经写入本次有效值。</p>
+      <p class="snapshot-limits"><strong>不能据此断言：</strong>快照没有提供 FP 区原始内容，也不能说明为什么 R1 为零。这里是整数 <code>UDIV</code> 除零，不是浮点除零；不要把错误样例中的 <code>SP+0x48</code> 公式套作 stacked PC 偏移。</p>
+    </div>
+  </article>
+
+  <article class="snapshot-panel" data-hardfault-panel="C" aria-labelledby="case-c" hidden>
+    <h3 id="case-c">案例 C：IMPRECISERR 与过期 BFAR</h3>
+    <pre class="snapshot-raw"><code>Target Cortex-M3
+EXC_RETURN FFFFFFF9; MSP 20003000
+HFSR 40000000; CFSR 00000400
+BFAR 60000004; BFARVALID 0
+stacked PC 08005020; matching AXF at PC: NOP
+prior writes: multiple writes
+stack-scan candidates 08001001 and 08002005</code></pre>
+    <div class="snapshot-conclusion">
+      <p><strong>可证到哪一步：</strong><code>FFFFFFF9</code> 选择 Thread/MSP 基本帧；若该 MSP 是帧基址，PC 字段地址为 <code>20003018</code>。<code>CFSR=00000400</code> 表示 <code>BFSR.IMPRECISERR</code>。这是延迟报告的写错误，给出的 stacked PC 映射到 <code>NOP</code> 并不能定位先前哪一条写指令。</p>
+      <p class="snapshot-limits"><strong>不能据此断言：</strong><code>BFARVALID=0</code>，所以 <code>BFAR=60000004</code> 是未验证的旧值，不能用作本次故障地址。存在多个较早写操作时，<code>08001001</code> 和 <code>08002005</code> 只是栈扫描候选值，不是可靠调用链；需要更早的总线/跟踪证据或受控复现来缩小范围。</p>
+    </div>
+  </article>
+
+  <article class="snapshot-panel" data-hardfault-panel="D" aria-labelledby="case-d" hidden>
+    <h3 id="case-d">案例 D：异常入栈失败，帧不可读</h3>
+    <pre class="snapshot-raw"><code>Target Cortex-M3
+EXC_RETURN FFFFFFFD
+MSP 20007F00; PSP 1FFFFFE0
+HFSR 40000000; CFSR 00001000
+RAM starts 20000000; task stack 20000000..20000800
+PSP timing unspecified; CCR unspecified
+exception frame unreadable; stacked PC unknown</code></pre>
+    <div class="snapshot-conclusion">
+      <p><strong>可证到哪一步：</strong><code>FFFFFFFD</code> 选择 Thread/PSP，<code>CFSR=00001000</code> 置 <code>BFSR.STKERR</code>。题设明确帧不可读，因此 stacked PC 是未知。给出的 PSP 数值低于 RAM 起始地址，但其采样时点与 <code>CCR</code> 均未提供，不能据此复算对齐填充、精确尝试地址或唯一根因。</p>
+      <p class="snapshot-limits"><strong>拒绝推断：</strong>不能改用看起来位于 RAM 的 MSP 凑 PC，不能扫描 RAM 或补零猜帧，也不能虚构 MMFAR/BFAR。现有证据仅够报告所选 PSP 帧不可信和 STKERR；栈耗尽、SP 被破坏、映射或访问问题都需额外证据区分。</p>
+    </div>
+  </article>
+</section>
+
+<section class="content-section article-section" id="fault-status-registers">
+  <div class="section-head"><h2 id="fault-status-masks">读故障状态前先保存原值</h2><p>地址与位掩码以 Armv7-M/Cortex-M3/M4 状态寄存器布局为例；具体实现仍须核对芯片手册。</p></div>
+  <p><code>CFSR</code> 由 MMFSR、BFSR、UFSR 三段组成。状态位是 sticky 的 W1C 位；先保存原始 <code>HFSR</code>/<code>CFSR</code> 和地址寄存器，再检查有效位。不要先清除现场，也不要在这些教学案例中写故障寄存器。</p>
+  <div class="table-wrap"><table class="fault-registers"><thead><tr><th>寄存器 / 位</th><th>地址或掩码</th><th>解读边界</th></tr></thead><tbody>
+    <tr><td>CFSR</td><td>0xE000ED28</td><td>MMFSR[7:0]、BFSR[15:8]、UFSR[31:16] 合并的状态。</td></tr>
+    <tr><td>HFSR</td><td>0xE000ED2C</td><td>FORCED 表示可配置 fault 升级；继续看 CFSR。</td></tr>
+    <tr><td>MMFAR</td><td>0xE000ED34</td><td>仅当 CFSR.MMARVALID 为 1 时，才把数值当作本次有效地址。</td></tr>
+    <tr><td>BFAR</td><td>0xE000ED38</td><td>仅当 CFSR.BFARVALID 为 1 时，才把数值当作本次有效地址。</td></tr>
+    <tr><td>HFSR.VECTTBL</td><td>bit 1 · 0x00000002</td><td>向量表读取相关的 fault 线索，不等于普通 stacked PC 指令出错。</td></tr>
+    <tr><td>HFSR.FORCED</td><td>bit 30 · 0x40000000</td><td>表示可配置 fault 升级到 HardFault；它本身不指出底层原因。</td></tr>
+    <tr><td>CFSR.MMARVALID</td><td>bit 7 · 0x00000080</td><td>MMFAR 有效标志。</td></tr>
+    <tr><td>BFSR.PRECISERR</td><td>bit 9 · 0x00000200</td><td>精确数据访问错误；结合 BFARVALID 和匹配反汇编。</td></tr>
+    <tr><td>BFSR.IMPRECISERR</td><td>bit 10 · 0x00000400</td><td>异步/延迟写错误；stacked PC 可能已经越过肇事 store。</td></tr>
+    <tr><td>BFSR.STKERR</td><td>bit 12 · 0x00001000</td><td>异常入栈错误；普通硬件帧解码可能不可信。</td></tr>
+    <tr><td>BFSR.BFARVALID</td><td>bit 15 · 0x00008000</td><td>BFAR 有效标志；为 0 时不要用寄存器旧值定责。</td></tr>
+    <tr><td>MMFSR.MSTKERR</td><td>bit 4 · 0x00000010</td><td>MemManage 异常入栈错误，同样应怀疑帧完整性。</td></tr>
+    <tr><td>UFSR.DIVBYZERO</td><td>bit 25 · 0x02000000</td><td>配合目标配置和指令判断；除零 trap 是可配置行为。</td></tr>
+    <tr><td>FPCCR.LSPACT</td><td>bit 0 · 0x00000001</td><td>lazy FP preservation 状态；预留槽位不证明 FP 值已保存。</td></tr>
+  </tbody></table></div>
+  <p><code>FPCCR.LSPACT</code> bit 0 依据 Arm 寄存器定义与图示。PM0214 Rev.10 §4.6.2 有一处正文把 LSPACT 标成 bit 1，与该节寄存器图、相邻 USER 字段及 Arm 定义不一致；这里保留差异说明并采用 bit 0，不静默照抄笔误。</p>
+</section>
+
+<section class="content-section article-section" id="keil-workflow">
+  <div class="section-head"><h2 id="match-the-firmware-build">在 Keil 中匹配实际固件构建</h2><p>先证实是哪份产物，再解读 PC；调试器给出的调用链只是补充线索。</p></div>
+  <ol>
+    <li><strong>固定固件身份。</strong>保留目标正在运行固件对应的 AXF/ELF、MAP、源代码版本、Arm Compiler 版本和编译/链接选项；不要拿另一次构建的地址表代替。</li>
+    <li><strong>从可信帧取 PC。</strong>依据异常入口 EXC_RETURN 与原始选中 MSP/PSP，核实帧边界、stacking fault、xPSR 对齐位以及必要的 FP 状态；C handler 序言之后的当前 SP 不等于入口帧基址。</li>
+    <li><strong>逐指令核对。</strong>在 µVision 用匹配的 AXF/ELF 和 MAP 打开 Disassembly、Call Stack、Locals，确认 stacked PC 的指令边界、前后指令和源代码映射。优化、内联、尾调用、缺少展开信息会改变可见调用链；不把扫描栈或单个 LR 当完整回溯。</li>
+    <li><strong>检查调试器能力。</strong><code>Fault Reports</code> 对话框能否显示取决于当前 debug driver。若该驱动不支持，就按 SCB 地址查看已有寄存器记录；不要因菜单缺失而猜测现场。</li>
+  </ol>
+  <p>不要套用固定的 PC-2、PC-4 或 LR 偏移；应从匹配反汇编和指令边界确认地址含义。</p>
+  <p>Arm Compiler 6 的 <code>fromelf</code> 可以只读 AXF 并导出反汇编/符号文本，例如：</p>
+  <pre><code>fromelf --text -c -s --output=firmware.dis.txt firmware.axf</code></pre>
+  <p>仅对产生该 AXF 的匹配 Arm Compiler 6 安装运行，并核对其确切版本与构建记录；示例读取 <code>firmware.axf</code>，输出清单文件，不执行目标程序。Arm Compiler 5 应使用它自己对应版本的工具和文档，不要将 AC5/AC6 混用，也不要把 AXF 上传到本页模型。</p>
+  <aside class="callout warning"><p>本文不提供通用 naked HardFault handler，不建议在故障处理路径中调用 <code>printf</code>、<code>malloc</code> 或 RTOS API。现场采集需要结合具体工程、编译器 ABI 与设备实现单独设计。</p></aside>
+</section>
+
+<script id="hardfault-snapshot-controller">
+const snapshotChoices = Array.from(document.querySelectorAll('input[name="hardfault-snapshot"]'));
+const snapshotPanels = Array.from(document.querySelectorAll('[data-hardfault-panel]'));
+const snapshotStatus = document.getElementById('hardfault-snapshot-status');
+function showSelectedHardfaultSnapshot() {
+  const selected = snapshotChoices.find(choice => choice.checked);
+  if (!selected) return;
+  snapshotPanels.forEach(panel => { panel.hidden = panel.dataset.hardfaultPanel !== selected.value; });
+  snapshotStatus.textContent = selected.dataset.status;
+}
+snapshotChoices.forEach(choice => choice.addEventListener('change', showSelectedHardfaultSnapshot));
+showSelectedHardfaultSnapshot();
+</script>
+<section class="content-section article-section" id="map-stacked-pc"><div class="section-head"><h2>从 stacked PC 核对真实指令</h2><p>解析字段和认定故障指令是两步不同的工作。</p></div><p>确认帧可信后，再将 stacked PC 映射到与运行固件完全匹配的 AXF/ELF、源码、map、符号和反汇编。优化等级、构建选项或二进制不一致会改变地址对应关系。Keil µVision 的 Disassembly、Call Stack 和 Locals 取决于调试符号、展开信息和调试驱动；调用链视图不能取代硬件帧证据。</p><p>不要对 PC 或 LR 固定减 2 或减 4。Thumb 指令有 16 位和 32 位长度；函数指针 bit 0 的状态语义不能直接套用到 stacked PC。按故障类别、异常返回语义、匹配版本反汇编和指令边界核对。RAM 扫描到“像代码地址”的字只能形成候选，不能证明完整调用链。</p></section>
+
+<section class="content-section article-section" id="untrusted-frame"><div class="section-head"><h2>栈帧不可信时停止推断</h2><p>保留“不知道”比给出伪精确地址更有用。</p></div><p>STKERR、UNSTKERR、栈越界、内存不可读、lazy FP 保存错误或明显损坏，都可能使硬件帧不可用。将字段标为未知/不可信，检查栈边界、栈指针破坏、访问权限和芯片内存映射；不要切换到另一条栈凑 PC，不要补零或扫描 RAM 拼出调用链。</p><p>报告应分清直接可证字段、仅支持一种解释的线索、以及现有现场无法确认的结论。HardFault 入口本身不提供唯一根因。</p></section>
+
+<section class="content-section article-section" id="sources"><div class="section-head"><h2>参考资料</h2><p>帧偏移以 Arm 架构算法为准。</p></div><ul class="source-list"><li><a href="https://documentation-service.arm.com/static/606dc36485368c4c2b1bf62f#page=532" target="_blank" rel="noopener">Armv7-M Architecture Reference Manual, DDI 0403E.e</a> — B1-532–536、B1-539–540，异常进入/返回与 PushStack()/PopStack()。</li><li><a href="https://documentation-service.arm.com/static/5f2ac76d60a93e65927bbdc5" target="_blank" rel="noopener">Cortex-M4 Devices Generic User Guide, DUI 0553B</a> — §§2.3–2.4、§4.3.10。</li><li><a href="https://www.st.com/resource/en/programming_manual/dm00046982-stm32-cortexm4-mcus-and-mpus-programming-manual-stmicroelectronics.pdf" target="_blank" rel="noopener">ST PM0214 Rev.10</a> — §2.3 printed p.43 Fig. 12 与 §4.4，作为交叉参考；若图示与 Arm 算法有差异，以 Arm 为准。</li><li><a href="https://github.com/ARM-software/abi-aa/blob/main/aapcs32/aapcs32.rst" target="_blank" rel="noopener">Arm AAPCS32</a> — 软件过程调用约定，区分 ABI 保存区和硬件帧。</li></ul><ul class="source-list"><li><a href="https://documentation-service.arm.com/static/5f2ac76d60a93e65927bbdc5#page=226" target="_blank" rel="noopener">Arm Cortex-M4 Devices Generic User Guide, DUI 0553B</a> · §4.3.10–13 与 §4.6.2–3：Fault 状态、有效位及 FPCCR/FPCAR 定义。</li><li><a href="https://www.keil.com/appnotes/files/apnt209.pdf#page=15" target="_blank" rel="noopener">Keil AN209</a> · µVision Fault Reports 与异常地址分析；对话框是否可用取决于当前 debug driver。</li><li><a href="https://documentation-service.arm.com/static/63eb52cb9567172d4e2aa9d7" target="_blank" rel="noopener">Arm Compiler fromelf User Guide DUI0805_l_en</a> · Arm Compiler 6 只读反汇编和符号清单。</li></ul><p class="local-note">继续阅读：<a class="note-link" href="cortex-m-cpu-registers.html">Cortex-M CPU 核心寄存器说明</a>。本文是架构教学材料，不替代具体 STM32/GD32 型号手册、勘误或匹配固件的现场诊断。</p></section>
+</main>
+<footer class="wrap footer"><span>MCU 学习笔记 · Cortex-M / Keil</span><span>独立交互文章 · 示意模型 · 不访问外部设备</span></footer>
+<script>
+'use strict';
+(()=>{
+const byId=id=>document.getElementById(id);
+const chooser=byId('exc-return');
+const pad=byId('stack-align-pad');
+const frameRows=[...document.querySelectorAll('[data-frame-field]')];
+function updateFrame(){
+  const value=Number.parseInt(chooser.value,16);
+  const mode=(value&0x8)?'Thread':'Handler';
+  const stack=(value&0x4)?'PSP':'MSP';
+  const extended=(value&0x10)===0;
+  const frameBytes=extended?0x68:0x20;
+  const padding=pad.checked?4:0;
+  byId('return-mode').textContent=mode;
+  byId('entry-stack').textContent=stack;
+  byId('frame-kind').textContent=(extended?'扩展 FP 帧':'基本帧')+' · 0x'+frameBytes.toString(16).toUpperCase()+' B';
+  byId('restored-sp').textContent='帧基址 + 0x'+frameBytes.toString(16).toUpperCase()+(padding?' + 0x04 对齐字':'');
+  const base=byId('frame-base');
+  const label=document.createElement('strong');
+  label.textContent='帧基址：';
+  base.replaceChildren(label,'异常入口 '+stack+' 的原始硬件帧起点；其地址值未提供，模型不读取内存。');
+  frameRows.forEach(row=>{
+    const isFp=row.dataset.fp==='true';
+    row.hidden=isFp&&!extended;
+    const location=row.querySelector('[data-address]');
+    if(location)location.textContent='异常入口 '+stack+' '+row.dataset.offset;
+  });
+  byId('model-status').textContent=(extended?'当前选择扩展 FP 帧，核心 PC 仍在帧基址 +0x18。':'当前选择基本帧，硬件帧为 0x20 字节。')+' Handler C 序言后变化的当前 SP 不参与帧基址推断。';
+}
+chooser.addEventListener('change',updateFrame);
+pad.addEventListener('change',updateFrame);
+updateFrame();
+})();
+</script>
+<script id="note-deep-links">
+function revealNoteHash(){let id;try{id=decodeURIComponent(window.location.hash.slice(1));}catch{return;}if(!id)return;const target=document.getElementById(id);if(!target)return;const section=target.closest('details');if(section)section.open=true;requestAnimationFrame(()=>target.scrollIntoView({block:'start'}));}
+window.addEventListener('hashchange',revealNoteHash);
+window.addEventListener('pageshow',revealNoteHash);
+revealNoteHash();
+</script>
+</body>
+</html>
