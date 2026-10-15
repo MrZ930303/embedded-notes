@@ -2,7 +2,7 @@
 
 使用 VitePress 1.6.4 稳定版构建的中文技术笔记站。依赖版本由 package-lock.json 锁定，适合部署到 GitHub Pages。
 
-当前内容：五篇完整的交互式 HTML 笔记（MCU 堆栈、Beads、Plane、Matt Pocock Skills、MCU 晶振与主频）和一条 MCU 内存学习路线。首页、分类和搜索用于找到笔记；进入笔记后直接操作模型、阅读图解并展开完整正文。尚未完成的分类明确标为规划中。
+当前内容：八篇完整的交互式 HTML 笔记（MCU 堆栈、Beads、Plane、Matt Pocock Skills、MCU 晶振与主频、Cortex-M CPU 核心寄存器、HardFault 栈回溯分析、EasyLogger）和一条 MCU 内存学习路线。首页按四个正式主题帮助你找到笔记，进入笔记后直接操作模型、阅读图解并展开完整正文。FreeRTOS 独立分类仍为规划中。
 
 ## 本地预览（Windows / macOS / Linux）
 
@@ -46,7 +46,7 @@ npm run docs:preview
 5. 运行 npm run check，然后在浏览器检查文章、搜索、移动端布局与交互。
 6. 审阅改动后提交并推送；main 分支的推送会触发自动发布。
 
-重要：docs/public/demos/ 下的 stack-heap.html、beads.html、plane.html、matt-pocock-skills.html 和 crystal-pll-clock.html 是主阅读体验的完整交互 HTML 源码。scripts/interactive-note.mjs 注册源码和主路径；VitePress 的 transformHtml 构建钩子原样输出到 c-memory/heap-stack.html、tools/ 与 mcu/ 下对应主阅读路径，开发服务提供相同 HTML。demos/ 路径保留兼容访问。docs/c-memory/heap-stack.md、docs/tools/ 与 docs/mcu/ 下对应文章 Markdown 只提供全文搜索输入，不作为公开文档式阅读页。修改正文、代码或限定条件后必须同步 HTML 与搜索输入；新增搜索标题还需为 HTML 中对应章节添加相同 id。构建测试会核对搜索结果锚点。
+重要：docs/public/demos/ 下的八篇 HTML 是主阅读体验的完整源码。scripts/interactive-note.mjs 注册源码和主路径；VitePress 的 transformHtml 构建钩子原样输出到 c-memory/heap-stack.html、tools/、mcu/ 与 debug/easylogger.html 等主阅读路径，开发服务提供相同 HTML。demos/ 路径保留兼容访问。docs/c-memory/heap-stack.md、docs/tools/、docs/mcu/ 与 docs/debug/easylogger.md 只提供全文搜索输入，不作为公开文档式阅读页。修改正文、代码或限定条件后必须同步 HTML 与搜索输入；新增搜索标题还需为 HTML 中对应章节添加相同 id。构建测试会核对搜索结果锚点。
 
 文章内链接到另一篇文章时，使用相对 Markdown 路径，如 ./heap-stack.md。主题组件中的站内链接使用 VitePress 的 withBase()。主交互笔记使用 data-no-router 和主题路由守卫进行浏览器原生导航，搜索及后退/前进也不会恢复成文档版。交互页中的搜索入口返回知识库并打开本地搜索。
 
@@ -93,9 +93,10 @@ SITE_BASE=/ npm run docs:preview
 - docs/c-memory/：分类索引，以及交互笔记的全文搜索输入
 - docs/tools/：Beads、Plane、Matt Pocock Skills 分类与全文搜索输入
 - docs/guide/：学习路线
-- docs/mcu/：时钟系统分类与晶振/PLL 全文搜索输入
-- docs/freertos/、docs/debug/：后续分类
-- docs/public/demos/：五篇主交互笔记 HTML 源码，样式、模型与正文完整内嵌；demos/ 保留兼容访问
+- docs/mcu/：时钟、寄存器与 HardFault 文章的分类和全文搜索输入
+- docs/debug/：调试与实战分类、EasyLogger 全文搜索输入
+- docs/freertos/：规划中分类
+- docs/public/demos/：八篇主交互笔记 HTML 源码，样式、模型与正文完整内嵌；demos/ 保留兼容访问
 - scripts/interactive-note.mjs：主阅读 URL 的开发/生产 HTML 输出适配
 - docs/.vitepress/theme/interactive-routing.mjs：点击、搜索与历史导航保护
 - templates/note.md：新笔记模板，不会被发布
@@ -111,6 +112,8 @@ Beads、Plane 与 Skills 交互均为本地教学模拟，不调用 CLI、不连
 MCU 晶振与主频笔记以 STM32F407、3.3 V / Scale 1 为限定条件，按当前官方资料校验 PLL、总线及 Flash 的名义数值。交互不配置硬件，不验证起振、锁相时间、精度、温漂或 USB 电气合规；其他系列不可直接套用。
 
 教学模型和示例代码不代表真实设备测量值。移植到工程前，应检查芯片内核、编译器、链接布局、RTOS 端口与版本；不要覆盖正在使用的栈。
+
+EasyLogger 笔记的过滤、RTT、ISR 优先级和 UART 带宽均为页面内教学模拟。简短片段不构成完整板级工程；研究参考实现的主机 ASan/UBSan 烟测不覆盖页面新片段，也不代表 Keil、AC5/AC6、真实 FreeRTOS 并发或目标硬件验证。接入前固定官方源码版本并保留许可证。
 
 ## 依赖与维护
 
