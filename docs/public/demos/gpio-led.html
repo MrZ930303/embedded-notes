@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="GPIO 输出路径、LED 限流与同时电流预算、手册脚注、六类诊断和十题回忆迁移。"><meta name="theme-color" content="#fafbf8"><link rel="icon" href="../favicon.svg" type="image/svg+xml"><title>GPIO 输出与 LED 驱动 · 嵌入式技术笔记</title>
+<style>
+:root{--paper:#fafbf8;--ink:#21382e;--muted:#526359;--line:#dce3d7;--green:#22664f;--pale:#eef2e9;--lime:#d5e7b3;--dark:#193e33;--mono:Consolas,ui-monospace,monospace;--amber:#92611e}*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:110px}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.9 system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif}a{color:var(--green);text-underline-offset:4px}button,input,select{font:inherit}button{cursor:pointer}.wrap{width:min(1120px,calc(100% - 64px));margin:auto}.skip{position:absolute;top:-90px;left:16px;z-index:20;background:white;padding:8px 12px}.skip:focus{top:8px}.topbar{position:sticky;top:0;z-index:10;border-bottom:1px solid var(--line);background:#fafbf8f5}.brand{text-decoration:none}.topbar nav a{white-space:nowrap}.hero{padding:48px 0 40px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:1.2fr 1fr;gap:48px;align-items:center}.tag{font-size:12px;color:var(--green);font-weight:700;letter-spacing:.08em}.hero h1{font-size:clamp(32px,3.6vw,44px);line-height:1.35;letter-spacing:-.035em;margin:16px 0}.hero-intro{font-size:17px;max-width:32rem}.hero-card{padding:26px;background:var(--pale);border:1px solid var(--line);border-radius:12px}.hero-card strong{font-size:25px;line-height:1.6}.hero-card p{margin:12px 0 0}.small,.date-note{font-size:13px;color:var(--muted)}.meta{display:flex;flex-wrap:wrap;gap:8px}.meta span{font-size:12px;border:1px solid var(--line);border-radius:4px;padding:3px 9px}.section-nav{display:flex;gap:10px;flex-wrap:wrap;padding:16px 0}.section-nav a{text-decoration:none}.content-section{padding:48px 0;border-bottom:1px solid var(--line);scroll-margin-top:115px}h2{font-size:28px;line-height:1.5;margin:0 0 18px}h3{font-size:20px;line-height:1.5;margin:0 0 12px}p{margin:0 0 16px}section>p{max-width:44rem}.section-head{display:flex;gap:18px;align-items:baseline}.num{font:700 13px var(--mono);color:var(--green);flex-shrink:0}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.card{border:1px solid var(--line);background:#fffefb;border-radius:12px;padding:22px;min-width:0}.card p:last-child{margin-bottom:0}.callout{padding:16px 20px;background:var(--pale);border-left:4px solid var(--green);border-radius:0 8px 8px 0;margin:20px 0;font-size:14px}.callout.warn{background:#fbf0dc;border-color:var(--amber)}.lab{padding:24px;border:1px solid var(--line);border-radius:12px;background:#fffefb}.lab-grid{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,1fr);gap:24px;align-items:start}.field{display:grid;gap:6px;min-width:0;font-size:14px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.field.full{grid-column:1/-1}select,input{width:100%;min-width:0;min-height:44px;border:1px solid #b9c8ba;border-radius:6px;padding:8px 10px;background:white;color:var(--ink);font-size:16px}.btn{min-height:44px;min-width:44px;padding:9px 15px;border:1px solid #b9c8ba;border-radius:6px;background:white;color:var(--ink);font-size:14px}.btn.primary{background:var(--dark);border-color:var(--dark);color:white}.btn:disabled{opacity:.58;cursor:default}.controls{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0}.feedback{padding:16px;background:var(--pale);border-radius:8px;margin-top:16px;font-size:14px;line-height:1.85}.feedback strong{display:block;font-size:18px}.circuit-figure{margin:0;padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--paper)}.circuit-figure svg{display:block;width:100%;height:auto}.circuit-figure figcaption{font-size:13px;color:var(--muted);line-height:1.8;margin-top:8px}.circuit-figure text{font-family:system-ui,"Microsoft YaHei",sans-serif;fill:var(--ink)}.applied{display:flex;gap:8px;flex-wrap:wrap;font-size:13px;margin-bottom:10px}.applied span{border:1px solid var(--line);padding:2px 8px;border-radius:4px}.circuit-readout{padding:16px 0 0;display:grid;grid-template-columns:70px 1fr;gap:6px 12px;font-size:14px}.circuit-readout dt{color:var(--muted)}.circuit-readout dd{margin:0}.wave{width:100%;display:block;height:auto;border:1px solid var(--line);border-radius:8px;background:var(--paper)}.wave text{font-family:var(--mono);font-size:13px;fill:var(--muted)}.wave path{vector-effect:non-scaling-stroke}.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:20px 0}.metric{background:var(--pale);padding:14px;border-radius:8px}.metric span{display:block;font-size:12px;color:var(--muted)}.metric strong{font:700 26px/1.5 var(--mono)}.timeline-fields{display:grid;grid-template-columns:minmax(130px,1fr) minmax(0,2fr);gap:16px;align-items:start}.checkbox{display:flex;gap:10px;align-items:flex-start;min-height:44px;padding-top:27px;font-size:14px}.checkbox input{width:20px;min-height:20px;flex:0 0 20px;margin-top:4px}.event-log{padding-left:22px;font-size:14px}.event-log li{margin-bottom:6px}details{margin:14px 0;padding:16px 20px;border:1px solid var(--line);border-radius:8px;background:#fffefb}summary{cursor:pointer;font-weight:700;min-height:44px}details p,details ul,details ol{margin:12px 0 0}li{margin-bottom:8px}.notes-toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:22px}pre{overflow-x:auto;background:var(--pale);padding:18px;border-radius:8px;font:14px/1.8 var(--mono)}code{font-family:var(--mono)}.table-wrap{max-width:100%;overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:14px;text-align:left}th,td{padding:12px;border-bottom:1px solid var(--line);vertical-align:top}th{background:var(--pale)}.source-list{padding-left:22px}.source-list a{overflow-wrap:anywhere}.next-links{display:flex;gap:20px;flex-wrap:wrap}.next-links a{display:inline-flex;align-items:center;min-height:44px}footer{padding:28px 0 36px;color:var(--muted);font-size:13px}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid #ad751d;outline-offset:4px}
+@media(max-width:760px){.hero,.lab-grid{grid-template-columns:1fr;gap:24px}.grid{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.timeline-fields{grid-template-columns:1fr}.checkbox{padding-top:0}.hero-card{padding:20px}.lab{padding:18px}}@media(max-width:520px){.wrap{width:calc(100% - 36px)}.hero{padding-top:32px}.fields{grid-template-columns:1fr}.field.full{grid-column:auto}.controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.controls .btn{padding-inline:6px}.section-head{gap:12px;align-items:flex-start}.content-section{padding:34px 0}.lab{padding:14px}.circuit-figure{padding:6px}.metrics{gap:8px}.metric{padding:10px}.metric strong{font-size:23px}h2{font-size:24px}details{padding:14px}.wave text{font-size:15px}}
+@media print{body{background:white;color:#15251b;font-size:11pt}.wrap{width:100%;max-width:none}.topbar,.skip,.section-nav,.controls,.fields,.timeline-fields,.notes-toolbar,.quiz-controls{display:none!important}.hero{display:block;padding:0 0 16px}.hero h1{font-size:26pt}.hero-card{display:none}.content-section{padding:18px 0}.lab-grid{grid-template-columns:1fr 1fr;gap:16px}.lab{padding:12px}.grid{grid-template-columns:1fr}.card,figure,table{break-inside:avoid}h2{font-size:17pt}h3{font-size:13pt}.feedback{padding:10px}.metrics{grid-template-columns:repeat(4,1fr)}.metric strong{font-size:18pt}details{break-inside:auto}a{color:inherit}.next-links{display:none}footer{font-size:9pt}pre{white-space:pre-wrap;overflow:visible}}
+</style>
+<style>
+/* Shared reading layer: keep this block identical in all standalone notes. */
+@media screen {
+:root{--paper:#fafbf8;--ink:#21382e;--muted:#526359;--line:#dce3d7;--green:#22664f;--pale:#eef2e9;--lime:#d5e7b3;--dark:#193e33}
+.notes-article{font-size:16px;line-height:1.9}
+.notes-article .wrap{width:min(1120px,calc(100% - 64px));max-width:none;padding-inline:0;margin-inline:auto}
+.notes-article .topbar{background:#fafbf8f5;z-index:10}
+.notes-article .topbar-inner{height:auto;min-height:68px;display:flex;align-items:center;justify-content:space-between;gap:24px;padding-block:0}
+.notes-article .brand{display:inline-flex;align-items:center;gap:10px;min-height:44px;margin:0;font-size:15px;font-weight:700;letter-spacing:0;color:var(--ink)}
+.notes-article .brandmark{display:grid;place-items:center;width:30px;height:30px;margin:0;border-radius:6px;background:var(--dark);color:#e0edcb;font:19px/1 var(--mono)}
+.notes-article .topbar nav{display:flex;align-items:center;gap:18px;margin:0;padding:0;width:auto;flex-wrap:nowrap}
+.notes-article .topbar nav a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:4px 3px;font-size:14px;font-weight:500;color:var(--muted);text-decoration:none;border-radius:4px}
+.notes-article .topbar nav a:hover,.notes-article .topbar nav a[aria-current="location"]{color:var(--green);background:var(--pale)}
+.notes-article .topbar nav a[aria-current="location"]{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:6px}
+.notes-article .hero{padding-block:48px 40px;gap:48px;grid-template-columns:1.12fr 1fr}
+.notes-article .hero h1{font-size:clamp(32px,3.6vw,44px);line-height:1.35;letter-spacing:-.035em;text-wrap:balance}
+.notes-article .hero h1 span{font-size:.78em;line-height:1.5;margin-top:8px}
+.notes-article .hero-intro{font-size:17px;line-height:1.9;max-width:32rem;margin-block:20px}
+.notes-article .hero>.hero-card,.notes-article .hero-flow,.notes-article .intro-map{box-shadow:none;border-radius:12px}
+.notes-article .hero .tag{font-size:12px;border-radius:4px;padding:4px 9px;margin:0 0 16px;line-height:1.7}
+.notes-article .hero>.hero-figure .map{transform:none;box-shadow:none}
+.notes-article .hero>div>.eyebrow{display:none}
+.notes-article .hero>.hero-card>.eyebrow,.notes-article .hero>.hero-flow>.eyebrow{display:block;font-size:12px;line-height:1.7}
+.notes-article .hero-links{gap:12px 22px;margin-top:24px}
+.notes-article .hero .text-link{display:inline-flex;align-items:center;min-height:44px;font-size:14px}
+.notes-article .hero figcaption,.notes-article .hero-figure figcaption,.notes-article .date-note{font-size:13px;line-height:1.8}
+.notes-article .hero-card p:last-child,.notes-article .hero-flow .small,.notes-article .intro-map>p:last-child{font-size:14px;line-height:1.85}
+.notes-article .hero-numbers span,.notes-article .hero-step small{font-size:13px}
+.notes-article h2{font-size:28px;line-height:1.5;text-wrap:balance}
+.notes-article .section-head p{font-size:15px;line-height:1.85}
+.notes-article .content-section,.notes-article .article-section{padding-block:52px}
+.notes-article .content-section+.content-section{padding-top:48px}
+.notes-article .note-section{scroll-margin-top:100px}
+.notes-article .note-section>summary{min-height:56px;font-size:18px;line-height:1.6}
+.notes-article .note-section>summary h2{font-size:20px;line-height:1.6}
+.notes-article .note-body{max-width:none;font-size:16px;line-height:1.95}
+.notes-article .note-body p,.notes-article .note-body li{font-size:16px;line-height:1.95}
+.notes-article .note-body>p,.notes-article .note-body>ul,.notes-article .note-body>ol,.notes-article .article-section>p,.notes-article .article-section>ul,.notes-article .article-section>ol{max-width:44rem;font-size:16px;line-height:1.95}
+.notes-article .note-body h3{font-size:21px;margin-block:28px 12px;scroll-margin-top:100px}
+.notes-article .note-body pre,.notes-article pre{font-size:14px;line-height:1.8}
+.notes-article .note-body table,.notes-article table{font-size:14px;line-height:1.8}
+.notes-article .note-body th,.notes-article .note-body td{font-size:14px;line-height:1.8}
+.notes-article .article-section>h2{font-size:28px}
+.notes-article .concept p,.notes-article .subnote p,.notes-article .risk p,.notes-article .monitor-step p,.notes-article .monitor-step ul,.notes-article .step-card p{font-size:15px;line-height:1.85}
+.notes-article .callout,.notes-article .model-scope,.notes-article .demo-disclaimer,.notes-article .version-card,.notes-article .version-card p{font-size:14px;line-height:1.85}
+.notes-article .source-list a,.notes-article .source-list span,.notes-article #plane-references~ul{font-size:14px;line-height:1.85}
+.notes-article #plane-overview~ul{max-width:none}
+.notes-article #plane-overview~ul li{font-size:15px;line-height:1.85}
+.notes-article .note-body .source-list{max-width:none}
+.notes-article .small,.notes-article .lab-note,.notes-article .lab-foot,.notes-article .lab-footer,.notes-article .clock-lab-foot,.notes-article .print-hint{font-size:13px;line-height:1.85}
+.notes-article .principle,.notes-article .principles span{font-size:13px;line-height:1.8}
+.notes-article .principles strong{font-size:15px}
+.notes-article .memory-motto,.notes-article .motto{background:var(--pale);color:var(--ink);border-radius:8px;text-align:left;padding:24px;margin-top:30px}
+.notes-article .memory-motto span,.notes-article .motto small{color:var(--muted);font-size:14px}
+.notes-article button,.notes-article .btn,.notes-article .notes-toolbar button{min-height:44px;min-width:44px;font-size:14px}
+.notes-article button,.notes-article .btn,.notes-article .topbar a,.notes-article summary,.notes-article .section-nav a,.notes-article .toc a{transition:background .18s,color .18s,border-color .18s,transform .18s}
+.notes-article button:enabled:hover{filter:brightness(1.06)}
+.notes-article button:enabled:active,.notes-article .btn:active{transform:translateY(1px)}
+.notes-article button:disabled{opacity:.58}
+.notes-article .graph-node:disabled,.notes-article .work-card:disabled{opacity:1}
+.notes-article :focus-visible{outline:3px solid #ad751d;outline-offset:4px}
+.notes-article .lab :focus-visible,.notes-article .clock-lab :focus-visible{outline-color:#f0cc80}
+.notes-article .toc a,.notes-article .section-nav a{display:inline-flex;align-items:center;min-height:44px;border-radius:5px;font-size:14px;padding:8px 12px}
+.notes-article .checklist label,.notes-article .clock-check{min-height:44px;font-size:14px;line-height:1.8}
+.notes-article .clock-field label,.notes-article .clock-controls small,.notes-article .clock-node small,.notes-article .clock-node span{font-size:13px;line-height:1.6}
+.notes-article .clock-current p,.notes-article .clock-candidate,.notes-article .clock-warnings{font-size:14px;line-height:1.8}
+.notes-article .clock-node strong,.notes-article .hero-numbers strong,.notes-article .metric strong{font-variant-numeric:tabular-nums}
+.notes-article .task-option strong,.notes-article .work-card strong{font-size:14px;line-height:1.65}
+.notes-article .task-option span,.notes-article .scope-buttons small,.notes-article .card-id,.notes-article .card-project,.notes-article .card-status,.notes-article .card-tags>span,.notes-article .lane-en{font-size:12px;line-height:1.6}
+.notes-article .scope-explanation,.notes-article .detail-copy>p,.notes-article .detail .acceptance,.notes-article .state-controls>p,.notes-article .board-heading p{font-size:14px;line-height:1.8}
+.notes-article .lane h4{font-size:14px;line-height:1.5;flex-wrap:wrap}
+.notes-article .lane-count{font-size:12px}
+.notes-article .lab .task-option{min-height:96px}
+.notes-article .skills-step-card dd,.notes-article .route-pane p,.notes-article .chooser-intro,.notes-article .permissions-pane>p{font-size:14px;line-height:1.85}
+.notes-article .skills-step-card dt,.notes-article .step-counter,.notes-article .permissions-pane small,.notes-article .permission-list span,.notes-article .graph-legend,.notes-article .graph-arrow-note{font-size:13px;line-height:1.8}
+.notes-article .ui-arrow{width:18px;height:18px;display:inline-block;vertical-align:middle;flex-shrink:0}
+.notes-article .selection-jump,.notes-article .choice-result{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;padding:10px 12px;border-radius:5px;font-size:13px;font-weight:600;line-height:1.6;text-decoration:none}
+.notes-article .selection-jump{background:#22664f;color:#fff}
+.notes-article .choice-result{color:#e2efca;border:1px solid #829873;background:#173e33;margin-top:7px}
+.notes-article .task-choice{min-width:0}
+.notes-article .task-choice .task-option{width:100%}
+.notes-article .task-option[aria-pressed="false"]+.choice-result{display:none}
+.notes-article #selected-skill,.notes-article #plane-selected-title{scroll-margin-top:128px}
+.notes-article footer,.notes-article .footer{font-size:13px;line-height:1.8}
+.notes-article footer a,.notes-article .footer a{display:inline-flex;align-items:center;min-height:44px}
+.notes-article .note-body p,.notes-article .hero-intro,.notes-article .article-section>p{text-wrap:pretty}
+@media(max-width:760px){
+.notes-article .wrap{width:calc(100% - 40px)}
+.notes-article .topbar-inner{flex-wrap:wrap;gap:0;padding-top:6px}
+.notes-article .brand{min-height:44px;font-size:15px}
+.notes-article .topbar nav{width:100%;gap:12px;overflow-x:auto;flex-wrap:nowrap;padding:0 0 4px;scrollbar-width:thin}
+.notes-article .topbar nav a{font-size:13px;flex-shrink:0;padding-inline:2px}
+.notes-article .hero{grid-template-columns:1fr;gap:28px;padding-block:32px}
+.notes-article .hero h1{font-size:32px;line-height:1.4}
+.notes-article .hero-intro{font-size:16px;max-width:none;margin-block:16px}
+.notes-article .hero-figure{max-width:500px}
+.notes-article .hero .tag{margin-bottom:12px}
+.notes-article .content-section,.notes-article .article-section{padding-block:36px}
+.notes-article .content-section+.content-section{padding-top:36px}
+.notes-article h2,.notes-article .article-section>h2{font-size:24px}
+.notes-article .section-head p{font-size:15px}
+.notes-article .note-section>summary{font-size:17px}
+.notes-article .note-section>summary h2{font-size:18px}
+.notes-article .note-body p,.notes-article .note-body li{font-size:16px}
+.notes-article .note-body pre,.notes-article pre{font-size:13px}
+.notes-article .note-body th,.notes-article .note-body td{font-size:14px}
+.notes-article .principles{grid-template-columns:1fr;gap:14px}
+.notes-article .principles strong{display:inline;margin-right:8px}
+.notes-article .principles span{display:inline}
+.notes-article .task-options{grid-template-columns:1fr 1fr;align-items:start}.notes-article .lab .task-option{min-height:76px;padding:12px}
+.notes-article .board{grid-template-columns:1fr 1fr}
+.notes-article .lane:last-child .lane-cards{display:flex}
+.notes-article .lane-cards{min-height:0}
+.notes-article .lane{padding:14px}
+.notes-article .lane-en{margin-bottom:10px}
+.notes-article .work-card{padding:14px}
+.notes-article .card-tags{gap:6px}
+.notes-article .lab-top{flex-wrap:wrap}
+.notes-article .lab-top .tag{white-space:normal}
+.notes-article .note-section,.notes-article .note-body h3,.notes-article .article-section,.notes-article .article-section>h3{scroll-margin-top:124px}
+}
+@media(max-width:370px){.notes-article .task-options,.notes-article .board{grid-template-columns:1fr}.notes-article .hero h1{font-size:30px}.notes-article .topbar nav{gap:8px}}
+}
+@media(prefers-reduced-motion:reduce){.notes-article *,.notes-article *::before,.notes-article *::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+</style>
+<style>
+/* GPIO chapter controls only; the shared reading layer remains unchanged. */
+.notes-article [role="region"].content-section>p{max-width:44rem}
+.budget-readout{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 16px;max-width:44rem;margin:20px 0}.budget-readout dt{color:var(--muted)}.budget-readout dd{margin:0;text-align:right;overflow-wrap:anywhere}.budget-readout output{font:700 18px/1.8 var(--mono);font-variant-numeric:tabular-nums}.exercise{border:1px solid var(--line);border-radius:8px;padding:20px;margin:20px 0}.exercise h3{font-size:19px}.exercise-answer{background:var(--pale)}#diagnosis-scenario{margin-top:18px}.budget-readout+details{clear:both}
+@media screen{.notes-article #entry-self-check,.notes-article #entry-self-check-answer,.notes-article #timeline-primer,.notes-article #voltage-exercise,.notes-article #sampling-limits,.notes-article .scenario-card,.notes-article #c-syntax,.notes-article #c-contract,.notes-article #c-source,.notes-article #c-host-lab,.notes-article #recall-questions,.notes-article #recall-answers,.notes-article .exercise,.notes-article .exercise-answer{scroll-margin-top:124px}}
+.reasoning-form{margin:18px 0}.reasoning-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.reasoning-form .btn{margin-top:12px}.reasoning-form .feedback{margin-top:12px}.reasoning-form select{white-space:normal}.scenario-card{margin-bottom:18px}
+@media(max-width:760px){.reasoning-fields{grid-template-columns:1fr}}
+@media print{.reasoning-form,.print-hint{display:none!important}body.exercise-print .hero,body.exercise-print .section-nav,body.exercise-print footer,body.exercise-print main>.content-section{display:none!important}body.exercise-print main>#lesson-notes{display:block!important;border:0;padding:0}body.exercise-print #lesson-notes>:not(#recall-questions){display:none!important}body.exercise-print .exercise-answer{display:none!important}body.exercise-print #recall-questions>.notes-toolbar,body.exercise-print #recall-questions>.print-hint{display:none!important}body.exercise-print #recall-questions .exercise{break-inside:avoid;margin:12px 0;padding:14px 18px;min-height:95px}body.exercise-print #recall-questions .exercise h3{font-size:12pt}}
+</style>
+<style>.led-two{grid-template-columns:repeat(2,minmax(0,1fr))}.metrics .event-word{font-size:18px;overflow-wrap:anywhere}.circuit-readout dd{overflow-wrap:anywhere}.circuit-figure svg{max-width:560px;margin:auto}.circuit-figure svg text{font-size:20px}.led-branch text{fill:var(--ink);stroke:none}.table-wrap caption{text-align:left;font-weight:600;margin-bottom:10px}@media(max-width:760px){.led-two{grid-template-columns:1fr}.lab-grid{grid-template-columns:1fr}.metrics .event-word{font-size:16px}}@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}</style></head><body class="notes-article"><a class="skip" href="#main">跳到正文</a><header class="topbar"><div class="wrap topbar-inner"><a class="brand" href="../"><span class="brandmark" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span>嵌入式技术笔记</a><nav aria-label="笔记导航"><a href="../learn/">返回分类</a><a href="#path-lab">交互实验</a><a href="#lesson-notes">完整笔记</a><a href="../?search=1">搜索笔记</a></nav></div></header>
+<div class="wrap"><div class="hero"><div><div class="tag">原创教材第 02 单元 · 输出与电流路径</div><h1 id="overview">GPIO 输出与<br>LED 驱动</h1><p class="hero-intro">把上章的一次按下通知变成一个能解释的输出：先沿电流走一圈，再判断 LED 能不能按预期工作。</p><div class="meta"><span>无需指定开发板</span><span>原创理想电路模型</span><span>未做硬件验证</span></div></div><aside class="hero-card"><div class="tag">本章成果</div><strong>命令 → 驱动路径 → LED 状态</strong><p>分三段完成：输出与电流路径、限流与预算、诊断与迁移。每段先读必要知识，再预测和检查理由。</p><p class="small">属于<a href="../learn/engineering-map.html#stage-01">学习地图第 01 阶段</a>，服务于可升级的数据采集终端。</p></aside></div>
+<nav class="section-nav" aria-label="章节"><a href="#prerequisites">前置知识</a><a href="#driver-modes">输出模式</a><a href="#path-lab">预测路径</a><a href="#event-replay">事件驱动 LED</a><a href="#current-budget">限流预算</a><a href="#datasheet-case">手册条件</a><a href="#diagnosis-lab">故障诊断</a><a href="#recall-questions">十题练习</a><a href="gpio-led-reference.html">打印速查</a></nav>
+<main id="main"><noscript><p class="callout">交互需要 JavaScript；完整原理、原始输入表、静态电路和全部折叠答案仍可阅读。本页没有连接真实设备，也不记录个人掌握程度。</p></noscript>
+<section class="content-section" id="prerequisites"><div class="section-head"><span class="num" aria-hidden="true">01</span><h2>先把“读到”与“驱动”分开</h2></div>
+<p>上章的 GPIO 输入观察一个节点，再把电压判成逻辑值。<strong>输出</strong>则由程序的命令控制引脚内部的驱动通路，使节点能够向外提供电流或吸收外部电流。命令是 0/1，节点实际电压还取决于供电、负载和器件条件；“写 1”不是给电路接上一台理想电源。</p>
+<p>本章沿用 <strong>GND</strong> 作为电压参考，<strong>VIO</strong> 表示此 I/O 电路允许的电源。电路图的箭头使用<strong>常规电流方向</strong>：从较高电位沿可导通的支路流向较低电位。先找电源、回流路径与元件方向，再看命令。若这些词还不熟，先回到<a href="gpio-button.html#zero-entry">按键首章的零基础入口</a>。</p>
+<div class="callout"><strong>先会三件事：</strong>指出 VIO 和 GND；解释高阻没有主动固定节点电压；区分“持续按住的状态”与“一次 PRESSED 通知”。本章会重新解释输出模式和 LED，不要求提前会寄存器或定时器。</div>
+</section>
+<div class="content-section" id="driver-modes" role="region" aria-labelledby="driver-modes-title"><div class="section-head"><span class="num" aria-hidden="true">02</span><h2 id="driver-modes-title">高侧、低侧与“释放”</h2></div>
+<p><strong>推挽（push-pull）</strong>可以控制高侧和低侧两个驱动通路：写 1 时高侧提供从 VIO 到 GPIO 的通路，写 0 时低侧提供从 GPIO 到 GND 的通路。这里画的是稳定状态的简化开关，不模拟切换瞬间，也不代表两个通路同时接通。</p>
+<p><strong>开漏（open-drain）</strong>只有主动拉低的低侧通路：写 0 导通低侧；写 1 让它断开，称为<strong>释放</strong>。释放不是主动输出高电平。要建立节点电压，须看外部上拉及其负载；没有确定偏置时，不能保证节点为高。高阻也不等于漏电流严格为零。</p>
+<p>两种模式的通路示意见 <a href="#source-an4899">ST AN4899 Rev 4 §4.3.2</a>。真实 MCU 的输出电压须看负载电流下的 VOH/VOL、完整料号和引脚限制；这张开关图没有替代那些条件。</p>
+<div class="table-wrap"><table><caption>先记通路，再记模式名称</caption><thead><tr><th>模式</th><th>写 0</th><th>写 1</th></tr></thead><tbody><tr><td>推挽</td><td>低侧导通，拉向 GND</td><td>高侧导通，拉向 VIO</td></tr><tr><td>开漏</td><td>低侧导通，拉向 GND</td><td>低侧断开，节点被释放</td></tr></tbody></table></div>
+<details id="mode-check"><summary>合上表格回忆：为什么开漏写 1 不能直接叫“高电平”？</summary><p>因为命令只让低侧开关断开，没有高侧驱动替它提供电流。若有上拉，电压仍要由上拉与所有负载共同决定；若没有确定偏置，就连高低都不能保证。错在把“不再拉低”当成“主动拉高”。</p></details>
+</div>
+<section class="content-section" id="source-sink"><div class="section-head"><span class="num" aria-hidden="true">03</span><h2>LED 的方向，决定哪条通路能工作</h2></div>
+<h3 id="led-polarity">先认 A、K 和串联电阻</h3><p>LED 是发光二极管，<strong>A 是阳极，K 是阴极</strong>。正常发光使用 A→K 的正向电流；封装方向要查实际料号的引脚图，不能只靠外观猜。正向压降 VF 随器件、电流和温度变化，不是一颗恒定“吃掉固定电压”的元件。反向接入不是本章的正常工作模式。</p>
+<p><strong>限流电阻 Rled 必须与 LED 在同一串联支路</strong>，可以在 LED 的前面或后面，因为该支路流过两者的电流相同。没有这个电阻，不能用理想开关模型猜一个有限电流。接下来的路径实验固定为方向正确、带串联电阻的 LED；电阻取值与预算在下一段单独检查。</p>
+<div class="grid led-two"><article class="card"><h3>拉电流：引脚供给支路</h3><p><strong>GPIO → Rled → LED(A→K) → GND。</strong>推挽写 1 时，高侧驱动把 VIO 接向 GPIO，形成完整回路。电流从引脚流出，称为拉电流（source）。</p></article><article class="card"><h3>灌电流：引脚吸收支路</h3><p><strong>VIO → Rled → LED(A→K) → GPIO。</strong>写 0 时，低侧驱动把 GPIO 接向 GND，形成回路。电流流入引脚再回地，称为灌电流（sink）。所以这种接法是低命令请求亮。</p></article></div>
+<figure class="circuit-figure" id="static-current-paths"><svg viewBox="0 0 360 330" role="img" aria-labelledby="static-led-title static-led-desc"><title id="static-led-title">两种正常 LED 串联支路的常规电流方向</title><desc id="static-led-desc">上方拉电流由 VIO 经高侧驱动、GPIO、串联电阻和 LED 到 GND。下方灌电流由 VIO 经串联电阻、LED、GPIO 和低侧驱动到 GND。箭头都沿 A 到 K。</desc><defs><marker id="static-led-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#22664f"/></marker></defs><g fill="none" stroke="#22664f" stroke-width="3"><path d="M30 45V85H105" marker-end="url(#static-led-arrow)"/><path d="M105 85H137M177 85H212M253 85H325V116" marker-end="url(#static-led-arrow)"/><rect x="137" y="74" width="40" height="22"/><path d="M218 73L241 85L218 97ZM245 72V98M315 119H335M319 126H331"/><path d="M30 210V250H78" marker-end="url(#static-led-arrow)"/><path d="M78 250H110M150 250H188M227 250H325V281" marker-end="url(#static-led-arrow)"/><rect x="110" y="239" width="40" height="22"/><path d="M194 238L217 250L194 262ZM221 237V263M315 284H335M319 291H331"/></g><g font-size="15"><text x="18" y="31">VIO</text><text x="45" y="53">高侧</text><text x="45" y="77">GPIO</text><text x="137" y="59">Rled</text><text x="213" y="59">LED</text><text x="209" y="120">A → K</text><text x="293" y="149">GND</text><text x="18" y="196">VIO</text><text x="111" y="224">Rled</text><text x="189" y="224">LED</text><text x="187" y="285">A → K</text><text x="252" y="230">GPIO / 低侧</text><text x="292" y="314">GND</text><text x="18" y="166">拉电流：从引脚流出</text><text x="18" y="326">灌电流：流入引脚，再回地</text></g></svg><figcaption>原创简化通路图。电阻与 LED 在同一串联支路；驱动开关的真实压降、限流数值和发光亮度不由此图给出。</figcaption></figure>
+<h3 id="worked-path">先一起走一次：灌电流接法、开漏写 0</h3><p>先从 VIO 出发，经 Rled、LED 的 A→K 到 GPIO，再经已导通的低侧回到 GND。因此 LED 支路有灌入引脚的正向通路。把命令改成 1，开漏释放，低侧这条回路被切断；不能凭“1”就说 LED 更亮。</p>
+<div class="callout warn"><strong>上拉还有自己的支路。</strong>低侧导通且外接上拉时，VIO→Rpu→GPIO→低侧→GND 也会流电流。即使 LED 支路没有正向通路，这股电流仍可能存在。LED 灭与“引脚全部电流为零”是不同判断，预算须包括相关电流。</div>
+</section>
+<div class="content-section" id="path-lab" role="region" aria-labelledby="path-lab-title"><div class="section-head"><span class="num" aria-hidden="true">04</span><h2 id="path-lab-title">先预测，再应用一组接线条件</h2></div><p>每次只预测 <strong>LED 支路</strong>由哪里供给电流。固定前提：允许的同一 VIO、正确方向的 LED、有效串联 Rled、理想稳态驱动。上拉选项指额外的 Rpu；它不能代替 Rled。预测不等于电气许可或亮度结论。</p>
+<div class="lab"><div class="lab-grid"><form id="path-form"><div class="fields"><label class="field" for="pending-mode">输出模式<select id="pending-mode"><option value="pp">推挽</option><option value="od">开漏</option></select></label><label class="field" for="pending-bit">写入命令<select id="pending-bit"><option value="1">写 1</option><option value="0">写 0</option></select></label><label class="field" for="pending-topology">LED 接法<select id="pending-topology"><option value="sink">灌电流：VIO 到 GPIO</option><option value="source">拉电流：GPIO 到 GND</option></select></label><label class="field" for="pending-pullup">额外上拉 Rpu<select id="pending-pullup"><option value="no">无额外上拉</option><option value="yes">有额外上拉</option></select></label><label class="field full" for="path-prediction">预测 LED 支路的供给<select id="path-prediction"><option value="">先选一个预测</option><option value="source">由引脚拉出</option><option value="sink">向引脚灌入</option><option value="pullup">由上拉供给</option><option value="off">无稳态通路</option></select></label></div><div class="controls"><button class="btn primary" type="submit" id="apply-path" disabled>提交预测并应用</button><button class="btn" type="button" id="reset-path">重置起点</button></div><p class="small" id="path-pending" role="status">选择待应用条件；图中仍为已应用起点。</p><div class="feedback" id="path-feedback" role="status">先选预测，再应用；四个选项只描述本模型中的 LED 支路。</div></form><div><p class="small" id="path-applied">已应用：推挽 / 写 1 / 灌电流 / 无上拉</p><figure class="circuit-figure"><div id="path-svg"><p>固定起点：推挽写 1、灌电流接法、无上拉。LED 支路无稳态正向通路。完整静态通路图见上方。</p></div><figcaption>高/低侧块是简化驱动开关。绿色表示已应用条件下的电流通路；虚线表示断开的驱动。箭头为常规电流方向。</figcaption></figure><dl class="circuit-readout"><dt>LED 支路</dt><dd id="path-kind">无稳态通路</dd><dt>电流路径</dt><dd id="path-current">理想稳态下，灌电流 LED 两端没有建立正向通路。</dd><dt>节点条件</dt><dd id="path-node">高侧驱动导通；实际电压须查负载条件。</dd><dt>其他电流</dt><dd id="path-extra">无额外上拉；本模型不计算漏电与瞬态。</dd></dl></div></div></div>
+<p class="small">“无稳态通路”只指此理想正向 LED 支路；不保证实物绝对不发光，也不保证节点能被另一个输入判成高。漏电、寄生电容、切换瞬态和亮度不在这个模型内。</p>
+<details id="path-static-answer"><summary>无 JavaScript 也能核对：16 组静态路径表与原因</summary><div class="table-wrap"><table id="path-truth-table"><caption>所有组合均保持 LED 正向、串联限流；“有上拉”是额外 Rpu</caption><thead><tr><th>模式</th><th>命令</th><th>LED 接法</th><th>额外上拉</th><th>LED 支路</th></tr></thead><tbody>
+<tr><td>推挽</td><td>0</td><td>拉电流</td><td>无</td><td>无稳态通路</td></tr><tr><td>推挽</td><td>0</td><td>拉电流</td><td>有</td><td>无稳态通路</td></tr><tr><td>推挽</td><td>0</td><td>灌电流</td><td>无</td><td>向引脚灌入</td></tr><tr><td>推挽</td><td>0</td><td>灌电流</td><td>有</td><td>向引脚灌入</td></tr>
+<tr><td>推挽</td><td>1</td><td>拉电流</td><td>无</td><td>由引脚拉出</td></tr><tr><td>推挽</td><td>1</td><td>拉电流</td><td>有</td><td>由引脚拉出</td></tr><tr><td>推挽</td><td>1</td><td>灌电流</td><td>无</td><td>无稳态通路</td></tr><tr><td>推挽</td><td>1</td><td>灌电流</td><td>有</td><td>无稳态通路</td></tr>
+<tr><td>开漏</td><td>0</td><td>拉电流</td><td>无</td><td>无稳态通路</td></tr><tr><td>开漏</td><td>0</td><td>拉电流</td><td>有</td><td>无稳态通路</td></tr><tr><td>开漏</td><td>0</td><td>灌电流</td><td>无</td><td>向引脚灌入</td></tr><tr><td>开漏</td><td>0</td><td>灌电流</td><td>有</td><td>向引脚灌入</td></tr>
+<tr><td>开漏</td><td>1</td><td>拉电流</td><td>无</td><td>无稳态通路</td></tr><tr><td>开漏</td><td>1</td><td>拉电流</td><td>有</td><td>由上拉供给</td></tr><tr><td>开漏</td><td>1</td><td>灌电流</td><td>无</td><td>无稳态通路</td></tr><tr><td>开漏</td><td>1</td><td>灌电流</td><td>有</td><td>无稳态通路</td></tr>
+</tbody></table></div><p>写 0 时两种模式都导通低侧；灌电流接法能沿 VIO→Rled→LED→GPIO→低侧→GND 走通。推挽写 1 的高侧能供给拉电流支路。开漏写 1 只有拉电流接法加上拉时，才有 VIO→Rpu→GPIO→Rled→LED→GND 的可能供给通路；它可能仅微弱导通，节点电压受负载影响，不能保证高逻辑或亮度。其余情况在理想模型里没有 LED 稳态正向回路。</p><p>任何“有上拉且写 0”的行，都另有 VIO→Rpu→GPIO→低侧→GND 电流。表只列 LED 支路，不能因此漏掉预算中的上拉电流。</p></details>
+</div>
+<div class="content-section" id="event-replay" role="region" aria-labelledby="event-replay-title"><div class="section-head"><span class="num" aria-hidden="true">05</span><h2 id="event-replay-title">让“一次按下”改变期望状态</h2></div><p><strong>期望状态</strong>是业务希望 LED 保持亮还是灭；<strong>输出命令</strong>是送给驱动的 0/1。两者之间要经过接线映射：这里固定推挽、灌电流 LED、正确方向和串联 Rled，因此希望亮时写 0，希望灭时写 1。这里的“亮”是模型的请求状态，实物是否满足电流和亮度仍需验证。</p>
+<p id="event-contract">下面只消费上章<strong>已经过滤的人工事件记录</strong>，不再运行消抖算法。PRESSED 表示一次已确认按下，RELEASED 表示一次已确认释放，NONE 表示这条记录没有新动作通知。记录中的时间只帮助对照，不触发等待或定时器。每收到一条 PRESSED，期望状态翻转一次；NONE 和 RELEASED 不改变它。</p>
+<pre><code>期望亮 = false
+逐条取已过滤事件：
+    若事件是 PRESSED：期望亮 = 非(期望亮)
+    推挽灌电流命令 = 期望亮 ? 0 : 1</code></pre>
+<div class="table-wrap"><table><caption>本次回放的全部输入，起点期望灭</caption><thead><tr><th>时间 / ms</th><th>已过滤事件</th></tr></thead><tbody><tr><td>0</td><td>NONE</td></tr><tr><td>11</td><td>PRESSED</td></tr><tr><td>12</td><td>NONE</td></tr><tr><td>31</td><td>RELEASED</td></tr><tr><td>41</td><td>PRESSED</td></tr></tbody></table></div>
+<p>先在纸上写下每行的期望亮灭和输出命令，再点“下一条事件”。保持按住不会在每条 NONE 上重复翻转；释放只是结束一次按压，不是本章的翻转触发。</p>
+<div class="lab"><div class="controls"><button class="btn primary" id="replay-step" type="button">下一条事件</button><button class="btn" id="replay-reset" type="button">重置回放</button></div><div class="metrics"><div class="metric"><span>记录时间 / ms</span><strong id="replay-time">0</strong></div><div class="metric"><span>当前事件</span><strong class="event-word" id="replay-event">NONE</strong></div><div class="metric"><span>期望状态</span><strong id="replay-state">灭</strong></div><div class="metric"><span>推挽灌电流命令</span><strong id="replay-bit">1</strong></div></div><p class="feedback" id="replay-feedback" role="status">起点期望灭，写 1；没有新的 PRESSED。</p><ol class="event-log" id="replay-log"><li>0 ms · NONE → 期望灭 / 写 1</li></ol></div>
+<details id="event-answer"><summary>核对回放：五条记录应得到什么？</summary><p>期望状态依次为<strong>灭、亮、亮、亮、灭</strong>；输出命令依次为<strong>1、0、0、0、1</strong>。11 ms 的 PRESSED 使期望亮；12 ms 的 NONE 和 31 ms 的 RELEASED 都保持它；41 ms 的第二次 PRESSED 才再次翻转。错把“按住”当“一次按下”，会在循环中反复翻转；把“期望亮”直接写成 1，则忽略了本例的灌电流接法。</p></details><p class="small">这是有界、可重置的事件→业务状态模型，不是物理按钮连线、GPIO 驱动程序、RTOS 或定时器实验。它不证明上章过滤器、实际引脚或真实器件在此接法下通过硬件测试。</p>
+</div>
+<section class="content-section" id="current-budget"><div class="section-head"><span class="num" aria-hidden="true">06</span><h2>先算一条支路，再算同时亮的全部负载</h2></div>
+<p>GPIO 导通仍有压降。拉电流时，可留给支路的电压是输出高电压 VOH；灌电流时，要从 VIO 扣掉输出低电压 VOL。两者都受驱动电流、供电和温度条件约束，不能把引脚当作理想 VIO 或理想地。电阻利用电压差限制正向电流：<code>I = (电源 − LED VF − 驱动压降) / R</code>，前提是有正向电压余量。</p>
+<h3 id="nominal-resistor">名义数值只给一个起点</h3><p>只为讲公式，假设电源 3.3 V、VF 2.0 V、驱动压降 0.2 V、目标 2 mA，则 <code>R = (3.3 − 2.0 − 0.2) / 0.002 = 550 Ω</code>。选附近的 560 Ω 还需重新核算；这些是假设，不是某个 MCU 或 LED 的规格。电阻承受功耗，还要按实际封装、环境温度、额定功率及降额留余量，不能只看阻值。</p>
+<h3 id="worst-case-bounds">把变化范围代入两端</h3><p>把电源、VF 和电阻看成范围。电阻标称 R、容差 t：<code>Rmin = R(1−t)</code>，<code>Rmax = R(1+t)</code>，5% 在式中写 0.05。为避免低估上限，本模型令最小驱动压降为 0；只用在给定工作点范围内有依据的 VF 上下界。</p>
+<pre><code>Imax = max(0, Vmax − VFmin) / Rmin             [A]
+Imin = max(0, Vmin − VFmax − 驱动压降上限) / Rmax [A]
+Pmax = max(0, Vmax − VFmin)² / Rmin             [W]
+电流 mA = 电流 A × 1000</code></pre>
+<p><code>Vmax ≤ VFmin</code> 表示本模型没有正向压差余量。即使 Imax 大于 0，Imin 为 0 也表示不能保证整个范围都导通。这个固定 VF 包络是条件化估算，不求解真实 LED 的非线性曲线，也不能凭电流估算保证可见亮度。手册缺 VFmin 或目标电流、温度的范围时，应补足依据，不能把 Typ 当 Min。</p>
+<h3 id="simultaneous-budgets">三个预算，逐层比较</h3><ul><li><strong>单引脚：</strong>与该方向、该引脚允许采用的设计电流预算比较，额外上拉等电流也要计入。</li><li><strong>同组或同端口：</strong>查所用器件是否给定分组限制，以及哪些引脚同组；不能凭名字为所有芯片编造同一限值。</li><li><strong>全芯片相关电源/地路径：</strong>包括同时工作的 I/O 和内核、外设及其他相关电流；分别按手册的供电路径条件相加，不把拉/灌电流的正负号相抵。</li></ul>
+<p>下面模型只算同一组、同一驱动方向、N 路同时亮的等值 LED：<code>组电流 = N×Imax</code>，<code>总电流 = 组电流 + 其他/内核电流</code>。它没有额外上拉支路、不同负载或不同供电域；遇到这些情况需单独记账。所有预算均为本练习的虚构设计预算，绝非器件 AMR；恰好等于预算只通过数值比较，没有余量。</p>
+</section>
+<div class="content-section" id="budget-lab" role="region" aria-labelledby="budget-lab-title"><h2 id="budget-lab-title">先预测：这组假设会超出哪个预算？</h2><p>练习输入全是假设：VIO 3.0—3.6 V，VF 1.8—2.2 V，驱动压降上限 0.4 V；R 为 680 Ω ±5%，4 路同时亮；单脚 4 mA、同组 12 mA、相关总预算 30 mA，其他/内核电流 10 mA。先估算，再选结论并提交。改变输入只更新待计算条件，读数仍保留上次结果。</p><p>预测先按正向余量分类：Vmax≤VFmin 时选“无正向余量”；有余量时再判断预算是否超出。结果仍会列出全部超预算项目，其他及内核电流不会因 LED 不导通而消失。</p>
+<div class="lab"><form id="budget-form" novalidate><div class="fields"><label class="field" for="budget-rOhm">标称电阻 / Ω<input id="budget-rOhm" type="number" value="680" step="any"></label><label class="field" for="budget-channels">同时亮的路数 / 路<input id="budget-channels" type="number" value="4" min="1" max="32" step="1"></label></div>
+<details id="budget-assumptions"><summary>查看或改变电压、容差及三个虚构预算</summary><div class="fields"><label class="field" for="budget-vMin">电源下界 / V<input id="budget-vMin" type="number" value="3.0" step="any"></label><label class="field" for="budget-vMax">电源上界 / V<input id="budget-vMax" type="number" value="3.6" step="any"></label><label class="field" for="budget-vfMin">VF 下界 / V<input id="budget-vfMin" type="number" value="1.8" step="any"></label><label class="field" for="budget-vfMax">VF 上界 / V<input id="budget-vfMax" type="number" value="2.2" step="any"></label><label class="field" for="budget-dropMax">驱动压降上限 / V<input id="budget-dropMax" type="number" value="0.4" step="any"></label><label class="field" for="budget-tolPct">电阻容差 / %<input id="budget-tolPct" type="number" value="5" step="any"></label><label class="field" for="budget-pinBudget">单脚设计预算 / mA<input id="budget-pinBudget" type="number" value="4" step="any"></label><label class="field" for="budget-groupBudget">同组设计预算 / mA<input id="budget-groupBudget" type="number" value="12" step="any"></label><label class="field" for="budget-totalBudget">相关总设计预算 / mA<input id="budget-totalBudget" type="number" value="30" step="any"></label><label class="field" for="budget-other">其他及内核电流 / mA<input id="budget-other" type="number" value="10" step="any"></label></div></details>
+<label class="field" for="budget-prediction">预测整体结论<select id="budget-prediction"><option value="">先选一个预测</option><option value="over">至少一项超</option><option value="within">所列均未超</option><option value="headroom">无正向余量</option></select></label><div class="controls"><button class="btn primary" id="calculate-budget" type="submit" disabled>提交预测并计算</button><button class="btn" id="reset-budget" type="button">重置假设</button></div><p id="budget-pending" class="small" role="status">尚未计算。先写下估算，再选预测。</p><p id="budget-feedback" class="feedback" role="status">结果只检验所列条件下的数学预算，不作接线或亮度验收。</p></form>
+<div id="budget-results" hidden><p class="small">上次已计算条件，读数四舍五入至小数点后 3 位；比较使用未舍入值。</p><dl class="budget-readout"><dt>Rmin / Ω</dt><dd><output id="budget-rmin"></output></dd><dt>Rmax / Ω</dt><dd><output id="budget-rmax"></output></dd><dt>每路 Imax / mA</dt><dd><output id="budget-imax"></output></dd><dt>每路 Imin / mA</dt><dd><output id="budget-imin"></output></dd><dt>每只电阻 Pmax / mW</dt><dd><output id="budget-power"></output></dd><dt>同时同组电流 / mA</dt><dd><output id="budget-group"></output></dd><dt>加其他的总电流 / mA</dt><dd><output id="budget-total"></output></dd></dl></div></div>
+<details id="budget-static-answer"><summary>提交后或无 JavaScript 时核对：默认值与变式解析</summary><p>Rmin=646 Ω、Rmax=714 Ω；每路 Imax≈2.786 mA、Imin≈0.560 mA，电阻 Pmax≈5.015 mW；4 路同组≈11.146 mA，总≈21.146 mA。只在所列假设内未超三个预算，不能称为硬件“安全”或保证亮度。</p><p>只把路数改 5：同组≈13.932 mA 超 12 mA，总≈23.932 mA 仍低于 30 mA；8 路时同组≈22.291 mA、总≈32.291 mA，两者都超。改 330 Ω、4 路会连单脚预算也超。名义算例改 560 Ω 后 Rmin=532 Ω，每路上界≈3.383 mA，4 路≈13.534 mA 超组预算；“向上取附近阻值”不能替代全套检查。重新选值和评估允许的亮度需求，而不是硬凑通过。</p></details>
+</div>
+<section class="content-section" id="datasheet-case"><h2>把完整料号、条件和脚注放在同一张记录上</h2>
+<p>电气表中的数字须连同测试条件、参数适用范围和脚注阅读。Absolute maximum ratings（AMR）是应力限制；接近它不代表正常功能、寿命或输出电平有保证。Min/Max 也只在列明条件与注释的保证方式下成立，有些行仅通过表征而非逐片生产测试。</p>
+<h3 id="mcu-case">MCU 案例：STM32F103C8T6，LQFP48</h3><p>用 <a href="#source-mcu">ST DS5319 Rev 20（July 2025）</a>练习读法，不指定开发板或批准接线。§5.3.13 表 37 的普通 GPIO 条件包含八脚同时驱动、IIO=±8 mA、<code>2.7&lt;VDD&lt;3.6 V</code>；对应 CMOS 行给出 <code>VOL≤0.4 V</code>、<code>VOH≥VDD−0.4 V</code>。这是带条件的输出电平资料，不能把 ±8 mA 直接升格为所有引脚的设计预算。更大电流行会改变电压保证且有表征脚注，不能只挑电流数字。</p>
+<p>§5.2 表 7 的单 I/O 灌 25 mA / 拉 −25 mA，相关 VDD/VDDA 与 VSS 各 150 mA，属于 AMR 应力限制，<strong>不是本章计算器的预算来源</strong>。总电流还涉及 MCU 自身耗电。不要虚构这个型号的“每端口统一上限”；只按实际手册给出的组、供电路径和条件核算。</p>
+<div class="callout warn"><strong>特殊脚注优先。</strong>表 5 脚注 5 对 PC13、PC14、PC15 的供电开关给出 3 mA、≤2 MHz、≤30 pF 限制，并明确这些脚不能用作电流源，例如驱动 LED。不能用普通脚的表 37，或一般性的 ±3 mA 文字，替代这个具体禁止条件。</div>
+<h3 id="led-case">LED 案例：Kingbright WP710A10ID</h3><p><a href="#source-led">DSAL0505/1101024897，V.12A，印刷日期 08/11/2023</a>，p2 的 VF 行条件是 IF=10 mA、TA=25°C，列 Typ 1.9 V、Max 2.3 V，并附 VF ±0.1 V 的注释。该行没有保证的 VFmin，也没有给出本章 2 mA、全温度的电压包络；不能把 1.9 V 填作保证下界。p1 包装图用来认极性。AMR 的直流、反向及脉冲数值不是正常设计许可，脉冲还有限定宽度/占空比，温度也须降额。</p>
+<p>交付一张可复核记录：完整 MCU/LED 料号、引脚、供电与温度范围、目标电流、VOH/VOL 条件、VF 包络、全部预算及特殊脚注。某个界限未知时写“缺依据”，继续查资料或测量定义明确的工作范围；不要让计算器用假设替真实选型签字。</p>
+</section>
+<section class="content-section" id="external-driver"><h2>需要更大负载时，GPIO 只发控制命令</h2><p>电流、压降、总预算或独立电源条件不适合直驱时，选有数据依据的晶体管或恒流驱动。外接驱动也不消除 LED 的限流需求；继电器、高功率灯等负载不能直接照搬本章 GPIO 接法，感性负载还需按器件检查关断保护。</p>
+<div class="grid led-two"><article class="card"><h3 id="npn-driver">NPN：基极电流也要算</h3><p>低侧思路为负载接电源、NPN 集电极接负载、发射极接地，GPIO 经基极电阻控制。不能省基极电阻；须按实际饱和条件设计基极电流，计入 GPIO 预算，并检查集电极电流、VCE(sat)、功耗和复位时关断偏置。把“有一个放大倍数”当作任何负载都能饱和，缺少工作条件。</p></article><article class="card"><h3 id="mosfet-driver">N 沟道 MOSFET：看驱动条件</h3><p>低侧源极接参考地，漏极接负载。控制电压是 VGS，不只是 GPIO 对另一个地的标称电压；需要公共参考，或经过合适隔离/驱动建立它。核对 RDS(on) 保证时的 VGS、温度、损耗及栅极电荷/瞬态驱动电流；高于 VGS(th) 只说明开始形成规定小电流，不保证所需低电阻。复位高阻期间用适当栅源下拉等让默认态关断，并检查电源先后及器件额定值。</p></article></div>
+<p><a href="#source-mosfet">TI SLPA021（November 2024）§4、§5.2</a>解释门极电压规格和低侧结构。器件选型、偏置电阻与散热须回到具体型号；这里不提供通用 NPN/MOS 数值，也不把“logic-level”字样等同任意 3.3 V 条件保证。独立负载电源还须满足参考、电平和上电顺序要求，不能让它经 GPIO 保护路径反向供电。</p>
+</section>
+<div class="content-section" id="diagnosis-lab" role="region" aria-labelledby="diagnosis-lab-title"><div class="section-head"><span class="num" aria-hidden="true">07</span><h2 id="diagnosis-lab-title">故障诊断：先找被破坏的前提</h2></div><p>先用纸笔依次检查：电源与公共参考 → A/K 与串联限流 → 驱动模式和冲突 → 同时电流预算 → 器件驱动条件。若电路有过流、短接或反向风险，先断电核对原理图，不能靠延时、时钟或日志修改掩盖它。</p>
+<form class="lab" id="diagnosis-form"><label class="field" for="diagnosis-case">选择独立故障场景<select id="diagnosis-case"><option value="missing">01 · 没有限流</option><option value="reverse">02 · 方向可疑</option><option value="release">03 · 释放当高</option><option value="contention">04 · 输出冲突</option><option value="budget">05 · 多路同时亮</option><option value="gate">06 · 阈值当导通</option></select></label><p id="diagnosis-scenario">假设原理图为推挽高侧→GPIO→LED(A→K)→GND，没有 Rled。应先检查哪项？</p><label class="field" for="diagnosis-prediction">选择优先检查<select id="diagnosis-prediction"><option value="">先作判断</option><option id="diagnosis-option-a" value="a">先补限流电阻</option><option id="diagnosis-option-b" value="b">先增驱动强度</option><option id="diagnosis-option-c" value="c">先改软件延时</option></select></label><div class="controls"><button class="btn primary" id="diagnose-submit" type="submit" disabled>提交判断看原因</button><button class="btn" id="diagnose-reset" type="button">重置诊断</button></div><p class="feedback" id="diagnosis-feedback" role="status">先选检查项；这是独立假想场景，不是对某块真实板子的故障结论。</p></form>
+<details id="diagnosis-static"><summary>无 JavaScript 时核对六类故障与下一步</summary><ol><li><strong>没有 Rled：</strong>先断电补齐有依据的串联限流；理想驱动图无法给出有限电流，加驱动或延时不限制导通电流。</li><li><strong>方向可疑：</strong>查封装 A/K 与原理图方向，不靠反向提高电压或删除电阻试亮。反向额定值不是正常反接许可。</li><li><strong>开漏释放当高：</strong>查偏置和全部负载。写 1 不提供主动高侧，上拉加 LED 会加载节点；不能保证高电压或亮度。</li><li><strong>输出冲突：</strong>先断开两个推挽输出的冲突源；一个写高、一个写低构成高低驱动间通路，LED 电阻不一定在该通路中。</li><li><strong>多路同时亮：</strong>核对单脚、同组及相关总电流，加内核/其他负载与上拉，禁止仅看单脚或正负相抵。</li><li><strong>只看 MOS 阈值：</strong>查所需 RDS(on) 的 VGS 条件、栅极电荷/驱动能力、参考关系及默认关断。VGS(th) 不保证负载电流下充分导通。</li></ol></details>
+</div>
+<div class="content-section" id="lesson-notes" role="region" aria-labelledby="lesson-notes-title"><h2 id="lesson-notes-title">合上结果，解释一条新路径</h2><div class="notes-toolbar"><button class="btn primary" id="expand-notes" type="button">展开全部答案</button><button class="btn" id="collapse-notes" type="button">折叠全部答案</button></div>
+<details id="path-recall"><summary>不看表：开漏写 1，GPIO 经 Rled、正向 LED 到地，再加上拉，为什么不能保证高？</summary><p>高侧驱动不存在，低侧已经断开。电流只能由 VIO 经过 Rpu、GPIO、Rled、LED 回地，上拉和 LED 共同决定节点电压。LED 可能微弱导通，但这不构成有保证的逻辑高，也不构成已验证亮度。错在把上拉当成没有压降的理想高源。</p></details>
+<details id="path-transfer"><summary>把固定回放改为推挽拉电流接法，PRESSED 时的业务翻转规则需要变吗？</summary><p>业务仍只在 PRESSED 时翻转，NONE/RELEASED 都保持期望状态。需要改变的是接线映射：推挽拉电流接法中，希望亮对应写 1，希望灭对应写 0。应把业务意图和电平映射分开，不能用改掉事件含义来补偿接线。</p></details>
+<p>本段交付物：画一条带 VIO/GND、Rled、A/K、驱动与箭头的回路；再写出上述五条事件的期望状态与命令。隔一段时间后，换成推挽拉电流接法重做，不靠背诵旧命令序列。若不清楚，可向助手指出卡在节点、通路、LED 方向还是事件映射；点击正确一次不能证明长期掌握。</p>
+<div id="recall-questions"><h3 id="ten-exercises">十题：基础、故障和迁移</h3><p>合上前面的表和结果，先在纸上写结论及原因，再打开每题解析。下面每题给出自己的输入；“只打印题目”包含这些输入，隐藏答案。普通打印会展开答案，之后恢复原来的折叠状态。</p><div class="notes-toolbar"><button class="btn primary" type="button" id="print-questions">只打印题目</button></div><p class="print-hint">题目打印需 JavaScript；无脚本仍可展开原生解析、阅读全文或使用浏览器普通打印。没有保存作答与掌握记录。</p>
+<article class="exercise" id="exercise-01"><h3>01 · 写 1 是命令，哪条驱动通路导通？</h3><p>分别把推挽、开漏写 1。LED 接法均为 GPIO→Rled→LED(A→K)→GND，无额外上拉、同一允许 VIO、理想稳态。哪种有正向支路？另一种为何不能直接叫高电平？</p><details class="exercise-answer" id="answer-01"><summary>展开本题原因</summary><p>推挽高侧提供 VIO→GPIO→Rled→LED→GND；开漏写 1 释放，没有主动高侧与确定偏置，模型无正向稳态支路，也不保证高逻辑。错在把两个模式的写 1 当成相同电路。</p></details></article>
+<article class="exercise" id="exercise-02"><h3>02 · 正确方向和电阻的位置</h3><p>负载电源→LED→Rled→GPIO 低侧。电阻有依据且串联；封装方向尚未核对。电阻一定要挪到 LED 前吗？上电前还必须确认哪条方向？</p><details class="exercise-answer" id="answer-02"><summary>展开本题原因</summary><p>同一串联支路中，Rled 放 LED 前后均可，两者电流相同。必须按完整 LED 料号的封装确认电源朝 A、GPIO 低侧朝 K，形成 A→K 正向通路；不能用反向加压或省电阻试亮。位置不是极性保证。</p></details></article>
+<article class="exercise" id="exercise-03"><h3>03 · 550 Ω 取 560 Ω 就结束了吗？</h3><p>名义假设 3.3 V、VF=2.0 V、驱动压降 0.2 V，目标 2 mA。另给最坏界：V=3.0—3.6 V、VF=1.8—2.2 V、驱动压降 0—0.4 V、R=560 Ω±5%，4 路同时同组、同方向；预算单脚 4 mA/组 12 mA/总 30 mA，其他电流 10 mA。算名义 R、每路上界和组电流，解释能否仅凭向上取阻值通过检查。</p><details class="exercise-answer" id="answer-03"><summary>展开本题原因</summary><p>名义 R=550 Ω。560 Ω 的最小实际值 532 Ω，每路上界约 3.383 mA，四路约 13.534 mA，超 12 mA 组预算；总约 23.534 mA 未超 30。必须重新选值和评估需求；单脚未超、名义 2 mA 或向上取值都不能替代同时组预算。结果仍是虚构条件的数学结论。</p></details></article>
+<article class="exercise" id="exercise-04"><h3>04 · 路数改变，哪层先失败？</h3><p>假设 V=3.0—3.6 V、VF=1.8—2.2 V、驱动压降 0—0.4 V、R=680 Ω±5%；同组同方向，全部同时亮，其他/内核电流 10 mA；预算单脚 4 mA/组 12 mA/总 30 mA。分别改为 5 路、8 路，列每路、组与总上界，指出失败层次。</p><details class="exercise-answer" id="answer-04"><summary>展开本题原因</summary><p>每路上界约 2.786 mA；5 路组约 13.932 mA 超组，总约 23.932 mA 未超；8 路组约 22.291 mA、总约 32.291 mA 都超，单脚仍未超。加内核/其他电流，不能只数 LED，也不能拉灌相抵。</p></details></article>
+<article class="exercise" id="exercise-05"><h3>05 · 没有正向余量，还能承诺亮度吗？</h3><p>假设电源 1.0—1.8 V，VF=1.8—2.2 V，驱动压降 0—0.4 V，R=680 Ω±5%。按本章包络求 Imax/Imin。若另外内核/其他电流为 40 mA，而相关总预算为 30 mA，LED 不导通能否让总预算自动通过？</p><details class="exercise-answer" id="answer-05"><summary>展开本题原因</summary><p>Vmax≤VFmin，Imax 与 Imin 均为 0，没有正向余量；不能承诺导通或亮度。其他电流 40 mA 本身仍超 30 mA。零 LED 电流不会抹去内核/其他耗电；若仅 Imin 为 0 而 Imax 大于 0，同样不能保证全范围导通。</p></details></article>
+<article class="exercise" id="exercise-06"><h3>06 · 为什么不能只看 MOSFET 的阈值？</h3><p>一个低侧 N 沟道方案，GPIO 对地 3.3 V，MOSFET 的 VGS(th) 写 1.5 V；尚无 RDS(on) 的 VGS/温度条件和门极电荷资料。负载 LED 有串联限流。能否据此断言可承受所需电流？若改用 NPN，还要给 GPIO 增加什么预算？</p><details class="exercise-answer" id="answer-06"><summary>展开本题原因</summary><p>不能。阈值对应开始形成规定小电流，并不保证负载下的低 RDS(on)；要查实际 VGS、温度、损耗、门极电荷和驱动能力、公共参考及默认关断。NPN 须有基极电阻，按其饱和工作条件核算基极电流并计入 GPIO 预算，不是把 MOS 的门极做法照抄过去。</p></details></article>
+<article class="exercise" id="exercise-07"><h3>07 · LED 的电阻为何救不了两个输出冲突？</h3><p>两个推挽 GPIO 直接相连，一个写高、另一个写低；该公共节点另经 Rled 和 LED 到地。哪个回路先要检查，能否仅加软件延时继续运行？</p><details class="exercise-answer" id="answer-07"><summary>展开本题原因</summary><p>先断电检查高侧驱动→公共节点→另一脚低侧→GND 的直接冲突回路。LED/Rled 是旁支，并不必然限制冲突电流；延时不改变两个输出对打的静态电路。应消除冲突并核对允许电路结构。</p></details></article>
+<article class="exercise" id="exercise-08"><h3>08 · 普通脚数据能覆盖特殊脚吗？</h3><p>STM32F103C8T6 的 DS5319 Rev 20：表 37 有普通 GPIO 八脚、IIO=±8 mA、2.7&lt;VDD&lt;3.6 V 的输出电平行；表 5 脚注 5 对 PC13—PC15 明示不能作为电流源。你打算用 PC13 向外拉电流驱动 LED。可以只引用表 37 或 AMR 的 25 mA 许可接线吗？</p><details class="exercise-answer" id="answer-08"><summary>展开本题原因</summary><p>不能。具体引脚脚注限制优先，PC13 不能按该思路作为电流源；普通 GPIO 测试条件不覆盖具体禁止。25 mA 是 AMR 应力值，也不是允许设计电流。记录完整料号、脚、方向、条件和脚注，重新选择有依据的方案。</p></details></article>
+<article class="exercise" id="exercise-09"><h3>09 · Typ 1.9 V 能填写 VFmin 吗？</h3><p>Kingbright WP710A10ID，V.12A，p2：TA=25°C、IF=10 mA，VF Typ=1.9 V、Max=2.3 V，附 VF ±0.1 V 注释；未给保证 Min。本任务想工作在 2 mA 且温度变化。能否把 1.9/2.3 V 直接当完整上下界？还缺什么？</p><details class="exercise-answer" id="answer-09"><summary>展开本题原因</summary><p>不能。Typ 不是保证下界；该行电流/温度也不同，并有测量注释。缺目标电流和温度范围的可靠 VF 包络及相关条件。应获取依据或明确定义测量范围，不能靠填假设数值冒充该料号验收。</p></details></article>
+<article class="exercise" id="exercise-10"><h3>10 · 换接法，只改哪一层？</h3><p>已过滤人工事件：NONE@0 ms、PRESSED@11 ms、NONE@12 ms、RELEASED@31 ms、PRESSED@41 ms；起点期望灭，每个 PRESSED 翻转一次，其他保持。改为推挽拉电流 GPIO→Rled→LED(A→K)→GND，Rled 有依据、同一允许 VIO。写出五条期望状态与命令；指出业务规则是否改变。</p><details class="exercise-answer" id="answer-10"><summary>展开本题原因</summary><p>期望灭/亮/亮/亮/灭，命令 0/1/1/1/0。业务仍仅在 PRESSED 翻转，变化的是期望→电平映射；保持和释放不重复翻转。事件记录不是原始按钮电平，不重新消抖，也不证明硬件亮度。</p></details></article>
+<p>练习交付物：一张完整回路图、一份保留单位/假设/预算/未知界的算式记录，以及上述五条事件表。隔一天合上答案，把接法从灌改拉、把路数从 4 改 5，解释原因后再核对；若仍卡住，可把自己的路径或计算交给助手继续追问。一次选对或覆盖了章节，都不能证明长期掌握。</p></div>
+</div>
+<section class="content-section" id="model-boundaries"><h2>模型结论到哪里为止</h2><p>路径模型只做固定条件下的理想稳态通路分类，预算模型在虚构包络内估算电流与电阻功耗；两者不求解真实节点电压、LED 非线性、寄生、电磁干扰或亮度，不模拟两个输出对接、反向 LED、无电阻短路、复位默认态及电源时序。外部上拉的电流、输出驱动压降及全部负载要放回真实设计核对。</p><p>本次页面脚本与主机模型验证只证明所列人工输入及交互行为；没有新 C 固件或硬件测试。实物应用要查实际完整 MCU/LED 料号、供电、引脚特殊限制、推荐工作条件与电流预算，不能把此页动画当成接线验收。</p></section>
+<section class="content-section" id="sources"><h2>已核对来源与阅读任务</h2><p>资料核对日期：2026-10-17。原理图、假设、解释、交互与练习均原创；没有复制厂商电路图片。</p><ul class="source-list">
+<li id="source-an4899"><a href="https://www.st.com/resource/en/application_note/an4899-stm32-microcontroller-gpio-hardware-settings-and-lowpower-consumption-stmicroelectronics.pdf">ST AN4899：GPIO hardware settings</a>，May 2026 / Rev 4。§4.2（p11）与 §4.3.2（p13）支撑输出等效电路、推挽和开漏；§5.1（p15）、§5.1.4—5.1.5 说明工作条件与负载背景。它不是跨所有 MCU 的寄存器配方或电阻推荐表。<strong>首选阅读任务：</strong>读 §4.3.2，只指出写 0/1 时哪个通路导通，再回来做一组未看答案的预测。</li>
+<li id="source-led"><a href="https://www.kingbrightusa.com/images/catalog/SPEC/WP710A10ID.pdf">Kingbright WP710A10ID</a>，DSAL0505/1101024897，V.12A，印刷日期 08/11/2023。p1 封装极性，p2 电气表条件；用来练习查 A/K 与 VF 条件，不将典型值当作所有电流、温度下的保证值。</li>
+<li id="source-mcu"><a href="https://www.st.com/resource/en/datasheet/stm32f103c8.pdf">ST DS5319：STM32F103x8/xB</a>，Rev 20 / July 2025。§5.1 条件，§5.2 表 7 应力，§5.3.13 表 37 输出电平，表 5 脚注 5 特殊脚；具体案例 STM32F103C8T6（LQFP48）。不把普通脚条件覆盖具体限制，也不将 AMR 当预算。</li>
+<li id="source-mosfet"><a href="https://www.ti.com/lit/an/slpa021/slpa021.pdf">TI SLPA021：Power MOSFET selection mistakes</a>，November 2024。§4（p4—6）门极电压规格，§5/§5.2（p7）低侧开关；VGS(th) 不保证所需 RDS(on)。不提供本站任意器件选型。</li>
+<li id="source-teach"><a href="https://github.com/mattpocock/skills/blob/main/skills/productivity/teach/SKILL.md?plain=1">Matt Pocock teach</a>：知识先行、短成果、预测反馈、回忆与迁移的教学组织方法，不提供电气正确性证明。</li></ul></section>
+<section class="content-section" id="next-lesson"><h2>把意图与电平映射带回主线</h2><p>先保存能解释的路径图与事件表，再进入后续 C 基础：位与寄存器掩码、对象与边界、有界缓冲。定时器与周期控制在具备前置知识后另成单元。本章不会把软件回放算作硬件通过，也不把一次练习当作个人掌握记录。</p><div class="next-links"><a href="gpio-led-reference.html">打开可打印速查</a><a href="gpio-button.html#raw-vs-event">回看按下事件</a><a href="../learn/engineering-map.html#stage-01">回到第 01 阶段</a><a href="../learn/engineering-map.html#resource-comparison">查看三套资源范围</a></div></section>
+</main><footer>原创嵌入式教材 · 本页不存储个人进度 · <a href="../learn/">学习主线目录</a></footer></div>
+
+<script id="led-model">
+const LedModel = (() => {
+  function path({ mode, bit, topology, pullup }) {
+    if (!['pp', 'od'].includes(mode) || ![0, 1].includes(bit) || !['source', 'sink'].includes(topology) || typeof pullup !== 'boolean') throw new Error('Invalid LED path settings');
+    let kind = 'off';
+    if (bit === 0 && topology === 'sink') kind = 'sink';
+    if (mode === 'pp' && bit === 1 && topology === 'source') kind = 'source';
+    if (mode === 'od' && bit === 1 && topology === 'source' && pullup) kind = 'pullup';
+    const paths = {
+      source: 'VIO → 高侧驱动 → GPIO → Rled → LED（A→K）→ GND',
+      sink: 'VIO → Rled → LED（A→K）→ GPIO → 低侧驱动 → GND',
+      pullup: 'VIO → Rpu → GPIO → Rled → LED（A→K）→ GND',
+      off: '在本理想模型中，LED 支路无稳态正向通路。'
+    };
+    const node = bit === 0 ? '低侧驱动导通；实际低电压须看负载下的 VOL。' : mode === 'pp' ? '高侧驱动导通；实际高电压须看负载下的 VOH。' : pullup && topology === 'source' ? '开漏已释放，上拉与 LED 共同加载节点；不保证到达高电平，可能只有微弱电流。' : '开漏已释放；有偏置仍须核对完整电路，无确定偏置时不保证高电平。';
+    return { kind, path: paths[kind], node, extraPullup: pullup && bit === 0 };
+  }
+  function replay() {
+    let on = false;
+    return [[0, 'NONE'], [11, 'PRESSED'], [12, 'NONE'], [31, 'RELEASED'], [41, 'PRESSED']].map(([t, event]) => {
+      if (event === 'PRESSED') on = !on;
+      return { t, event, on, bit: on ? 0 : 1 };
+    });
+  }
+  function limits(s) {
+    const keys = ['vMin', 'vMax', 'vfMin', 'vfMax', 'dropMax', 'rOhm', 'tolPct', 'channels', 'pinBudget', 'groupBudget', 'totalBudget', 'other'];
+    if (keys.some(key => typeof s[key] !== 'number' || !Number.isFinite(s[key]) || s[key] < 0) || s.vMin > s.vMax || s.vfMin > s.vfMax || s.rOhm <= 0 || s.tolPct >= 100 || !Number.isInteger(s.channels) || s.channels < 1 || s.channels > 32 || s.pinBudget <= 0 || s.groupBudget <= 0 || s.totalBudget <= 0 || s.dropMax > s.vMin) throw new Error('Invalid calculation bounds');
+    const t = s.tolPct / 100;
+    const rMin = s.rOhm * (1 - t), rMax = s.rOhm * (1 + t);
+    const upperV = Math.max(0, s.vMax - s.vfMin);
+    const iMaxMa = upperV / rMin * 1000;
+    const iMinMa = Math.max(0, s.vMin - s.vfMax - s.dropMax) / rMax * 1000;
+    const pMaxW = upperV * upperV / rMin;
+    const groupMa = s.channels * iMaxMa, totalMa = groupMa + s.other;
+    if (![rMin, rMax, iMaxMa, iMinMa, pMaxW, pMaxW * 1000, groupMa, totalMa].every(Number.isFinite) || rMin <= 0) throw new Error('Invalid calculation magnitude');
+    const exceeded = [];
+    if (iMaxMa > s.pinBudget) exceeded.push('pin');
+    if (groupMa > s.groupBudget) exceeded.push('group');
+    if (totalMa > s.totalBudget) exceeded.push('total');
+    const kind = s.vMax <= s.vfMin ? 'headroom' : exceeded.length ? 'over' : 'within';
+    return { rMin, rMax, iMaxMa, iMinMa, pMaxW, groupMa, totalMa, exceeded, kind };
+  }
+  return { path, replay, limits };
+})();
+</script>
+<script id="led-controller">
+(() => {
+  const byId = id => document.getElementById(id);
+  const labels = { source: '由引脚拉出', sink: '向引脚灌入', pullup: '由上拉供给', off: '无稳态通路' };
+  const defaults = { mode: 'pp', bit: 1, topology: 'sink', pullup: false };
+  const input = () => {
+    const bit = byId('pending-bit').value, pullup = byId('pending-pullup').value;
+    if (!['0', '1'].includes(bit) || !['no', 'yes'].includes(pullup)) throw new Error('Invalid pending settings');
+    return { mode: byId('pending-mode').value, bit: Number(bit), topology: byId('pending-topology').value, pullup: pullup === 'yes' };
+  };
+  const settingsText = s => (s.mode === 'pp' ? '推挽' : '开漏') + ' / 写 ' + s.bit + ' / ' + (s.topology === 'sink' ? '灌电流' : '拉电流') + ' / ' + (s.pullup ? '有额外上拉' : '无额外上拉');
+  function diagram(s, result) {
+    const green = '#22664f', gray = '#89958c', high = s.mode === 'pp' && s.bit === 1, low = s.bit === 0;
+    const branch = s.topology === 'source'
+      ? '<path d="M130 150H260V176M260 208V229M260 254V280"/><rect x="250" y="176" width="20" height="32"/><path d="M249 231L260 248L271 231ZM247 252H273"/><text x="284" y="199">Rled</text><text x="282" y="240">LED</text><text x="284" y="259">A→K</text><path d="M246 283H274M251 290H269"/><text x="246" y="314">GND</text>'
+      : '<path d="M260 35V60M260 92V113M260 138V150H130"/><rect x="250" y="60" width="20" height="32"/><path d="M249 115L260 132L271 115ZM247 136H273"/><text x="282" y="83">Rled</text><text x="282" y="124">LED</text><text x="284" y="143">A→K</text><text x="244" y="25">VIO</text>';
+    const current = result.kind === 'source' ? 'M130 42V150H260V275' : result.kind === 'sink' ? 'M260 42V150H130V275' : result.kind === 'pullup' ? 'M45 42V150H260V275' : '';
+    return '<svg viewBox="0 0 360 330" role="img" aria-labelledby="live-led-title live-led-desc"><title id="live-led-title">已应用的 LED 支路：' + labels[result.kind] + '</title><desc id="live-led-desc">' + result.path + ' ' + result.node + '</desc><defs><marker id="live-led-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10Z" fill="' + green + '" stroke="none"/></marker></defs><g fill="none" stroke="' + gray + '" stroke-width="2.5"><path d="M130 35V70M130 110V190M130 230V280"/><rect x="116" y="70" width="28" height="40" stroke="' + (high ? green : gray) + '"' + (high ? '' : ' stroke-dasharray="4 4"') + '/><rect x="116" y="190" width="28" height="40" stroke="' + (low ? green : gray) + '"' + (low ? '' : ' stroke-dasharray="4 4"') + '/><path d="M116 283H144M121 290H139"/><g class="led-branch">' + branch + '</g>' + (s.pullup ? '<path d="M45 35V70M45 108V150H130"/><rect x="35" y="70" width="20" height="38"/><text x="18" y="25">VIO</text><text x="15" y="132">Rpu</text>' : '') + '</g><g fill="none" stroke="' + green + '" stroke-width="4" opacity=".85">' + (current ? '<path class="led-current-path" d="' + current + '" marker-end="url(#live-led-arrow)"/>' : '') + (result.extraPullup ? '<path class="pullup-current-path" d="M45 42V150H130V275" marker-end="url(#live-led-arrow)"/>' : '') + '</g><circle cx="130" cy="150" r="5" fill="' + green + '"/><g font-size="15" stroke="none"><text x="112" y="25">VIO</text><text x="153" y="96">高侧' + (s.mode === 'od' ? '未设' : high ? '导通' : '断开') + '</text><text x="148" y="174">GPIO</text><text x="153" y="217">低侧' + (low ? '导通' : '断开') + '</text><text x="112" y="314">GND</text></g></svg>';
+  }
+  function render(s) {
+    const result = LedModel.path(s);
+    byId('path-applied').textContent = '已应用：' + settingsText(s);
+    byId('path-kind').textContent = labels[result.kind];
+    byId('path-current').textContent = result.path;
+    byId('path-node').textContent = result.node;
+    byId('path-extra').textContent = result.extraPullup ? '另有 VIO → Rpu → GPIO → 低侧 → GND 电流；即使 LED 支路为 off 也须计入预算。' : '此条件没有低侧吸收的额外上拉电流；本模型不计算漏电与瞬态。';
+    byId('path-svg').innerHTML = diagram(s, result);
+    return result;
+  }
+  function clearPrediction() { byId('path-prediction').value = ''; byId('apply-path').disabled = true; }
+  function pendingChanged() {
+    clearPrediction();
+    byId('path-pending').textContent = '条件待应用；图、路径和反馈仍描述上次已应用条件。先预测，再提交。';
+  }
+  for (const id of ['pending-mode', 'pending-bit', 'pending-topology', 'pending-pullup']) byId(id).addEventListener('change', pendingChanged);
+  byId('path-prediction').addEventListener('change', () => { byId('apply-path').disabled = !Object.hasOwn(labels, byId('path-prediction').value); });
+  byId('path-form').addEventListener('submit', event => {
+    event.preventDefault();
+    const prediction = byId('path-prediction').value;
+    if (!Object.hasOwn(labels, prediction)) return;
+    let result;
+    try { result = render(input()); } catch { byId('path-pending').textContent = '条件无效，保留上次图示。请重置后再试。'; clearPrediction(); return; }
+    const feedback = (prediction === result.kind ? '预测正确。' : '再沿电流走一次。你选了“' + labels[prediction] + '”，本条件是“' + labels[result.kind] + '”。') + result.path + ' ' + result.node + (result.extraPullup ? ' 另外仍有上拉电流进入低侧，LED 支路的结论不能代替总电流预算。' : '') + ' 这里只分类稳态通路，不保证亮度或硬件合规。';
+    byId('path-feedback').textContent = feedback;
+    byId('path-pending').textContent = '已应用本次预测；下一次改变条件后请重新预测。';
+    clearPrediction();
+  });
+  byId('reset-path').addEventListener('click', () => {
+    byId('pending-mode').value = defaults.mode; byId('pending-bit').value = String(defaults.bit); byId('pending-topology').value = defaults.topology; byId('pending-pullup').value = 'no';
+    render(defaults); clearPrediction();
+    byId('path-feedback').textContent = '已重置为固定起点。先选预测，再应用；四个选项只描述本模型中的 LED 支路。';
+    byId('path-pending').textContent = '选择待应用条件；图中为已应用起点。';
+  });
+  render(defaults); clearPrediction();
+  const frames = LedModel.replay();
+  let cursor = 0;
+  function renderReplay() {
+    const frame = frames[cursor];
+    byId('replay-time').textContent = frame.t;
+    byId('replay-event').textContent = frame.event;
+    byId('replay-state').textContent = frame.on ? '亮' : '灭';
+    byId('replay-bit').textContent = frame.bit;
+    byId('replay-step').disabled = cursor === frames.length - 1;
+    byId('replay-feedback').textContent = frame.t + ' ms：' + (frame.event === 'PRESSED' ? '一次 PRESSED 使期望状态翻转。' : frame.event === 'RELEASED' ? 'RELEASED 只通知释放，期望状态保持。' : 'NONE 没有新按下，期望状态保持。') + '固定推挽灌电流接法：期望' + (frame.on ? '亮' : '灭') + '，写 ' + frame.bit + '。';
+    byId('replay-log').innerHTML = frames.slice(0, cursor + 1).map(item => '<li>' + item.t + ' ms · ' + item.event + ' → 期望' + (item.on ? '亮' : '灭') + ' / 写 ' + item.bit + '</li>').join('');
+  }
+  byId('replay-step').addEventListener('click', () => { if (cursor < frames.length - 1) cursor++; renderReplay(); });
+  byId('replay-reset').addEventListener('click', () => { cursor = 0; renderReplay(); });
+  renderReplay();
+})();
+
+</script>
+<script id="led-budget-controller">
+(() => {
+  const byId = id => document.getElementById(id);
+  const defaults = { vMin: 3, vMax: 3.6, vfMin: 1.8, vfMax: 2.2, dropMax: 0.4, rOhm: 680, tolPct: 5, channels: 4, pinBudget: 4, groupBudget: 12, totalBudget: 30, other: 10 };
+  const labels = { within: '所列均未超', over: '至少一项超', headroom: '无正向余量' };
+  const clear = () => { byId('budget-prediction').value = ''; byId('calculate-budget').disabled = true; };
+  const pending = () => { clear(); byId('budget-pending').textContent = '待计算条件已改变；读数和反馈仍描述上次结果。请重新预测。'; };
+  for (const key of Object.keys(defaults)) {
+    byId('budget-' + key).addEventListener('input', pending);
+    byId('budget-' + key).addEventListener('change', pending);
+  }
+  byId('budget-prediction').addEventListener('change', () => { byId('calculate-budget').disabled = !Object.hasOwn(labels, byId('budget-prediction').value); });
+  byId('budget-form').addEventListener('submit', event => {
+    event.preventDefault();
+    const prediction = byId('budget-prediction').value;
+    if (!Object.hasOwn(labels, prediction)) return;
+    const input = {};
+    let result;
+    try {
+      for (const key of Object.keys(defaults)) {
+        const raw = byId('budget-' + key).value.trim();
+        if (!raw) throw new Error('Empty input');
+        input[key] = Number(raw);
+      }
+      result = LedModel.limits(input);
+    } catch {
+      byId('budget-pending').textContent = '输入无效，保留上次结果。请填完整有限数值：范围有序、电阻和预算为正、容差 0≤t<100%、路数整数 1—32、其他电流非负、压降 0 至电源下界；数值不可大到溢出。';
+      clear(); return;
+    }
+    const readings = { rmin: result.rMin, rmax: result.rMax, imax: result.iMaxMa, imin: result.iMinMa, power: result.pMaxW * 1000, group: result.groupMa, total: result.totalMa };
+    for (const [key, value] of Object.entries(readings)) byId('budget-' + key).textContent = value.toFixed(3);
+    byId('budget-results').hidden = false;
+    const failure = { pin: '单脚预算超出', group: '组预算超出', total: '总预算超出' };
+    const resultText = (result.kind === 'headroom' ? 'Vmax≤VFmin，本模型无正向压差余量。' : '') + (result.exceeded.length ? result.exceeded.map(key => failure[key]).join('；') + '。' : '只在所列假设内未超预算；等于预算也没有余量。');
+    byId('budget-feedback').textContent = (prediction === result.kind ? '预测正确。' : '重新核对：你预测“' + labels[prediction] + '”，计算为“' + labels[result.kind] + '”。') + resultText + (result.iMinMa === 0 ? ' Imin为0，整个范围的导通不获保证。' : '') + ' 这是条件化数学检查；没有检验实际芯片/LED包络、温度、亮度或硬件接线。';
+    byId('budget-pending').textContent = '本次已计算；三个预算采用未舍入值比较。改变条件须重新预测。';
+    clear();
+  });
+  byId('reset-budget').addEventListener('click', () => {
+    for (const [key, value] of Object.entries(defaults)) byId('budget-' + key).value = String(value);
+    for (const key of ['rmin', 'rmax', 'imax', 'imin', 'power', 'group', 'total']) byId('budget-' + key).textContent = '';
+    byId('budget-results').hidden = true;
+    byId('budget-pending').textContent = '已重置假设，尚未计算。先写估算，再选预测。';
+    byId('budget-feedback').textContent = '结果只检验所列条件下的数学预算，不作接线或亮度验收。';
+    clear();
+  });
+  byId('budget-results').hidden = true; clear();
+})();
+</script>
+<script id="led-diagnosis-controller">
+(() => {
+  const byId = id => document.getElementById(id);
+  const cases = {
+    missing: { question: '假设原理图为推挽高侧→GPIO→LED(A→K)→GND，没有 Rled。应先检查哪项？', options: ['先补限流电阻', '先增驱动强度', '先改软件延时'], answer: 'a', reason: '先断电核对并补齐有依据的串联限流；无 Rled 破坏有限电流前提。增强驱动或改变延时不限制导通电流。' },
+    reverse: { question: '已画串联电阻，封装 K 却朝向正电源、A 朝 GPIO 低侧。尚未上电，应先做什么？', options: ['先反向加电压', '先查封装极性', '先删限流电阻'], answer: 'b', reason: '先查完整 LED 料号的封装极性 A/K，再核对正向回路。反向加压和删电阻会破坏前提，不是排除不亮的方式。' },
+    release: { question: '开漏写 1，GPIO 通过 Rled 和正向 LED 到地，另有上拉，却不能推断 GPIO 为高。应先核对什么？', options: ['先加大主时钟', '先改日志文字', '先查偏置负载'], answer: 'c', reason: '开漏写 1 只释放；上拉与 LED 等全部负载共同决定节点电压，可能微弱导通。查偏置负载才能判断，时钟/日志不建立主动高侧。' },
+    contention: { question: '两个推挽引脚直接相连，一个写 1，一个写 0，旁边另接有 LED 电阻。应先做什么？', options: ['先断开冲突源', '先增大输出速', '先保持原接线'], answer: 'a', reason: '先断电并断开输出冲突源，检查从高侧到低侧的直接通路。LED 电阻不一定串在冲突电流路径里，输出速度也不能解决静态冲突。' },
+    budget: { question: '每路电流低于单脚预算，但全部同时点亮；还没有核算内核耗电和分组。下一步是什么？', options: ['先抄单脚上限', '先核同时预算', '先让正负相抵'], answer: 'b', reason: '核算同时导通的各组/相关供电路径和内核、其他负载，再对照适用预算；单脚未超不推导总量未超，拉灌正负号不能相抵。' },
+    gate: { question: 'GPIO 电压高于某 MOSFET 的 VGS(th)，但未查 RDS(on) 条件就想驱动更大 LED 电流。应先查什么？', options: ['先只看阈电压', '先继续减小R', '先查驱动条件'], answer: 'c', reason: '核对所需 RDS(on) 保证时的 VGS、温度和栅极驱动能力/电荷，检查参考关系和默认关断。VGS(th) 不是充分导通保证；减小 R 还可能加重负载。' }
+  };
+  const clear = () => { byId('diagnosis-prediction').value = ''; byId('diagnose-submit').disabled = true; };
+  function change() {
+    const item = cases[byId('diagnosis-case').value];
+    clear();
+    if (!item) { byId('diagnosis-feedback').textContent = '场景无效，请重置。'; return; }
+    byId('diagnosis-scenario').textContent = item.question;
+    ['a', 'b', 'c'].forEach((key, i) => { byId('diagnosis-option-' + key).textContent = item.options[i]; });
+    byId('diagnosis-feedback').textContent = '本题尚未判断。先选优先检查项，再看原因；假想场景没有连接真实设备。';
+  }
+  byId('diagnosis-case').addEventListener('change', change);
+  byId('diagnosis-prediction').addEventListener('change', () => { byId('diagnose-submit').disabled = !['a', 'b', 'c'].includes(byId('diagnosis-prediction').value); });
+  byId('diagnosis-form').addEventListener('submit', event => {
+    event.preventDefault();
+    const item = cases[byId('diagnosis-case').value], answer = byId('diagnosis-prediction').value;
+    if (!item || !['a', 'b', 'c'].includes(answer)) return;
+    byId('diagnosis-feedback').textContent = (answer === item.answer ? '选择正确。' : '重新检查被破坏的前提。') + item.reason;
+    clear();
+  });
+  byId('diagnose-reset').addEventListener('click', () => { byId('diagnosis-case').value = 'missing'; change(); });
+  change();
+})();
+</script>
+<script id="note-deep-links">
+(() => {
+  const reveal = () => {
+    let id;try{id=decodeURIComponent(window.location.hash.slice(1));}catch{return;}
+    if(!id) return;
+    const target=document.getElementById(id);if(!target) return;
+    let panel=target.closest('details');
+    while(panel) {panel.open=true;panel=panel.parentElement?.closest?.('details')||null;}
+    target.closest('section')?.querySelectorAll?.('details').forEach(detail=>{detail.open=true;});
+    requestAnimationFrame(()=>target.scrollIntoView({block:'start'}));
+  };
+  window.addEventListener('hashchange',reveal);window.addEventListener('pageshow',reveal);reveal();
+})();
+</script>
+<script id="note-print">
+(() => {
+  let previous;
+  window.addEventListener('beforeprint',()=>{
+    if(previous) return;
+    previous=[...document.querySelectorAll('details')].map(panel=>[panel,panel.open]);
+    previous.forEach(([panel])=>{panel.open=true;});
+  });
+  window.addEventListener('afterprint',()=>{previous?.forEach(([panel,open])=>{panel.open=open;});previous=undefined;});
+})();
+</script>
+<script id="led-reader">(()=>{document.getElementById("expand-notes").onclick=()=>document.querySelectorAll("details").forEach(panel=>{panel.open=true;});document.getElementById("collapse-notes").onclick=()=>document.querySelectorAll("details").forEach(panel=>{panel.open=false;});})();</script>
+<script id="led-worksheet">
+(() => {
+  const clearMode = () => document.body.classList.remove('exercise-print');
+  window.addEventListener('afterprint', clearMode);
+  document.getElementById('print-questions').addEventListener('click', () => {
+    document.body.classList.add('exercise-print');
+    try { window.print(); } catch { clearMode(); }
+  });
+})();
+</script>
+</body></html>

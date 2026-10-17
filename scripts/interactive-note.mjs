@@ -14,7 +14,9 @@ export const interactiveNotes = [
   { path: notePaths[8], source: 'mcu-ota.html' },
   { path: notePaths[9], source: 'learning-map.html' },
   { path: notePaths[10], source: 'gpio-button.html' },
-  { path: notePaths[11], source: 'gpio-button-reference.html' }
+  { path: notePaths[11], source: 'gpio-button-reference.html' },
+  { path: notePaths[12], source: 'gpio-led.html' },
+  { path: notePaths[13], source: 'gpio-led-reference.html' }
 ]
 
 export function readInteractiveNote(path = notePath) {

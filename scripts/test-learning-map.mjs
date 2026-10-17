@@ -57,6 +57,12 @@ assert.match(focus['.focus-accept'].innerHTML, /不能把 volatile 当作并发�
 buttons[6].click()
 assert.match(focus['.focus-accept'].innerHTML, /禁止的旧版不能绕过版本策略.*CRC 不替代签名/)
 assert.match(focus['.focus-notes'].innerHTML, /\.\.\/mcu\/mcu-ota\.html/)
+buttons[0].click()
+assert.match(focus['.focus-notes'].innerHTML, /href="gpio-led\.html"/, 'Stage01 must lead from input into the real LED output chapter')
+assert.match(focus['.focus-notes'].innerHTML, /href="gpio-led-reference\.html"/, 'Stage01 must include the real printable LED reference')
+for (const source of [html, markdown]) {
+  for (const phrase of ['03—05', '06—09', '第 10 单元']) assert.ok(source.includes(phrase), 'Course order must retain the next C prerequisites before timers: ' + phrase)
+}
 console.log('PASS learning map: actual eight-stage selection, next/previous controls, boundaries, ARIA selection and complete field rendering.')
 
 const notePaths = ['c-memory/heap-stack.html', 'mcu/crystal-pll-clock.html', 'mcu/cortex-m-cpu-registers.html', 'mcu/hardfault-stack-trace.html', 'debug/easylogger.html', 'tools/beads.html', 'tools/plane.html', 'tools/matt-pocock-skills.html', 'mcu/mcu-ota.html']

@@ -35,6 +35,8 @@ export default defineConfig({
         { text: 'MCU 工程学习地图', link: '/learn/engineering-map.html' },
         { text: '按下按钮，为什么读到 0？', link: '/learn/gpio-button.html' },
         { text: 'GPIO 按键：可打印速查', link: '/learn/gpio-button-reference.html' },
+        { text: 'GPIO 输出与 LED 驱动', link: '/learn/gpio-led.html' },
+        { text: 'GPIO 输出与 LED 驱动：可打印速查', link: '/learn/gpio-led-reference.html' },
         { text: 'MCU 堆栈原理与监测', link: '/c-memory/heap-stack.html' },
         { text: 'MCU 晶振与主频：从 8 MHz 到 168 MHz', link: '/mcu/crystal-pll-clock.html' },
         { text: 'Cortex-M CPU 核心寄存器', link: '/mcu/cortex-m-cpu-registers.html' },
@@ -61,6 +63,8 @@ export default defineConfig({
         { text: 'MCU 工程学习地图', link: '/learn/engineering-map.html' },
         { text: '按下按钮，为什么读到 0？', link: '/learn/gpio-button.html' },
         { text: 'GPIO 按键：可打印速查', link: '/learn/gpio-button-reference.html' },
+        { text: 'GPIO 输出与 LED 驱动', link: '/learn/gpio-led.html' },
+        { text: 'GPIO 输出与 LED 驱动：可打印速查', link: '/learn/gpio-led-reference.html' },
       ]},
       { text: '从这里开始', items: [
         { text: 'MCU 内存学习路线', link: '/guide/memory-roadmap.html' }

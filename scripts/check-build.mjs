@@ -51,7 +51,7 @@ const html=await readFile(path.join(root,'index.html'),'utf8')
 assert.ok(html.includes('嵌入式技术笔记'))
 assert.ok(html.includes(base+'c-memory/heap-stack.html'))
 assert.ok(html.includes('data-no-router'))
-assert.ok(html.includes('12 篇') && html.includes('5 个主题'), 'Home must describe twelve entries across five active categories')
+assert.ok(html.includes('14 篇') && html.includes('5 个主题'), 'Home must describe fourteen entries across five active categories')
 const debugCategory = await readFile(path.join(root, 'debug/index.html'), 'utf8')
 assert.ok(debugCategory.includes(base + 'debug/easylogger.html'), 'Debug category must link to the full EasyLogger reader')
 assert.ok(!debugCategory.includes('这个分类尚未发布独立文章'), 'Debug must be an active category')
@@ -99,6 +99,8 @@ const queries = {
   'learn/engineering-map.html': ['先修', 'F103', 'F407', '数据采集', '建设中'],
   'learn/gpio-button.html': ['GPIO', '上拉', '悬空', '抖动', '11', '高阻', 'VIH', 'VIL', '启动', 'maxGapMs'],
   'learn/gpio-button-reference.html': ['GPIO', '速查', '稳定', '11', '高阻', 'VIH', 'VIL', '启动', 'maxGapMs'],
+  'learn/gpio-led.html': ['LED', '推挽', '开漏', 'Rmin', 'PRESSED', 'VFmin', 'PC13', 'VGS'],
+  'learn/gpio-led-reference.html': ['LED', '速查', '开漏', 'Rmin', 'PRESSED', 'VFmin', 'PC13', 'VGS'],
   'mcu/mcu-ota.html': ['OTA', 'Bootloader', '暂存', 'Swap', 'A/B', '回滚', 'KiB', 'CRC'],
   'debug/easylogger.html': ['EasyLogger', 'Mutex', 'SEGGER_RTT_SetFlagsUpBuffer', 'NOINIT', 'MicroLIB', 'pendingWrite', 'LeakSanitizer']
 }
@@ -145,6 +147,30 @@ for (const [query, anchor] of [
   assert.ok(search.search(query).some(result => result.id.startsWith(base + 'learn/gpio-button.html#' + anchor)), 'GPIO search must reach the corresponding exercise: ' + query + ' -> ' + anchor)
 }
 assert.ok(!files.some(file => /[\\/]public[\\/]examples[\\/]gpio-button[\\/]README\.html$/.test(file)), 'Download-only GPIO README must not become an extra documentation page')
+for (const [article, targets] of [
+  ['learn/gpio-led.html', {
+    '推挽': 'driver-modes',
+    'Rpu': 'path-truth-table',
+    'PRESSED': 'event-contract',
+    'Rmin': 'worst-case-bounds',
+    '646': 'budget-static-answer',
+    'PC13': 'exercise-08',
+    'VGS': 'mosfet-driver',
+    '打印': 'ten-exercises'
+  }],
+  ['learn/gpio-led-reference.html', {
+    '开漏': 'reference-modes',
+    'PRESSED': 'reference-events',
+    'Rmin': 'reference-budget',
+    'PC13': 'reference-parts',
+    'VGS': 'reference-driver',
+    '故障': 'reference-diagnosis'
+  }]
+]) {
+  for (const [query, anchor] of Object.entries(targets)) {
+    assert.ok(search.search(query).some(result => result.id.startsWith(base + article + '#' + anchor)), 'LED search must reach the matching section: ' + article + ': ' + query + ' -> ' + anchor)
+  }
+}
 for (const filename of ['button.c', 'README.txt']) {
   const original = await readFile(path.resolve(import.meta.dirname, '../docs/public/examples/gpio-button', filename))
   const published = await readFile(path.join(root, 'examples/gpio-button', filename))

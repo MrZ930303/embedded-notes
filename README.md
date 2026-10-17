@@ -2,7 +2,7 @@
 
 使用 VitePress 1.6.4 稳定版构建的中文技术笔记站。依赖版本由 package-lock.json 锁定，适合部署到 GitHub Pages。
 
-当前内容：九篇技术交互笔记（MCU 堆栈、Beads、Plane、Matt Pocock Skills、MCU 晶振与主频、Cortex-M CPU 核心寄存器、HardFault 栈回溯分析、EasyLogger、MCU OTA），另有学习地图与三路资料对照、GPIO 原创小课、GPIO 打印速查三份学习中心资料，以及一条 MCU 内存学习路线。首页按五个正式主题帮助你找到笔记，进入笔记后直接操作模型、阅读图解并展开完整正文。FreeRTOS 独立分类仍为规划中。
+当前内容：九篇技术交互笔记（MCU 堆栈、Beads、Plane、Matt Pocock Skills、MCU 晶振与主频、Cortex-M CPU 核心寄存器、HardFault 栈回溯分析、EasyLogger、MCU OTA），另有学习地图与三路资料对照、GPIO 按键原创小课与打印速查、GPIO 输出与 LED 驱动原创章节与打印速查五份学习中心资料，以及一条 MCU 内存学习路线。首页按五个正式主题帮助你找到笔记，进入笔记后直接操作模型、阅读图解并展开完整正文。FreeRTOS 独立分类仍为规划中。
 
 ## 本地预览（Windows / macOS / Linux）
 
@@ -46,7 +46,7 @@ npm run docs:preview
 5. 运行 npm run check，然后在浏览器检查文章、搜索、移动端布局与交互。
 6. 审阅改动后提交并推送；main 分支的推送会触发自动发布。
 
-重要：docs/public/demos/ 下的十二份 HTML 是主阅读体验的完整源码。scripts/interactive-note.mjs 注册源码和主路径；VitePress 的 transformHtml 构建钩子原样输出到 c-memory/heap-stack.html、tools/、mcu/ 与 debug/easylogger.html 等主阅读路径，开发服务提供相同 HTML。demos/ 路径保留兼容访问。docs/c-memory/heap-stack.md、docs/tools/、docs/mcu/、docs/learn/ 与 docs/debug/easylogger.md 只提供全文搜索输入，不作为公开文档式阅读页。修改正文、代码或限定条件后必须同步 HTML 与搜索输入；新增搜索标题还需为 HTML 中对应章节添加相同 id。构建测试会核对搜索结果锚点。
+重要：docs/public/demos/ 下的十四份 HTML 是主阅读体验的完整源码。scripts/interactive-note.mjs 注册源码和主路径；VitePress 的 transformHtml 构建钩子原样输出到 c-memory/heap-stack.html、tools/、mcu/ 与 debug/easylogger.html 等主阅读路径，开发服务提供相同 HTML。demos/ 路径保留兼容访问。docs/c-memory/heap-stack.md、docs/tools/、docs/mcu/、docs/learn/ 与 docs/debug/easylogger.md 只提供全文搜索输入，不作为公开文档式阅读页。修改正文、代码或限定条件后必须同步 HTML 与搜索输入；新增搜索标题还需为 HTML 中对应章节添加相同 id。构建测试会核对搜索结果锚点。
 
 文章内链接到另一篇文章时，使用相对 Markdown 路径，如 ./heap-stack.md。主题组件中的站内链接使用 VitePress 的 withBase()。主交互笔记使用 data-no-router 和主题路由守卫进行浏览器原生导航，搜索及后退/前进也不会恢复成文档版。交互页中的搜索入口返回知识库并打开本地搜索。
 

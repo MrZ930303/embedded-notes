@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="GPIO 输出路径、限流预算公式、手册脚注、晶体管边界和故障检查的打印速查。"><meta name="theme-color" content="#fafbf8"><link rel="icon" href="../favicon.svg" type="image/svg+xml"><title>GPIO 输出与 LED 驱动速查 · 嵌入式技术笔记</title>
+<style>
+:root{--paper:#fafbf8;--ink:#21382e;--muted:#526359;--line:#dce3d7;--green:#22664f;--pale:#eef2e9;--lime:#d5e7b3;--dark:#193e33;--mono:Consolas,ui-monospace,monospace;--amber:#92611e}*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:110px}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.9 system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif}a{color:var(--green);text-underline-offset:4px}button,input,select{font:inherit}button{cursor:pointer}.wrap{width:min(1120px,calc(100% - 64px));margin:auto}.skip{position:absolute;top:-90px;left:16px;z-index:20;background:white;padding:8px 12px}.skip:focus{top:8px}.topbar{position:sticky;top:0;z-index:10;border-bottom:1px solid var(--line);background:#fafbf8f5}.brand{text-decoration:none}.topbar nav a{white-space:nowrap}.hero{padding:48px 0 40px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:1.2fr 1fr;gap:48px;align-items:center}.tag{font-size:12px;color:var(--green);font-weight:700;letter-spacing:.08em}.hero h1{font-size:clamp(32px,3.6vw,44px);line-height:1.35;letter-spacing:-.035em;margin:16px 0}.hero-intro{font-size:17px;max-width:32rem}.hero-card{padding:26px;background:var(--pale);border:1px solid var(--line);border-radius:12px}.hero-card strong{font-size:25px;line-height:1.6}.hero-card p{margin:12px 0 0}.small,.date-note{font-size:13px;color:var(--muted)}.meta{display:flex;flex-wrap:wrap;gap:8px}.meta span{font-size:12px;border:1px solid var(--line);border-radius:4px;padding:3px 9px}.section-nav{display:flex;gap:10px;flex-wrap:wrap;padding:16px 0}.section-nav a{text-decoration:none}.content-section{padding:48px 0;border-bottom:1px solid var(--line);scroll-margin-top:115px}h2{font-size:28px;line-height:1.5;margin:0 0 18px}h3{font-size:20px;line-height:1.5;margin:0 0 12px}p{margin:0 0 16px}section>p{max-width:44rem}.section-head{display:flex;gap:18px;align-items:baseline}.num{font:700 13px var(--mono);color:var(--green);flex-shrink:0}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.card{border:1px solid var(--line);background:#fffefb;border-radius:12px;padding:22px;min-width:0}.card p:last-child{margin-bottom:0}.callout{padding:16px 20px;background:var(--pale);border-left:4px solid var(--green);border-radius:0 8px 8px 0;margin:20px 0;font-size:14px}.callout.warn{background:#fbf0dc;border-color:var(--amber)}.lab{padding:24px;border:1px solid var(--line);border-radius:12px;background:#fffefb}.lab-grid{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,1fr);gap:24px;align-items:start}.field{display:grid;gap:6px;min-width:0;font-size:14px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.field.full{grid-column:1/-1}select,input{width:100%;min-width:0;min-height:44px;border:1px solid #b9c8ba;border-radius:6px;padding:8px 10px;background:white;color:var(--ink);font-size:16px}.btn{min-height:44px;min-width:44px;padding:9px 15px;border:1px solid #b9c8ba;border-radius:6px;background:white;color:var(--ink);font-size:14px}.btn.primary{background:var(--dark);border-color:var(--dark);color:white}.btn:disabled{opacity:.58;cursor:default}.controls{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0}.feedback{padding:16px;background:var(--pale);border-radius:8px;margin-top:16px;font-size:14px;line-height:1.85}.feedback strong{display:block;font-size:18px}.circuit-figure{margin:0;padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--paper)}.circuit-figure svg{display:block;width:100%;height:auto}.circuit-figure figcaption{font-size:13px;color:var(--muted);line-height:1.8;margin-top:8px}.circuit-figure text{font-family:system-ui,"Microsoft YaHei",sans-serif;fill:var(--ink)}.applied{display:flex;gap:8px;flex-wrap:wrap;font-size:13px;margin-bottom:10px}.applied span{border:1px solid var(--line);padding:2px 8px;border-radius:4px}.circuit-readout{padding:16px 0 0;display:grid;grid-template-columns:70px 1fr;gap:6px 12px;font-size:14px}.circuit-readout dt{color:var(--muted)}.circuit-readout dd{margin:0}.wave{width:100%;display:block;height:auto;border:1px solid var(--line);border-radius:8px;background:var(--paper)}.wave text{font-family:var(--mono);font-size:13px;fill:var(--muted)}.wave path{vector-effect:non-scaling-stroke}.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:20px 0}.metric{background:var(--pale);padding:14px;border-radius:8px}.metric span{display:block;font-size:12px;color:var(--muted)}.metric strong{font:700 26px/1.5 var(--mono)}.timeline-fields{display:grid;grid-template-columns:minmax(130px,1fr) minmax(0,2fr);gap:16px;align-items:start}.checkbox{display:flex;gap:10px;align-items:flex-start;min-height:44px;padding-top:27px;font-size:14px}.checkbox input{width:20px;min-height:20px;flex:0 0 20px;margin-top:4px}.event-log{padding-left:22px;font-size:14px}.event-log li{margin-bottom:6px}details{margin:14px 0;padding:16px 20px;border:1px solid var(--line);border-radius:8px;background:#fffefb}summary{cursor:pointer;font-weight:700;min-height:44px}details p,details ul,details ol{margin:12px 0 0}li{margin-bottom:8px}.notes-toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:22px}pre{overflow-x:auto;background:var(--pale);padding:18px;border-radius:8px;font:14px/1.8 var(--mono)}code{font-family:var(--mono)}.table-wrap{max-width:100%;overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:14px;text-align:left}th,td{padding:12px;border-bottom:1px solid var(--line);vertical-align:top}th{background:var(--pale)}.source-list{padding-left:22px}.source-list a{overflow-wrap:anywhere}.next-links{display:flex;gap:20px;flex-wrap:wrap}.next-links a{display:inline-flex;align-items:center;min-height:44px}footer{padding:28px 0 36px;color:var(--muted);font-size:13px}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid #ad751d;outline-offset:4px}
+@media(max-width:760px){.hero,.lab-grid{grid-template-columns:1fr;gap:24px}.grid{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.timeline-fields{grid-template-columns:1fr}.checkbox{padding-top:0}.hero-card{padding:20px}.lab{padding:18px}}@media(max-width:520px){.wrap{width:calc(100% - 36px)}.hero{padding-top:32px}.fields{grid-template-columns:1fr}.field.full{grid-column:auto}.controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.controls .btn{padding-inline:6px}.section-head{gap:12px;align-items:flex-start}.content-section{padding:34px 0}.lab{padding:14px}.circuit-figure{padding:6px}.metrics{gap:8px}.metric{padding:10px}.metric strong{font-size:23px}h2{font-size:24px}details{padding:14px}.wave text{font-size:15px}}
+@media print{body{background:white;color:#15251b;font-size:11pt}.wrap{width:100%;max-width:none}.topbar,.skip,.section-nav,.controls,.fields,.timeline-fields,.notes-toolbar,.quiz-controls{display:none!important}.hero{display:block;padding:0 0 16px}.hero h1{font-size:26pt}.hero-card{display:none}.content-section{padding:18px 0}.lab-grid{grid-template-columns:1fr 1fr;gap:16px}.lab{padding:12px}.grid{grid-template-columns:1fr}.card,figure,table{break-inside:avoid}h2{font-size:17pt}h3{font-size:13pt}.feedback{padding:10px}.metrics{grid-template-columns:repeat(4,1fr)}.metric strong{font-size:18pt}details{break-inside:auto}a{color:inherit}.next-links{display:none}footer{font-size:9pt}pre{white-space:pre-wrap;overflow:visible}}
+</style>
+<style>
+/* Shared reading layer: keep this block identical in all standalone notes. */
+@media screen {
+:root{--paper:#fafbf8;--ink:#21382e;--muted:#526359;--line:#dce3d7;--green:#22664f;--pale:#eef2e9;--lime:#d5e7b3;--dark:#193e33}
+.notes-article{font-size:16px;line-height:1.9}
+.notes-article .wrap{width:min(1120px,calc(100% - 64px));max-width:none;padding-inline:0;margin-inline:auto}
+.notes-article .topbar{background:#fafbf8f5;z-index:10}
+.notes-article .topbar-inner{height:auto;min-height:68px;display:flex;align-items:center;justify-content:space-between;gap:24px;padding-block:0}
+.notes-article .brand{display:inline-flex;align-items:center;gap:10px;min-height:44px;margin:0;font-size:15px;font-weight:700;letter-spacing:0;color:var(--ink)}
+.notes-article .brandmark{display:grid;place-items:center;width:30px;height:30px;margin:0;border-radius:6px;background:var(--dark);color:#e0edcb;font:19px/1 var(--mono)}
+.notes-article .topbar nav{display:flex;align-items:center;gap:18px;margin:0;padding:0;width:auto;flex-wrap:nowrap}
+.notes-article .topbar nav a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:4px 3px;font-size:14px;font-weight:500;color:var(--muted);text-decoration:none;border-radius:4px}
+.notes-article .topbar nav a:hover,.notes-article .topbar nav a[aria-current="location"]{color:var(--green);background:var(--pale)}
+.notes-article .topbar nav a[aria-current="location"]{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:6px}
+.notes-article .hero{padding-block:48px 40px;gap:48px;grid-template-columns:1.12fr 1fr}
+.notes-article .hero h1{font-size:clamp(32px,3.6vw,44px);line-height:1.35;letter-spacing:-.035em;text-wrap:balance}
+.notes-article .hero h1 span{font-size:.78em;line-height:1.5;margin-top:8px}
+.notes-article .hero-intro{font-size:17px;line-height:1.9;max-width:32rem;margin-block:20px}
+.notes-article .hero>.hero-card,.notes-article .hero-flow,.notes-article .intro-map{box-shadow:none;border-radius:12px}
+.notes-article .hero .tag{font-size:12px;border-radius:4px;padding:4px 9px;margin:0 0 16px;line-height:1.7}
+.notes-article .hero>.hero-figure .map{transform:none;box-shadow:none}
+.notes-article .hero>div>.eyebrow{display:none}
+.notes-article .hero>.hero-card>.eyebrow,.notes-article .hero>.hero-flow>.eyebrow{display:block;font-size:12px;line-height:1.7}
+.notes-article .hero-links{gap:12px 22px;margin-top:24px}
+.notes-article .hero .text-link{display:inline-flex;align-items:center;min-height:44px;font-size:14px}
+.notes-article .hero figcaption,.notes-article .hero-figure figcaption,.notes-article .date-note{font-size:13px;line-height:1.8}
+.notes-article .hero-card p:last-child,.notes-article .hero-flow .small,.notes-article .intro-map>p:last-child{font-size:14px;line-height:1.85}
+.notes-article .hero-numbers span,.notes-article .hero-step small{font-size:13px}
+.notes-article h2{font-size:28px;line-height:1.5;text-wrap:balance}
+.notes-article .section-head p{font-size:15px;line-height:1.85}
+.notes-article .content-section,.notes-article .article-section{padding-block:52px}
+.notes-article .content-section+.content-section{padding-top:48px}
+.notes-article .note-section{scroll-margin-top:100px}
+.notes-article .note-section>summary{min-height:56px;font-size:18px;line-height:1.6}
+.notes-article .note-section>summary h2{font-size:20px;line-height:1.6}
+.notes-article .note-body{max-width:none;font-size:16px;line-height:1.95}
+.notes-article .note-body p,.notes-article .note-body li{font-size:16px;line-height:1.95}
+.notes-article .note-body>p,.notes-article .note-body>ul,.notes-article .note-body>ol,.notes-article .article-section>p,.notes-article .article-section>ul,.notes-article .article-section>ol{max-width:44rem;font-size:16px;line-height:1.95}
+.notes-article .note-body h3{font-size:21px;margin-block:28px 12px;scroll-margin-top:100px}
+.notes-article .note-body pre,.notes-article pre{font-size:14px;line-height:1.8}
+.notes-article .note-body table,.notes-article table{font-size:14px;line-height:1.8}
+.notes-article .note-body th,.notes-article .note-body td{font-size:14px;line-height:1.8}
+.notes-article .article-section>h2{font-size:28px}
+.notes-article .concept p,.notes-article .subnote p,.notes-article .risk p,.notes-article .monitor-step p,.notes-article .monitor-step ul,.notes-article .step-card p{font-size:15px;line-height:1.85}
+.notes-article .callout,.notes-article .model-scope,.notes-article .demo-disclaimer,.notes-article .version-card,.notes-article .version-card p{font-size:14px;line-height:1.85}
+.notes-article .source-list a,.notes-article .source-list span,.notes-article #plane-references~ul{font-size:14px;line-height:1.85}
+.notes-article #plane-overview~ul{max-width:none}
+.notes-article #plane-overview~ul li{font-size:15px;line-height:1.85}
+.notes-article .note-body .source-list{max-width:none}
+.notes-article .small,.notes-article .lab-note,.notes-article .lab-foot,.notes-article .lab-footer,.notes-article .clock-lab-foot,.notes-article .print-hint{font-size:13px;line-height:1.85}
+.notes-article .principle,.notes-article .principles span{font-size:13px;line-height:1.8}
+.notes-article .principles strong{font-size:15px}
+.notes-article .memory-motto,.notes-article .motto{background:var(--pale);color:var(--ink);border-radius:8px;text-align:left;padding:24px;margin-top:30px}
+.notes-article .memory-motto span,.notes-article .motto small{color:var(--muted);font-size:14px}
+.notes-article button,.notes-article .btn,.notes-article .notes-toolbar button{min-height:44px;min-width:44px;font-size:14px}
+.notes-article button,.notes-article .btn,.notes-article .topbar a,.notes-article summary,.notes-article .section-nav a,.notes-article .toc a{transition:background .18s,color .18s,border-color .18s,transform .18s}
+.notes-article button:enabled:hover{filter:brightness(1.06)}
+.notes-article button:enabled:active,.notes-article .btn:active{transform:translateY(1px)}
+.notes-article button:disabled{opacity:.58}
+.notes-article .graph-node:disabled,.notes-article .work-card:disabled{opacity:1}
+.notes-article :focus-visible{outline:3px solid #ad751d;outline-offset:4px}
+.notes-article .lab :focus-visible,.notes-article .clock-lab :focus-visible{outline-color:#f0cc80}
+.notes-article .toc a,.notes-article .section-nav a{display:inline-flex;align-items:center;min-height:44px;border-radius:5px;font-size:14px;padding:8px 12px}
+.notes-article .checklist label,.notes-article .clock-check{min-height:44px;font-size:14px;line-height:1.8}
+.notes-article .clock-field label,.notes-article .clock-controls small,.notes-article .clock-node small,.notes-article .clock-node span{font-size:13px;line-height:1.6}
+.notes-article .clock-current p,.notes-article .clock-candidate,.notes-article .clock-warnings{font-size:14px;line-height:1.8}
+.notes-article .clock-node strong,.notes-article .hero-numbers strong,.notes-article .metric strong{font-variant-numeric:tabular-nums}
+.notes-article .task-option strong,.notes-article .work-card strong{font-size:14px;line-height:1.65}
+.notes-article .task-option span,.notes-article .scope-buttons small,.notes-article .card-id,.notes-article .card-project,.notes-article .card-status,.notes-article .card-tags>span,.notes-article .lane-en{font-size:12px;line-height:1.6}
+.notes-article .scope-explanation,.notes-article .detail-copy>p,.notes-article .detail .acceptance,.notes-article .state-controls>p,.notes-article .board-heading p{font-size:14px;line-height:1.8}
+.notes-article .lane h4{font-size:14px;line-height:1.5;flex-wrap:wrap}
+.notes-article .lane-count{font-size:12px}
+.notes-article .lab .task-option{min-height:96px}
+.notes-article .skills-step-card dd,.notes-article .route-pane p,.notes-article .chooser-intro,.notes-article .permissions-pane>p{font-size:14px;line-height:1.85}
+.notes-article .skills-step-card dt,.notes-article .step-counter,.notes-article .permissions-pane small,.notes-article .permission-list span,.notes-article .graph-legend,.notes-article .graph-arrow-note{font-size:13px;line-height:1.8}
+.notes-article .ui-arrow{width:18px;height:18px;display:inline-block;vertical-align:middle;flex-shrink:0}
+.notes-article .selection-jump,.notes-article .choice-result{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;padding:10px 12px;border-radius:5px;font-size:13px;font-weight:600;line-height:1.6;text-decoration:none}
+.notes-article .selection-jump{background:#22664f;color:#fff}
+.notes-article .choice-result{color:#e2efca;border:1px solid #829873;background:#173e33;margin-top:7px}
+.notes-article .task-choice{min-width:0}
+.notes-article .task-choice .task-option{width:100%}
+.notes-article .task-option[aria-pressed="false"]+.choice-result{display:none}
+.notes-article #selected-skill,.notes-article #plane-selected-title{scroll-margin-top:128px}
+.notes-article footer,.notes-article .footer{font-size:13px;line-height:1.8}
+.notes-article footer a,.notes-article .footer a{display:inline-flex;align-items:center;min-height:44px}
+.notes-article .note-body p,.notes-article .hero-intro,.notes-article .article-section>p{text-wrap:pretty}
+@media(max-width:760px){
+.notes-article .wrap{width:calc(100% - 40px)}
+.notes-article .topbar-inner{flex-wrap:wrap;gap:0;padding-top:6px}
+.notes-article .brand{min-height:44px;font-size:15px}
+.notes-article .topbar nav{width:100%;gap:12px;overflow-x:auto;flex-wrap:nowrap;padding:0 0 4px;scrollbar-width:thin}
+.notes-article .topbar nav a{font-size:13px;flex-shrink:0;padding-inline:2px}
+.notes-article .hero{grid-template-columns:1fr;gap:28px;padding-block:32px}
+.notes-article .hero h1{font-size:32px;line-height:1.4}
+.notes-article .hero-intro{font-size:16px;max-width:none;margin-block:16px}
+.notes-article .hero-figure{max-width:500px}
+.notes-article .hero .tag{margin-bottom:12px}
+.notes-article .content-section,.notes-article .article-section{padding-block:36px}
+.notes-article .content-section+.content-section{padding-top:36px}
+.notes-article h2,.notes-article .article-section>h2{font-size:24px}
+.notes-article .section-head p{font-size:15px}
+.notes-article .note-section>summary{font-size:17px}
+.notes-article .note-section>summary h2{font-size:18px}
+.notes-article .note-body p,.notes-article .note-body li{font-size:16px}
+.notes-article .note-body pre,.notes-article pre{font-size:13px}
+.notes-article .note-body th,.notes-article .note-body td{font-size:14px}
+.notes-article .principles{grid-template-columns:1fr;gap:14px}
+.notes-article .principles strong{display:inline;margin-right:8px}
+.notes-article .principles span{display:inline}
+.notes-article .task-options{grid-template-columns:1fr 1fr;align-items:start}.notes-article .lab .task-option{min-height:76px;padding:12px}
+.notes-article .board{grid-template-columns:1fr 1fr}
+.notes-article .lane:last-child .lane-cards{display:flex}
+.notes-article .lane-cards{min-height:0}
+.notes-article .lane{padding:14px}
+.notes-article .lane-en{margin-bottom:10px}
+.notes-article .work-card{padding:14px}
+.notes-article .card-tags{gap:6px}
+.notes-article .lab-top{flex-wrap:wrap}
+.notes-article .lab-top .tag{white-space:normal}
+.notes-article .note-section,.notes-article .note-body h3,.notes-article .article-section,.notes-article .article-section>h3{scroll-margin-top:124px}
+}
+@media(max-width:370px){.notes-article .task-options,.notes-article .board{grid-template-columns:1fr}.notes-article .hero h1{font-size:30px}.notes-article .topbar nav{gap:8px}}
+}
+@media(prefers-reduced-motion:reduce){.notes-article *,.notes-article *::before,.notes-article *::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+</style>
+<style>
+/* GPIO chapter controls only; the shared reading layer remains unchanged. */
+@media screen{.notes-article #entry-self-check,.notes-article #entry-self-check-answer,.notes-article #timeline-primer,.notes-article #voltage-exercise,.notes-article #sampling-limits,.notes-article .scenario-card,.notes-article #c-syntax,.notes-article #c-contract,.notes-article #c-source,.notes-article #c-host-lab,.notes-article #recall-questions,.notes-article #recall-answers,.notes-article .exercise,.notes-article .exercise-answer{scroll-margin-top:124px}}
+.reasoning-form{margin:18px 0}.reasoning-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.reasoning-form .btn{margin-top:12px}.reasoning-form .feedback{margin-top:12px}.reasoning-form select{white-space:normal}.scenario-card{margin-bottom:18px}
+@media(max-width:760px){.reasoning-fields{grid-template-columns:1fr}}
+@media print{.reasoning-form,.print-hint{display:none!important}body.exercise-print .hero,body.exercise-print .section-nav,body.exercise-print footer,body.exercise-print main>section{display:none!important}body.exercise-print main>#lesson-notes{display:block!important;border:0;padding:0}body.exercise-print #lesson-notes>:not(#recall-questions){display:none!important}body.exercise-print .exercise-answer{display:none!important}body.exercise-print #recall-questions>.notes-toolbar,body.exercise-print #recall-questions>.print-hint{display:none!important}body.exercise-print #recall-questions .exercise{break-inside:avoid;margin:12px 0;padding:14px 18px;min-height:95px}body.exercise-print #recall-questions .exercise h3{font-size:12pt}}
+</style>
+<style>.reference-body h2,.reference-body h3{scroll-margin-top:130px}.reference-body h2:not(:first-child){margin-top:36px}.reference-body p{max-width:44rem}.reference-body th,.reference-body td{min-width:70px}.reference-body details summary{font-size:16px}@media print{.reference-body h2{margin-top:18px}}</style></head><body class="notes-article"><a class="skip" href="#main">跳到正文</a><header class="topbar"><div class="wrap topbar-inner"><a class="brand" href="../"><span class="brandmark" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span>嵌入式技术笔记</a><nav aria-label="笔记导航"><a href="../learn/">返回分类</a><a href="#quick-reference">交互实验</a><a href="#lesson-notes">完整笔记</a><a href="../?search=1">搜索笔记</a></nav></div></header><div class="wrap"><div class="hero"><div><div class="tag">可打印速查 · 原创教材第 02 单元</div><h1 id="reference-overview">GPIO 输出与<br>LED 驱动速查</h1><p class="hero-intro">压缩回忆输出通路、LED 方向与事件到命令的映射。零基础先读<a href="gpio-led.html#prerequisites">完整章节</a>。</p><p class="small">不绑定开发板；未做硬件验证。资料核对：2026-10-17。</p></div><aside class="hero-card"><strong>期望亮灭 ≠ 输出命令 ≠ 电流与亮度保证</strong><p>先能解释回路，再查完整器件条件。用这张卡回忆，不把看过答案当作长期掌握。</p></aside></div><nav class="section-nav" aria-label="章节"><a href="#quick-reference">规则速查</a><a href="#reference-events">事件映射</a><a href="#reference-budget">限流预算</a><a href="#reference-parts">手册条件</a><a href="#reference-driver">外接驱动</a><a href="#lesson-notes">回忆迁移</a><a href="#reference-sources">核对来源</a><a href="gpio-led.html#path-lab">返回交互</a></nav><main id="main"><div class="content-section reference-body" role="region" aria-labelledby="quick-reference"><div class="notes-toolbar"><button class="btn primary" type="button" id="print-reference">打印这张速查</button><button class="btn" type="button" id="expand-notes">展开回忆答案</button></div><p class="print-hint">打印会展开答案，打印后恢复折叠。只打印题目请使用完整章节的练习打印选项。</p><p>先读<a href="./gpio-led.html#prerequisites">完整第 02 单元</a>，再用这张卡回忆。无需指定开发板，未做硬件验证；打印自动展开答案，打印后恢复折叠。</p>
+<h2 id="quick-reference" tabindex="-1">规则速查 </h2>
+<p>输入观察节点，输出命令控制驱动通路。写 0/1 是命令，不直接保证节点实际电压。GND 是参考，VIO 是允许的 I/O 电源。</p>
+<h3 id="reference-modes" tabindex="-1">输出模式 </h3>
+<div class="table-wrap"><table tabindex="0">
+<thead>
+<tr>
+<th>模式</th>
+<th>写 0</th>
+<th>写 1</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>推挽</td>
+<td>低侧导通，GPIO → GND</td>
+<td>高侧导通，VIO → GPIO</td>
+</tr>
+<tr>
+<td>开漏</td>
+<td>低侧导通，GPIO → GND</td>
+<td>释放；无主动高侧</td>
+</tr>
+</tbody>
+</table></div>
+<p>释放不等于高；上拉与负载共同决定电压，无确定偏置不保证高。真实电压须查负载下的 VOH/VOL 和完整料号；高阻不等于零漏电。</p>
+<h3 id="reference-paths" tabindex="-1">LED 支路与方向 </h3>
+<p>A 阳极、K 阴极，正常用 A → K 正向电流；查实际封装，不把外观当保证。Rled 与 LED 串联，同一支路放前后均可；不省略。VF 随电流、温度、器件改变，反向不是正常模式。</p>
+<ul>
+<li>拉电流：VIO → 高侧 → GPIO → Rled → LED(A → K) → GND。推挽写 1 请求亮。</li>
+<li>灌电流：VIO → Rled → LED(A → K) → GPIO → 低侧 → GND。写 0 请求亮。</li>
+<li>开漏释放、拉电流接法加上拉：VIO → Rpu → GPIO → Rled → LED → GND，可能仅微弱导通；节点受负载影响，不能保证高或亮度。Rpu 不替代 Rled。</li>
+<li>上拉加低侧导通另有 VIO → Rpu → GPIO → 低侧 → GND 电流，即使 LED 支路 off，仍须计入相关预算。</li>
+</ul>
+<p>所有路径都假设正确方向、有效串联电阻、同一允许 VIO 与理想稳态驱动。“无稳态通路”只描述 LED 正向支路，不保证实物黑暗或逻辑高；漏电、瞬态、亮度和电气许可在模型外。<a href="./gpio-led.html#path-truth-table">完整 16 组表</a>。</p>
+<h3 id="reference-events" tabindex="-1">事件到期望，再映射命令 </h3>
+<p>固定推挽灌电流 LED，起点期望灭。只消费已经过滤的人工事件，不运行消抖或定时器：每条 PRESSED 翻转一次期望状态，NONE/RELEASED 保持。期望亮 → 写 0，期望灭 → 写 1。</p>
+<div class="table-wrap"><table tabindex="0">
+<thead>
+<tr>
+<th>人工时间 / ms</th>
+<th>事件</th>
+<th>期望</th>
+<th>命令</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>NONE</td>
+<td>灭</td>
+<td>1</td>
+</tr>
+<tr>
+<td>11</td>
+<td>PRESSED</td>
+<td>亮</td>
+<td>0</td>
+</tr>
+<tr>
+<td>12</td>
+<td>NONE</td>
+<td>亮</td>
+<td>0</td>
+</tr>
+<tr>
+<td>31</td>
+<td>RELEASED</td>
+<td>亮</td>
+<td>0</td>
+</tr>
+<tr>
+<td>41</td>
+<td>PRESSED</td>
+<td>灭</td>
+<td>1</td>
+</tr>
+</tbody>
+</table></div>
+<p>时间只作记录标签。换推挽拉电流接法，业务翻转条件不变，命令映射反过来。回放不是物理连接、C 固件、RTOS 或硬件验证。</p>
+<h2 id="reference-budget" tabindex="-1">限流与同时预算 </h2>
+<p>驱动有压降：拉电流须看负载下的 VOH，灌电流须扣除 VOL。名义示例全为假设：<code>(3.3−2.0−0.2)V/0.002A=550Ω</code>。附近 560 Ω 只是起点，仍需最坏核算与功率/温度降额。</p>
+<div class="language-text vp-adaptive-theme"><span class="lang">text</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0" v-pre=""><code><span class="line"><span>t = 容差百分数 / 100</span></span>
+<span class="line"><span>Rmin=R(1−t)；Rmax=R(1+t)</span></span>
+<span class="line"><span>Imax=max(0,Vmax−VFmin)/Rmin              [A]</span></span>
+<span class="line"><span>Imin=max(0,Vmin−VFmax−驱动压降上限)/Rmax  [A]</span></span>
+<span class="line"><span>Pmax=max(0,Vmax−VFmin)²/Rmin             [W]</span></span>
+<span class="line"><span>mA=A×1000；mW=W×1000</span></span>
+<span class="line"><span>组上界=N×Imax；相关总上界=组上界+其他/内核电流</span></span></code></pre>
+</div><p>上界保守采用驱动压降最小 0；VF 包络必须适用于目标器件、电流与温度。<code>Vmax≤VFmin</code> 无正向余量；Imin=0 不保证全范围导通，任何电流都不直接保证亮度。不能用 Typ 填保证 Min；缺界就记“缺依据”。其他电流即使 LED 无通路也照算。</p>
+<p>虚构练习包络：电源 3.0—3.6 V、VF 1.8—2.2 V、驱动压降 0—0.4 V、680 Ω±5%，同组同方向同时亮；单脚/组/相关总预算为 4/12/30 mA，其他/内核 10 mA。这些不是 MCU/LED 规格、AMR 或实测。</p>
+<div class="table-wrap"><table tabindex="0">
+<thead>
+<tr>
+<th>情况</th>
+<th>每路上界 / mA</th>
+<th>同组 / mA</th>
+<th>含其他总量 / mA</th>
+<th>条件化比较</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>680 Ω，4 路</td>
+<td>2.786</td>
+<td>11.146</td>
+<td>21.146</td>
+<td>所列均未超</td>
+</tr>
+<tr>
+<td>680 Ω，5 路</td>
+<td>2.786</td>
+<td>13.932</td>
+<td>23.932</td>
+<td>组超</td>
+</tr>
+<tr>
+<td>680 Ω，8 路</td>
+<td>2.786</td>
+<td>22.291</td>
+<td>32.291</td>
+<td>组、总超</td>
+</tr>
+<tr>
+<td>560 Ω，4 路</td>
+<td>3.383</td>
+<td>13.534</td>
+<td>23.534</td>
+<td>组超</td>
+</tr>
+</tbody>
+</table></div>
+<p>默认 Rmin=646 Ω、Rmax=714 Ω、Imin≈0.560 mA、每只电阻 Pmax≈5.015 mW。比较用未舍入值；恰等预算没有余量。额外上拉、不同负载或供电域须另记账；查实际分组/供电路径，不将拉灌正负相抵。<a href="./gpio-led.html#budget-lab">预测计算</a>和<a href="./gpio-led.html#recall-questions">十题完整输入</a>。</p>
+<h2 id="reference-parts" tabindex="-1">完整料号与脚注 </h2>
+<ul>
+<li><strong>STM32F103C8T6 / LQFP48，DS5319 Rev 20，July 2025：</strong>§5.3.13 表 37 普通 GPIO 八脚同时、IIO=±8 mA、2.7&lt;VDD&lt;3.6 V 对应 VOL≤0.4 V/VOH≥VDD−0.4 V；是条件化输出电平资料，不能直接当各脚预算。§5.2 表 7 的单 I/O ±25 mA、相关 VDD/VDDA 和 VSS 各 150 mA 为 AMR 应力限制，非正常设计目标。表 5 脚注 5 对 PC13—15 的电源开关有 3 mA、≤2 MHz、≤30 pF 限制，并禁止作电流源（如 LED）；普通脚条件不能覆盖特殊禁止。总量须含内核耗电，不编造统一端口数字。</li>
+<li><strong>Kingbright WP710A10ID，DSAL0505/1101024897，V.12A，印刷日期 08/11/2023：</strong> p2 在 IF=10 mA、TA=25°C 时 VF Typ 1.9 V/Max 2.3 V，附 VF ±0.1 V 注释；没有保证 Min，也不是 2 mA/全温包络。p1 查 A/K；直流、反向、脉冲 AMR 均非默认设计许可，脉冲和温度另有条件。</li>
+</ul>
+<p>两者只是读手册案例，不是获准配对接线。记录完整料号、脚、方向、供电/温度、保证方式、全部预算、脚注与未知界。Min/Max 也须连同测试/表征条件使用。</p>
+<h2 id="reference-driver" tabindex="-1">何时外接驱动 </h2>
+<p>直驱不满足电流/电压/总预算或负载电源条件时，用有依据的驱动。LED 仍需串联限流或恒流；继电器和高功率负载不能照搬 GPIO 直驱，感性负载还须核对关断保护。</p>
+<ul>
+<li>NPN 低侧：负载接集电极、发射极接地，GPIO 经基极电阻；按实际饱和条件算基极电流、GPIO 预算、VCE(sat) 和损耗，检查复位关断。</li>
+<li>N 沟道 MOS 低侧：源极接参考地，漏极接负载；看实际 VGS、所需 RDS(on) 对应的 VGS/温度条件、栅极电荷/瞬态驱动、热与默认栅源下拉。VGS(th) 不保证充分导通；检查公共参考（或合适隔离/驱动）及上电顺序，避免反向供电。</li>
+</ul>
+<p>不提供通用晶体管/电阻型号；<a href="https://www.ti.com/lit/an/slpa021/slpa021.pdf" target="_blank" rel="noreferrer">TI SLPA021 §4、§5.2</a>支撑 MOS 门极条件与低侧结构，具体选型仍需器件手册。</p>
+<h2 id="reference-diagnosis" tabindex="-1">六类故障的优先检查 </h2>
+<div class="table-wrap"><table tabindex="0">
+<thead>
+<tr>
+<th>破坏的前提</th>
+<th>下一步</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>缺 Rled</td>
+<td>先断电补有依据的串联限流，不靠延时限制导通电流</td>
+</tr>
+<tr>
+<td>方向可疑</td>
+<td>查完整封装 A/K，不用反向加压试亮</td>
+</tr>
+<tr>
+<td>开漏释放当高</td>
+<td>查偏置与全部负载，不凭写 1 保证电压/亮度</td>
+</tr>
+<tr>
+<td>推挽互相冲突</td>
+<td>先断开冲突源，LED 电阻未必在冲突回路</td>
+</tr>
+<tr>
+<td>同时电流漏算</td>
+<td>核单脚/组/相关总量，加内核/其他与上拉</td>
+</tr>
+<tr>
+<td>MOS 阈值当导通</td>
+<td>查 RDS(on) 的 VGS 条件、驱动/参考和默认关断</td>
+</tr>
+</tbody>
+</table></div>
+<p><a href="./gpio-led.html#diagnosis-lab">逐题诊断</a>。这些是假想独立场景，不是对真实板卡的故障归因。</p>
+<h2 id="lesson-notes" tabindex="-1">合上卡片，再解释 </h2>
+<details id="reference-recall"><summary>LED 灭能推出 GPIO 没有任何电流吗？ </summary>
+<p>不能。低侧导通加上拉时，即使 LED 支路 off，仍可能有 VIO → Rpu → GPIO → 低侧 → GND 电流；还有模型没有计算的漏电或瞬态。错在把 LED 支路当成整个引脚。</p>
+</details>
+<details id="reference-release"><summary>开漏写 1 加上拉，能保证高吗？ </summary>
+<p>仍要查负载。拉电流 LED 可经 Rpu 获得微弱电流并加载节点，不保证高逻辑或亮度。无确定偏置时高低都不保证。</p>
+</details>
+<details id="reference-transfer"><summary>换拉电流接法，PRESSED 规则要改吗？ </summary>
+<p>只在 PRESSED 翻转期望的规则不变；变的是期望 → 命令映射：推挽拉电流请求亮写 1、请求灭写 0。保持/释放不反复翻转。</p>
+</details>
+<details id="reference-budget-recall"><summary>单脚未超，为什么五路仍需重新核算？ </summary>
+<p>假设 680 Ω±5%、电源上界 3.6 V、VF 下界 1.8 V、驱动最小压降 0，每路约 2.786 mA。五路同组约 13.932 mA 已超虚构组预算 12 mA；其他电流还要计入相关总量。单脚未超不推导全部未超。</p>
+</details>
+<details id="reference-condition-recall"><summary>VF 典型值和 MOS 阈值分别缺少什么？ </summary>
+<p>VF Typ 缺保证下界及目标电流/温度包络；VGS(th) 缺所需负载下 RDS(on) 的驱动条件。都不能用一个看起来合适的数字替整套条件验收。</p>
+</details>
+<h2 id="reference-sources" tabindex="-1">核对来源与边界 </h2>
+<p>核对日期 2026-10-17。<a href="https://www.st.com/resource/en/application_note/an4899-stm32-microcontroller-gpio-hardware-settings-and-lowpower-consumption-stmicroelectronics.pdf" target="_blank" rel="noreferrer">ST AN4899 May 2026 Rev 4</a> §4.2、§4.3.2：输出通路；§5.1 与 §5.1.4—5.1.5：工作条件及负载。<a href="https://www.st.com/resource/en/datasheet/stm32f103c8.pdf" target="_blank" rel="noreferrer">ST DS5319 Rev 20 / July 2025</a> §5.1、§5.2 表 7、§5.3.13 表 37、表 5 脚注 5：具体条件与特殊限制。<a href="https://www.kingbrightusa.com/images/catalog/SPEC/WP710A10ID.pdf" target="_blank" rel="noreferrer">Kingbright WP710A10ID</a> DSAL0505/1101024897、V.12A、印刷日期 08/11/2023，p1 极性、p2 电气条件。<a href="https://www.ti.com/lit/an/slpa021/slpa021.pdf" target="_blank" rel="noreferrer">TI SLPA021 November 2024</a> §4 p4—6、§5/§5.2 p7：门极和低侧条件。首选读 AN4899 §4.3.2，再画一条回路。图片、例子与练习原创，资料不为本站理想模型背书。</p>
+<p>模型只证明所列输入与软件行为，不能替代完整料号、原理图、电气和硬件验证。遇到疑问，可向助手指出卡在驱动、节点、LED 方向还是事件映射；隔一段时间换接法重做，不把一次正确视为长期掌握。<a href="./gpio-led.html">回完整章节</a> · <a href="../learn/engineering-map.html#stage-01">学习地图</a> · <a href="../learn/engineering-map.html#resource-comparison">资源比较</a>。</p>
+</div></main><footer>原创嵌入式教材 · 无个人进度存储 · <a href="../learn/">学习主线目录</a></footer></div>
+<script id="note-deep-links">
+(() => {
+  const reveal = () => {
+    let id;try{id=decodeURIComponent(window.location.hash.slice(1));}catch{return;}
+    if(!id) return;
+    const target=document.getElementById(id);if(!target) return;
+    let panel=target.closest('details');
+    while(panel) {panel.open=true;panel=panel.parentElement?.closest?.('details')||null;}
+    target.closest('section')?.querySelectorAll?.('details').forEach(detail=>{detail.open=true;});
+    requestAnimationFrame(()=>target.scrollIntoView({block:'start'}));
+  };
+  window.addEventListener('hashchange',reveal);window.addEventListener('pageshow',reveal);reveal();
+})();
+</script>
+<script id="note-print">
+(() => {
+  let previous;
+  window.addEventListener('beforeprint',()=>{
+    if(previous) return;
+    previous=[...document.querySelectorAll('details')].map(panel=>[panel,panel.open]);
+    previous.forEach(([panel])=>{panel.open=true;});
+  });
+  window.addEventListener('afterprint',()=>{previous?.forEach(([panel,open])=>{panel.open=open;});previous=undefined;});
+})();
+</script>
+<script id="led-reference-reader">(()=>{document.getElementById("print-reference").onclick=()=>window.print();document.getElementById("expand-notes").onclick=()=>document.querySelectorAll("details").forEach(panel=>{panel.open=true;});})();</script>
+</body></html>

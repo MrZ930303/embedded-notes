@@ -107,6 +107,6 @@ cc -std=c11 -Wall -Wextra -Werror -pedantic -DBUTTON_TEST button.c -o button-tes
 
 ## 回到主线 {#reference-next}
 
-下一章“GPIO 输出与 LED 限流”建设中。先解释电路，再完成采样与代码检查点；无需提前购买开发板。
+先解释电路，再完成采样与代码检查点；随后进入[第二章 GPIO 输出与 LED 驱动](gpio-led.html)，无需提前购买开发板。
 
-[返回完整首章](gpio-button.html) · [学习地图第 01 阶段](./engineering-map.html#stage-01)
+[返回完整首章](gpio-button.html) · [LED 驱动可打印速查](gpio-led-reference.html) · [学习地图第 01 阶段](./engineering-map.html#stage-01)

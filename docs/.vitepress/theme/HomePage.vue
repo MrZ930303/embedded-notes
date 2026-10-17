@@ -13,9 +13,11 @@ const notes = [
   { n: '10', category: '学习中心', title: 'MCU 工程学习地图', desc: '沿八阶段完善可升级的数据采集终端，按证据使用三路资料，找到现有笔记的学习位置。', path: '/learn/engineering-map.html', detail: '八阶段主线 · 三路资料对照 · 验收与建设状态' },
   { n: '11', category: '学习中心', title: '按下按钮，为什么读到 0？', desc: '先预测上拉与按键电路，再用人工时间轴理解抖动、稳定过滤与一次可靠按下。', path: '/learn/gpio-button.html', detail: '原创 GPIO 小课 · 先预测再解释 · 人工抖动示例' },
   { n: '12', category: '学习中心', title: 'GPIO 按键：可打印速查', desc: '回看电平、悬空和连续稳定过滤规则，用回忆与迁移题检验理解。', path: '/learn/gpio-button-reference.html', detail: '电路状态 · 11 ms 固定样例 · 上板验证清单' },
+  { n: '13', category: '学习中心', title: 'GPIO 输出与 LED 驱动', desc: '先预测推挽与开漏的电流路径，再检查限流和同时电流预算，把一次按下映射为 LED 期望状态。', path: '/learn/gpio-led.html', detail: '16 组路径 · 条件预算 · 故障诊断与十题迁移' },
+  { n: '14', category: '学习中心', title: 'GPIO 输出与 LED 驱动：可打印速查', desc: '压缩回看 LED 方向、输出模式、预算公式、特殊引脚脚注与外接驱动条件。', path: '/learn/gpio-led-reference.html', detail: '路径规则 · 最坏条件核算 · 原厂手册边界' },
 ]
 const categories = [
-  { title: '学习中心', path: '/learn/', count: '3 篇' },
+  { title: '学习中心', path: '/learn/', count: '5 篇' },
   { title: 'C 语言与内存', path: '/c-memory/', count: '1 篇' },
   { title: 'MCU 基础与外设', path: '/mcu/', count: '4 篇' },
   { title: '工程工具与协作', path: '/tools/', count: '3 篇' },
@@ -30,14 +32,14 @@ const categories = [
       <h1 id="notebook-title">嵌入式技术笔记</h1>
       <p class="intro-description">从内存到时钟，从原理到工程。<br>动手操作模型，再读懂背后的原理、代码与适用边界。</p>
       <div class="intro-actions">
-        <a class="notebook-button primary" href="#notes">浏览 12 篇笔记 <span aria-hidden="true">↓</span></a>
+        <a class="notebook-button primary" href="#notes">浏览 14 篇笔记 <span aria-hidden="true">↓</span></a>
         <a class="intro-route" :href="withBase('/learn/')">从工程学习地图开始 <svg class="ui-arrow" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-5-5 5 5-5 5"/></svg></a>
         <a class="intro-route" :href="withBase('/guide/memory-roadmap.html')">从 MCU 内存学习路线开始 <svg class="ui-arrow" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-5-5 5 5-5 5"/></svg></a>
       </div>
     </section>
 
     <section class="home-section" aria-labelledby="notes">
-      <div class="home-section-heading"><h2 id="notes">交互笔记</h2><span>12 篇 · 5 个主题</span></div>
+      <div class="home-section-heading"><h2 id="notes">交互笔记</h2><span>14 篇 · 5 个主题</span></div>
       <div class="note-list">
         <article v-for="note in notes" :key="note.path" class="note-entry">
           <span class="note-number" aria-hidden="true">{{ note.n }}</span>

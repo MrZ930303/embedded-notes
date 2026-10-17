@@ -146,7 +146,7 @@
 <li><strong>原理必读：</strong>从第 0 节开始，解释电压参考、GPIO 输入、高阻与上下拉；沿线路预测 0、1 或无法保证；手算原始变化怎样形成一次事件。完成十题中的 1—6、9—10，即可检查这一层。</li>
 <li><strong>C 代码进阶：</strong>先读语法桥梁，再运行独立 C11 状态机；解释启动按住、丢采样和计时回绕。完成第 7—8 题与主机实验。没有 C 基础时，可以先停在第一个检查点，之后回来读代码。</li>
 </ul>
-<p>本页和<a href="gpio-button-reference.html">速查卡</a>属于<a href="../learn/engineering-map.html#stage-01">学习地图第 01 阶段</a>的一章，不能代替整个电路与 C 阶段。GPIO 输出、LED 限流、完整 C 语言基础和缓冲区课程仍在建设中。</p>
+<p>本页和<a href="gpio-button-reference.html">速查卡</a>属于<a href="../learn/engineering-map.html#stage-01">学习地图第 01 阶段</a>的一章，不能代替整个电路与 C 阶段。可继续<a href="gpio-led.html">第二章 GPIO 输出与 LED 驱动</a>；完整 C 语言基础和缓冲区课程仍在建设中。</p>
 </section>
 <section class="content-section" id="zero-entry"><h2>0. 零基础入口：先认识节点与电压</h2>
 <p><strong>MCU（微控制器）</strong>能运行程序，并通过引脚与外部电路交换信号。<strong>GPIO</strong> 是 General-Purpose Input/Output，即通用输入/输出。输入模式让程序观察引脚的逻辑值；输出模式由程序控制输出驱动电路，具体输出模式留到后续章节。本章只使用数字输入，不要求配置任何厂商寄存器。某个引脚是否支持数字输入、复位时是什么状态，仍须查真实型号手册。</p>
@@ -722,8 +722,8 @@ ButtonEvent button_update(Button *button, bool rawHigh, uint32_t nowMs)
 <p>假设门限、示例阻值、人工采样数据、解释和习题均独立编写，不从资料中的某个器件偷换成通用参数。实物应用仍要查选定完整料号和板级设计。</p>
 </section>
 <section class="content-section" id="next-lesson"><h2>带着能解释的结果回到主线</h2>
-<p>先完成一个可解释的结果：沿节点连接推到电压范围，再从观测序列推到一次事件。原理层完成后可先休息；C 进阶层可在补基础后回来练。下一章“GPIO 输出与 LED 限流”仍在建设中，不要求提前购买或选定开发板。</p>
-<p><a href="gpio-button-reference.html">打开可打印速查</a> · <a href="../learn/engineering-map.html#stage-01">返回学习地图第 01 阶段</a></p>
+<p>先完成一个可解释的结果：沿节点连接推到电压范围，再从观测序列推到一次事件。原理层完成后可先休息；C 进阶层可在补基础后回来练。继续<a href="gpio-led.html">第二章 GPIO 输出与 LED 驱动</a>，把一次已确认按下变为 LED 期望状态，再解释路径与限流预算；不要求提前购买或选定开发板。</p>
+<p><a href="gpio-button-reference.html">打开按键可打印速查</a> · <a href="gpio-led-reference.html">LED 驱动可打印速查</a> · <a href="../learn/engineering-map.html#stage-01">返回学习地图第 01 阶段</a></p>
 </section>
 </main><footer>原创教材首章 · GPIO 按键 · 2026-10-17<br>人工模型与 C 主机实验；未做目标硬件验证。</footer></div>
 <script id="gpio-controller">

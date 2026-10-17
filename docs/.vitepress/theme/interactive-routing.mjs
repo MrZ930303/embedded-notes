@@ -1,4 +1,4 @@
-export const notePaths = ['c-memory/heap-stack.html', 'tools/beads.html', 'tools/plane.html', 'tools/matt-pocock-skills.html', 'mcu/crystal-pll-clock.html', 'mcu/cortex-m-cpu-registers.html', 'mcu/hardfault-stack-trace.html', 'debug/easylogger.html', 'mcu/mcu-ota.html', 'learn/engineering-map.html', 'learn/gpio-button.html', 'learn/gpio-button-reference.html']
+export const notePaths = ['c-memory/heap-stack.html', 'tools/beads.html', 'tools/plane.html', 'tools/matt-pocock-skills.html', 'mcu/crystal-pll-clock.html', 'mcu/cortex-m-cpu-registers.html', 'mcu/hardfault-stack-trace.html', 'debug/easylogger.html', 'mcu/mcu-ota.html', 'learn/engineering-map.html', 'learn/gpio-button.html', 'learn/gpio-button-reference.html', 'learn/gpio-led.html', 'learn/gpio-led-reference.html']
 export const notePath = notePaths[0]
 
 export function isInteractiveNote(href, base, currentUrl) {
