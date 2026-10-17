@@ -7,7 +7,7 @@ description: 上拉下拉真值表、11 ms 人工教学例子、连续稳定过�
 
 可打印速查 · 原创小课 01。先沿电路判断原始值，再用稳定状态的变化识别一次按下。动作、电压、逻辑值、事件分别判断。
 
-适用 STM32 / GD32 通用输入概念，先修允许电源与共地；具体型号门限和库版本按实际工程核对。人工示例未做硬件验证。先读[互动小课](./gpio-button.html)，速查不替代原理图与芯片手册。
+适用通用 GPIO 输入原理，不绑定开发板或固定引脚；先修允许电源与共地。独立练习不依赖指定硬件，STM32/GD32 资料仅作实现案例；上板时具体型号门限和库版本按实际工程核对。人工示例未做硬件验证。先读[互动小课](./gpio-button.html)，速查不替代原理图与芯片手册。
 
 ## 从输入到事件的四步 {#quick-reference}
 
@@ -74,7 +74,7 @@ if candidate != stable
 
 ## 原理与方法来源 {#reference-sources}
 
-- [ST AN4899：GPIO 输入模式与硬件设置](https://www.st.com.cn/resource/en/application_note/an4899-guidelines-for-gpio-hardware-settings-and-lowpower-consumption-on-stm32-mcus-stmicroelectronics.pdf)。具体门限查所选芯片数据手册。
+- [ST AN4899：GPIO 输入模式与硬件设置](https://www.st.com.cn/resource/en/application_note/an4899-guidelines-for-gpio-hardware-settings-and-lowpower-consumption-on-stm32-mcus-stmicroelectronics.pdf)。STM32 实现案例；具体门限与寄存器配置仍查所选芯片手册，不跨 MCU 套用。
 - [TI：Debounce a Switch](https://www.ti.com/document-viewer/lit/html/scea094)。机械触点抖动和消抖原理。
 - [Matt Pocock teach](https://github.com/mattpocock/skills/blob/main/skills/productivity/teach/SKILL.md?plain=1)。单一成果、紧密反馈、回忆迁移与独立打印速查的教学组织方法。
 

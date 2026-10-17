@@ -35,7 +35,7 @@ const document = {
 vm.runInNewContext(controller, { document }, { timeout: 1000 })
 assert.equal(buttons.length, 8)
 assert.equal(stages.length, 8, 'All eight full stage bodies must exist before JavaScript runs')
-const titles = ['电路与 C', '启动与内存', '外设与协议', '中断与 DMA', 'FreeRTOS', '调试与测试', '启动与升级', '架构与可靠性']
+const titles = ['电路与 C', '启动与内存', '外设与协议', '中断与 DMA', '任务与并发', '调试与测试', '启动与升级', '架构与可靠性']
 for (let i = 0; i < 8; i++) {
   buttons[i].click()
   assert.ok(elements['focus-title'].textContent.includes(titles[i]), 'Stage selection must show the chosen topic')

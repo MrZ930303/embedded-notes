@@ -7,7 +7,7 @@ description: 从上拉与按键电路预测 GPIO 原始值，再用人工抖动�
 
 原创小课 01 · 电路与 C。只完成一件事：沿着线路解释原始电平，再把有抖动的输入变成一次可靠的“按下”事件。动作 → 电压 → 逻辑值 → 事件。
 
-适用 STM32 / GD32 通用输入概念，无指定开发板先修；需要会分辨允许电源与共地。型号门限和所用库版本须按实际工程核对。人工交互模型未做硬件验证，不连接真实设备。资料核对日期：2026-10-17。
+适用通用 GPIO 输入原理，不绑定开发板或固定引脚；需要会分辨允许电源与共地。交互模型与独立练习不依赖指定硬件，STM32/GD32 等芯片资料仅作实现案例；接入硬件后，型号门限和所用库版本须按实际工程核对。人工交互模型未做硬件验证，不连接真实设备。资料核对日期：2026-10-17。
 
 本课属于[学习地图第 01 阶段](./engineering-map.html#stage-01)。另有[可打印速查](./gpio-button-reference.html)。
 
@@ -110,7 +110,7 @@ description: 从上拉与按键电路预测 GPIO 原始值，再用人工抖动�
 
 ## 从原理资料继续查 {#sources}
 
-- [ST AN4899：GPIO 硬件设置与低功耗](https://www.st.com.cn/resource/en/application_note/an4899-guidelines-for-gpio-hardware-settings-and-lowpower-consumption-on-stm32-mcus-stmicroelectronics.pdf)：主要原理参考，输入模式、上拉下拉和电气限制；具体门限仍查所选芯片数据手册。
+- [ST AN4899：GPIO 硬件设置与低功耗](https://www.st.com.cn/resource/en/application_note/an4899-guidelines-for-gpio-hardware-settings-and-lowpower-consumption-on-stm32-mcus-stmicroelectronics.pdf)：STM32 实现案例，输入模式、上拉下拉和电气限制；不能把其寄存器配置套用到其他 MCU，具体门限仍查所选芯片数据手册。
 - [TI：Debounce a Switch](https://www.ti.com/document-viewer/lit/html/scea094)：机械开关抖动和消抖思路。本页人工数据与 5 ms 参数用于教学，不冒充测量结果。
 - [Matt Pocock teach](https://github.com/mattpocock/skills/blob/main/skills/productivity/teach/SKILL.md?plain=1)：一个成果一节课、必要知识先行、立即反馈、回忆与迁移，并配独立打印速查。内容为本站原创。
 
