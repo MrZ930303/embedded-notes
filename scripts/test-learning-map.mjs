@@ -109,9 +109,20 @@ assert.deepEqual(unitRows.map(row => row.split('|')[1].trim()), Array.from({ len
 assert.equal((coverage.match(/^### 阶段 \d{2} /gm) || []).length, 8, 'All eight stage evidence scopes must remain')
 assert.match(unitRows[1], /\| 完整 \| 已通过 \| 本单元无新工作 \| 未验 \| 已发布 \|$/, 'Unit02 publication must retain its no-new-C and hardware limits')
 for (const row of unitRows.slice(2, 5)) assert.match(row, /\| 完整 \| 已通过 \| 已有 C 证据 \| 未验 \| 已发布 \|$/, 'Units03–05 publication uses parent-confirmed78723d5 evidence and retains hardware limits')
-for (const row of unitRows.slice(5, 9)) assert.match(row, /\| 本地完整 \| 已通过 \| 已有 C 证据 \| 未验 \| 本地候选 \|$/, 'Units06–09 remain local candidates after bounded chapter checks')
-for (const row of unitRows.slice(9)) assert.match(row, /\| 待写 \| 未做 \| 未做 \| 未验 \| 未发布 \|$/, 'Units10–32 remain pending; existing topic notes do not earn course credit')
+for (const row of unitRows.slice(5, 9)) assert.match(row, /\| 完整 \| 已通过 \| 已有 C 证据 \| 未验 \| 已发布 \|$/, 'Units06–09 publication uses parent-confirmed4ac57c4/CI39068664322 evidence and retains hardware limits')
+for (const row of unitRows.slice(9, 11)) assert.match(row, /\| 本地完整 \| 已通过 \| 已有 C 证据 \| 未验 \| 本地候选 \|$/, 'Units10–11 have bounded local evidence, not publication or hardware evidence')
+for (const row of unitRows.slice(11)) assert.match(row, /\| 待写 \| 未做 \| 未做 \| 未验 \| 未发布 \|$/, 'Units12–32 remain pending; research and existing topic notes do not earn course credit')
 await access(new URL('../curriculum/stage01-evidence.md', import.meta.url))
 await access(new URL('../curriculum/stage02-evidence.md', import.meta.url))
 assert.ok(coverage.includes('10—14') && coverage.includes('39058801087') && coverage.includes('78723d525775feb83b91071b3f634a9c65863a1a'))
-console.log('PASS course ledger:32 ordered units,8 stages,01–05 published with bounded evidence,06–09 local only,10–32 and all hardware pending.')
+assert.ok(coverage.includes('4ac57c4f5021cf9bb13344792c3c7961f54981fb') && coverage.includes('39068664322'))
+await access(new URL('../curriculum/stage03-evidence.md', import.meta.url))
+buttons[2].click()
+for (const name of ['timer-pwm', 'uart-framing']) {
+  for (const suffix of ['', '-reference']) {
+    assert.ok(focus['.focus-notes'].innerHTML.includes('href="' + name + suffix + '.html"'), 'Stage03 must reach each actual time/serial reader: ' + name + suffix)
+    assert.ok(markdown.includes(name + suffix + '.html'), 'Search mirror must include each actual time/serial reader: ' + name + suffix)
+  }
+}
+assert.match(focus['.focus-notes'].innerHTML, /12[—–]14.*待/, 'The remaining stage03 protocol/ADC/fault units remain pending')
+console.log('PASS course ledger:32 ordered units,8 stages,01–09 published with bounded proof,10–11 local candidates,12–32 and all hardware pending.')

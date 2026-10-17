@@ -174,7 +174,7 @@ fifo_reset(NULL) 返回 INVALID_ARGUMENT；否则对真实可写对象直接写�
 
 ## 完整C11模块与实际主机检查 {#fifo-c-lab-title}
 
-<a href="../examples/bounded-fifo/fifo.c" download>下载完整 fifo.c</a> · <a href="../examples/bounded-fifo/README.txt" download>下载使用与复现说明</a>。这是本站原创、厂商无关的C11模块，没有GPIO地址访问。实现要求8位字节和uint8_t；不满足时编译报错，不悄悄换一种数据域。head/tail/count使用size_t，不假定MCU或主机的指针宽度。
+<a href="../examples/bounded-fifo/fifo.c" download>下载完整 fifo.c</a> · <a href="../examples/bounded-fifo/fifo.h" download>下载完整 fifo.h</a> · <a href="../examples/bounded-fifo/README.txt" download>下载使用与复现说明</a>。这是本站原创、厂商无关的C11模块，没有GPIO地址访问。实现要求8位字节和uint8_t；不满足时编译报错，不悄悄换一种数据域。head/tail/count使用size_t，不假定MCU或主机的指针宽度。
 
 公开C接口与五种状态
 
@@ -191,6 +191,82 @@ fifo_reset(NULL) 返回 INVALID_ARGUMENT；否则对真实可写对象直接写�
  | FIFO_INVALID_ARGUMENT | queue为空，或pop output为空；不访问队列
 
  | FIFO_BAD_STATE | 真实已初始化对象的元数据范围/关系失配；不读槽、不修改状态或output
+
+先把fifo.h、fifo.c与README放在同一目录。公共容量、类型和声明在fifo.h，原实现只保留一份；调用者包含头文件，分别编译自己的源文件与fifo.c，再链接目标文件，不要include实现文件。单上下文、不可重入、有效对象和不重叠输出的条件不变。
+
+### 公共头文件 fifo.h {#fifo-public-header}
+
+```c
+/******************************************************************************
+ * @file fifo.h
+ * @brief Original embedded-notes four-byte, single-context FIFO interface.
+ * @version V1.0 2026-10-17
+ *
+ * C11, eight-bit bytes and uint8_t. Four internally owned byte values.
+ * Reset a real writable Fifo before use; reset does not read prior contents.
+ * Later operations require that same live initialized object. Callers must not
+ * edit metadata. head is next read, tail next write, count occupancy.
+ * Single thread, single execution context, non-reentrant; not task/ISR/DMA-safe
+ * or concurrent SPSC. volatile supplies no synchronization or atomicity.
+ * Pop output is a live writable caller byte outside the entire Fifo object.
+ * Null is rejected, but forged/dangling pointers and overlap are not detected.
+ * Metadata checks require real fully initialized objects. Rejection preserves
+ * all fields and pop output. Success copies values; no pointer is retained.
+ * Bounded operations: no allocation, blocking, waiting or retry.
+ *****************************************************************************/
+#ifndef EMBEDDED_NOTES_BOUNDED_FIFO_H
+#define EMBEDDED_NOTES_BOUNDED_FIFO_H
+
+#include <limits.h>
+#include <stddef.h>
+#include <stdint.h>
+
+#define FIFO_CAPACITY 4U
+#if CHAR_BIT != 8 || !defined(UINT8_MAX)
+#error "This example requires eight-bit bytes and uint8_t."
+#endif
+
+typedef enum {
+    FIFO_OK,
+    FIFO_FULL,
+    FIFO_EMPTY,
+    FIFO_INVALID_ARGUMENT,
+    FIFO_BAD_STATE
+} FifoStatus;
+
+typedef struct {
+    uint8_t slots[FIFO_CAPACITY];
+    size_t head;
+    size_t tail;
+    size_t count;
+} Fifo;
+
+/**
+ * @brief Establish an empty queue without reading prior contents.
+ * @param[in,out] queue Real writable queue object, or null.
+ * @return FIFO_OK or FIFO_INVALID_ARGUMENT.
+ */
+FifoStatus fifo_reset(Fifo *queue);
+
+/**
+ * @brief Copy one value into a single-context initialized queue.
+ * @param[in,out] queue Live initialized Fifo, or null.
+ * @param[in] value Byte copied by value; validate wider inputs before narrowing.
+ * @return FIFO_OK/FIFO_FULL/FIFO_INVALID_ARGUMENT/FIFO_BAD_STATE.
+ */
+FifoStatus fifo_push(Fifo *queue, uint8_t value);
+
+/**
+ * @brief Copy the oldest value into a distinct caller-owned byte.
+ * @param[in,out] queue Live initialized Fifo, or null.
+ * @param[out] output Live writable byte outside the entire queue, or null.
+ * @return FIFO_OK/FIFO_EMPTY/FIFO_INVALID_ARGUMENT/FIFO_BAD_STATE.
+ */
+FifoStatus fifo_pop(Fifo *queue, uint8_t *output);
+
+#endif
+
+```
 
 下面显示的**完整源文件**与下载、实际编译的源字节相同。只有定义 `FIFO_TEST` 才带测试main；不定义时可独立编译模块。C的uint8_t形参已经是字节域；调用者若在更宽整数转成uint8_t之前需要拒绝256，必须先在转换前验证，不能要求此形参恢复被转换丢掉的信息。浏览器输入在转换前拒绝越界。
 
@@ -216,31 +292,11 @@ fifo_reset(NULL) 返回 INVALID_ARGUMENT；否则对真实可写对象直接写�
  * Define FIFO_TEST for the executable, omit it for the reusable module.
  * No hardware validation or target-specific synchronization is provided.
  *****************************************************************************/
-#include <limits.h>
+#include "fifo.h"
 #include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
 #ifdef FIFO_TEST
 #include <stdio.h>
 #endif
-#define FIFO_CAPACITY 4U
-#if CHAR_BIT != 8 || !defined(UINT8_MAX)
-#error "This example requires eight-bit bytes and uint8_t."
-#endif
-typedef enum {
-    FIFO_OK,
-    FIFO_FULL,
-    FIFO_EMPTY,
-    FIFO_INVALID_ARGUMENT,
-    FIFO_BAD_STATE
-} FifoStatus;
-
-typedef struct {
-    uint8_t slots[FIFO_CAPACITY];
-    size_t head;
-    size_t tail;
-    size_t count;
-} Fifo;
 /**
  * @brief Check metadata before any slot access in an initialized object.
  * @param[in] queue Non-null live initialized object.
@@ -550,17 +606,24 @@ int main(void)
 
 ### 在自己的主机复现 {#fifo-c-reproduce}
 
+先下载上述两个源码文件；把README中完整调用方保存为consumer.c。前三组命令检查原模块并生成fifo.o，随后单独生成consumer.o，再链接两个目标文件并运行调用方；不为模块定义FIFO_TEST。
+
 ```c
 cc -std=c11 -Wall -Wextra -Werror -pedantic -DFIFO_TEST fifo.c -o fifo-test
 ./fifo-test
 cc -std=c11 -Wall -Wextra -Werror -pedantic -DFIFO_TEST -DNDEBUG fifo.c -o fifo-test-ndebug
 ./fifo-test-ndebug
 cc -std=c11 -Wall -Wextra -Werror -pedantic -c fifo.c -o fifo.o
+cc -std=c11 -Wall -Wextra -Werror -pedantic -c consumer.c -o consumer.o
+cc consumer.o fifo.o -o fifo-consumer
+./fifo-consumer
 ```
 
 Windows按实际编译器和终端使用.exe名称。先准备已有C11编译器，不要求特定开发板。若你所在工程要求统一构建入口，应把以上同一参数配置到工程允许的profile中。本次本地主机验证使用已安装GCC13.1.0，经mcu-build自定义profile执行validate→dry-run→build；正常、NDEBUG和无main模块编译退出0，两个可执行测试退出0。公开命令给出编译器参数，不要求读者拥有作者的私有路径。
 
 实际测试输出：`PASS FIFO: literal replay, boundaries, null, initialized corruption, snapshots, copy, 20000 steps`。检查不依赖assert，因此NDEBUG不消除验收。固定14行检查字节顺序、状态、head/tail/count、输出以及拒绝前后所有命名字段和槽位；另测0/255、空参数、真实已初始化的越界/关系失配、reset恢复与复制17。长回放用一个线性移位列表作独立预期，连续20000次调用，核对最旧字节、数量、边界和拒绝保持；它没有复制环形下标算法。
+
+README给出完整consumer.c；它重复包含头文件，分别编译调用方和不带main的FIFO模块后链接。实际严格与NDEBUG调用方均核对复制、EMPTY和0/255；头文件与三个旧C源的测试前后哈希保持一致。
 
 本段交付物：保留编译器版本、实际命令和测试退出码，给一次FULL和一次EMPTY写出“哪些状态不能变”。主机C检查与页面脚本检查分别成立，都不构成硬件、RTOS或并发验证。
 

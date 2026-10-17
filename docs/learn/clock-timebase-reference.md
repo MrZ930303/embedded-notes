@@ -78,4 +78,6 @@ D365、BRR0x016D；USART用PCLK1，TIM的预分频倍频规则只作用于定时
 
 ## 继续路线 {#clock-next-title}
 
-[返回完整章](../learn/clock-timebase.html)·[阶段02地图](../learn/engineering-map.html#stage-02)·[晶振、PLL与时钟树桥梁](../mcu/crystal-pll-clock.html)。下一段10—14仍待建设。此为本地候选：主机C与浏览器、整站构建、独立审阅、发布分别取证；未做目标硬件、波形、供电、物理纸张验证。
+[返回完整章](../learn/clock-timebase.html)·[阶段02地图](../learn/engineering-map.html#stage-02)·[晶振、PLL与时钟树桥梁](../mcu/crystal-pll-clock.html)。06—09已有4ac57c4/CI39068664322及父任务线上核验的发布证据。下一章为10的定时器与非阻塞期限，再到11的UART有界命令；12—14仍待建设。本地检查与发布分别取证；未做目标硬件、波形、供电、物理纸张验证。
+
+[下一章：定时器、PWM与非阻塞期限](timer-pwm.html) · [第10章打印速查](timer-pwm-reference.html)

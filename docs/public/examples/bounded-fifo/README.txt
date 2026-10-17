@@ -1,4 +1,8 @@
-bounded-fifo / fifo.c — original vendor-independent C11 teaching module
+bounded-fifo / fifo.h + fifo.c — original vendor-independent C11 teaching module
+
+Download fifo.h, fifo.c and this README into the same directory. fifo.h owns
+the unchanged public declarations; fifo.c includes it and owns the implementation.
+Do not include fifo.c in a caller, duplicate the queue, or change its capacity.
 
 Prerequisites: an existing C11 compiler, CHAR_BIT == 8 and uint8_t.
 Capacity: exactly four internally owned byte values (0..255).
@@ -41,6 +45,63 @@ cc -std=c11 -Wall -Wextra -Werror -pedantic -c fifo.c -o fifo.o
 Define FIFO_TEST only for the test executable. No main is emitted without it.
 Checks remain active under NDEBUG; a failed expectation returns nonzero.
 Projects requiring a build wrapper should express the same flags in that wrapper.
+
+Separate compilation: save the following complete caller as consumer.c next to
+fifo.h. Repeated inclusion exercises the guard. Every operation checks status;
+the byte output lives outside the queue. The FIFO implementation is linked once.
+
+```c
+#include "fifo.h"
+#include "fifo.h"
+#include <stdio.h>
+
+_Static_assert(FIFO_CAPACITY == 4U, "four value slots");
+_Static_assert(FIFO_OK == 0 && FIFO_FULL == 1 && FIFO_EMPTY == 2 &&
+    FIFO_INVALID_ARGUMENT == 3 && FIFO_BAD_STATE == 4, "unchanged status values");
+
+/**
+ * @brief Exercise the public interface from a separate translation unit.
+ * @return Zero only when the fixed copied-value and boundary cases pass.
+ */
+int main(void)
+{
+    Fifo queue;
+    uint8_t output = 165U;
+    uint8_t source = 17U;
+    /**
+     * Initialize a real object, copy its input, and consume only an OK output.
+     **/
+    if (fifo_reset(&queue) != FIFO_OK || fifo_push(&queue, source) != FIFO_OK) {
+        return 1;
+    }
+    source = 99U;
+    if (fifo_pop(&queue, &output) != FIFO_OK || output != 17U || source != 99U ||
+        fifo_pop(&queue, &output) != FIFO_EMPTY || output != 17U) {
+        return 1;
+    }
+    if (fifo_push(&queue, 0U) != FIFO_OK || fifo_push(&queue, UINT8_MAX) != FIFO_OK ||
+        fifo_pop(&queue, &output) != FIFO_OK || output != 0U ||
+        fifo_pop(&queue, &output) != FIFO_OK || output != UINT8_MAX) {
+        return 1;
+    }
+    if (puts("PASS FIFO consumer: repeated header, separate module, copy, empty, 0/255") < 0) {
+        return 1;
+    }
+    return fflush(stdout) == EOF ? 1 : 0;
+}
+```
+
+cc -std=c11 -Wall -Wextra -Werror -pedantic -c consumer.c -o consumer.o
+cc consumer.o fifo.o -o fifo-consumer
+./fifo-consumer
+For an independent NDEBUG caller, add -DNDEBUG while compiling consumer.c;
+link that caller object with the same no-main fifo.o. No assertion is required.
+The repository runner tests these exact README caller bytes in both variants:
+node scripts/test-c-foundations-c.mjs --compiler <existing-cc> --router <build_router.py> --python <python> --output .scratch/your-private-run
+Omit --output to retain the earlier .scratch/c-foundations/code-evidence default.
+An explicit --output stays inside this checkout's .scratch and creates a fresh
+run directory; it never replaces a previous run. Source/header hashes are checked
+before and after. Use the actual result.json path printed by the runner.
 
 Actual local verification: installed GCC13.1.0, through mcu-build custom profiles,
 validate -> dry-run -> build. Strict test, NDEBUG test and module builds exited0;

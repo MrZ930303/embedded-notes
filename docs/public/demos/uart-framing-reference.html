@@ -1,0 +1,159 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="原创UART帧、FIFO服务、20ms观察超时、丢失恢复、接口与资料边界。"><meta name="theme-color" content="#fafbf8"><link rel="icon" href="../favicon.svg" type="image/svg+xml"><title>UART有界命令速查 · 嵌入式技术笔记</title><style>
+:root{--paper:#fafbf8;--ink:#21382e;--muted:#526359;--line:#dce3d7;--green:#22664f;--pale:#eef2e9;--lime:#d5e7b3;--dark:#193e33;--mono:Consolas,monospace}*{box-sizing:border-box}html{scroll-padding-top:120px}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.9 system-ui,"Microsoft YaHei",sans-serif}a{color:var(--green);text-underline-offset:4px}p{margin:0 0 16px}.wrap{width:min(1120px,calc(100% - 64px));margin:auto}.skip{position:absolute;top:-100px;z-index:20;background:white;padding:10px}.skip:focus{top:5px}.topbar{position:sticky;top:0;border-bottom:1px solid var(--line)}.brand{text-decoration:none}.hero{display:grid;grid-template-columns:1.12fr 1fr;gap:48px;padding:48px 0 40px;border-bottom:1px solid var(--line)}h1{font-size:40px;line-height:1.35}h2{font-size:28px;line-height:1.5;margin:0 0 18px}h3{font-size:21px;line-height:1.5;margin:28px 0 12px}.tag,.small{color:var(--muted);font-size:13px}.hero-card,.lab,.callout{border:1px solid var(--line);border-radius:12px;padding:24px;background:var(--pale)}.hero-card strong{font-size:26px}.content-section{padding:48px 0;border-bottom:1px solid var(--line)}.section-nav,.controls,.notes-toolbar,.next-links{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.field{display:grid;gap:6px;min-width:0}.field.full{grid-column:1/-1}button,input,select{font:inherit;color:inherit}input,select{width:100%;min-width:0;min-height:44px;padding:8px;border:1px solid #aabaad;border-radius:6px;background:white}.btn{min-height:44px;min-width:44px;padding:9px 14px;background:white;border:1px solid #aabaad;border-radius:6px;cursor:pointer}.btn.primary{background:var(--dark);color:white}.btn:disabled{opacity:.55;cursor:default}.feedback,.applied-result{padding:16px;border:1px solid var(--line);border-radius:8px;background:#fffefb;margin:16px 0;overflow-wrap:anywhere}.pending{color:#7c581d}.lab{background:#fffefb}.lab>p{max-width:44rem}details{margin:16px 0;padding:16px;border:1px solid var(--line);border-radius:8px;background:#fffefb}summary{min-height:44px;cursor:pointer;font-weight:650}details p{margin-top:12px}.table-wrap{max-width:100%;overflow:auto}table{border-collapse:collapse;width:100%;font-size:14px;text-align:left}th,td{padding:10px;border-bottom:1px solid var(--line);vertical-align:top;white-space:nowrap}th{background:var(--pale)}figure{margin:20px 0;border:1px solid var(--line);border-radius:10px;padding:14px;background:white}svg{display:block;width:100%;height:auto}svg text{font:18px system-ui,"Microsoft YaHei",sans-serif;fill:#21382e}figcaption{font-size:13px;color:var(--muted);margin-top:12px}pre{max-width:100%;overflow:auto;padding:18px;background:var(--pale);font:14px/1.7 var(--mono);border-radius:8px}code{font-family:var(--mono)}li{margin-bottom:8px}.source-list a{overflow-wrap:anywhere}footer{padding:28px 0;font-size:13px;color:var(--muted)}:focus-visible{outline:3px solid #ad751d;outline-offset:4px}.exercise{padding:14px 0;border-bottom:1px solid var(--line)}.exercise h3{margin-top:14px}.exercise-answer{margin-bottom:20px}
+@media(max-width:760px){.hero,.fields{grid-template-columns:1fr}.hero{gap:24px}.field.full{grid-column:auto}.wrap{width:calc(100% - 40px)}.lab{padding:16px}}@media(max-width:370px){.lab{padding:12px}.btn{padding-inline:10px}svg text{font-size:20px}}
+@media print{body{background:white;color:#15251b;font-size:11pt}.wrap{width:100%;max-width:none}.topbar,.skip,.section-nav,.controls,.fields,.notes-toolbar,.next-links{display:none!important}.hero{display:block;padding:0 0 14px}.hero-card{display:none}.content-section{padding:18px 0}h1{font-size:25pt}h2{font-size:17pt}h3{font-size:13pt}.lab{padding:12px}pre{white-space:pre-wrap;overflow:visible;font-size:9pt}table{font-size:10pt}.table-wrap{overflow:visible}th,td{white-space:normal;padding:6px}a{color:inherit}details{break-inside:auto}.exercise{break-inside:avoid}body.exercise-print main>.hero,body.exercise-print main>.section-nav,body.exercise-print main>.content-section:not(#uart-practice),body.exercise-print .practice-intro,body.exercise-print footer{display:none!important}body.exercise-print .exercise-answer{display:none!important}body.exercise-print .applied-result,body.exercise-print .feedback{display:none!important}body.exercise-print #uart-practice{border:0;padding:0}}
+
+.flow-scroll{overflow:auto;max-width:100%}.flow-scroll svg{min-width:760px}.source-downloads{display:flex;flex-wrap:wrap;gap:12px}.source-downloads a{min-height:44px;display:inline-flex;align-items:center}.flow-scroll:focus-visible,.table-wrap:focus-visible,pre:focus-visible{outline:3px solid #ad751d;outline-offset:3px}svg .box{fill:#eef2e9;stroke:#63836f;stroke-width:2}svg .arrow{stroke:#63836f;stroke-width:2;fill:none}.hero-card code{overflow-wrap:anywhere}.exercise-print #uart-practice>h2{margin-top:0}
+</style><style>
+/* Shared reading layer: keep this block identical in all standalone notes. */
+@media screen {
+:root{--paper:#fafbf8;--ink:#21382e;--muted:#526359;--line:#dce3d7;--green:#22664f;--pale:#eef2e9;--lime:#d5e7b3;--dark:#193e33}
+.notes-article{font-size:16px;line-height:1.9}
+.notes-article .wrap{width:min(1120px,calc(100% - 64px));max-width:none;padding-inline:0;margin-inline:auto}
+.notes-article .topbar{background:#fafbf8f5;z-index:10}
+.notes-article .topbar-inner{height:auto;min-height:68px;display:flex;align-items:center;justify-content:space-between;gap:24px;padding-block:0}
+.notes-article .brand{display:inline-flex;align-items:center;gap:10px;min-height:44px;margin:0;font-size:15px;font-weight:700;letter-spacing:0;color:var(--ink)}
+.notes-article .brandmark{display:grid;place-items:center;width:30px;height:30px;margin:0;border-radius:6px;background:var(--dark);color:#e0edcb;font:19px/1 var(--mono)}
+.notes-article .topbar nav{display:flex;align-items:center;gap:18px;margin:0;padding:0;width:auto;flex-wrap:nowrap}
+.notes-article .topbar nav a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:4px 3px;font-size:14px;font-weight:500;color:var(--muted);text-decoration:none;border-radius:4px}
+.notes-article .topbar nav a:hover,.notes-article .topbar nav a[aria-current="location"]{color:var(--green);background:var(--pale)}
+.notes-article .topbar nav a[aria-current="location"]{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:6px}
+.notes-article .hero{padding-block:48px 40px;gap:48px;grid-template-columns:1.12fr 1fr}
+.notes-article .hero h1{font-size:clamp(32px,3.6vw,44px);line-height:1.35;letter-spacing:-.035em;text-wrap:balance}
+.notes-article .hero h1 span{font-size:.78em;line-height:1.5;margin-top:8px}
+.notes-article .hero-intro{font-size:17px;line-height:1.9;max-width:32rem;margin-block:20px}
+.notes-article .hero>.hero-card,.notes-article .hero-flow,.notes-article .intro-map{box-shadow:none;border-radius:12px}
+.notes-article .hero .tag{font-size:12px;border-radius:4px;padding:4px 9px;margin:0 0 16px;line-height:1.7}
+.notes-article .hero>.hero-figure .map{transform:none;box-shadow:none}
+.notes-article .hero>div>.eyebrow{display:none}
+.notes-article .hero>.hero-card>.eyebrow,.notes-article .hero>.hero-flow>.eyebrow{display:block;font-size:12px;line-height:1.7}
+.notes-article .hero-links{gap:12px 22px;margin-top:24px}
+.notes-article .hero .text-link{display:inline-flex;align-items:center;min-height:44px;font-size:14px}
+.notes-article .hero figcaption,.notes-article .hero-figure figcaption,.notes-article .date-note{font-size:13px;line-height:1.8}
+.notes-article .hero-card p:last-child,.notes-article .hero-flow .small,.notes-article .intro-map>p:last-child{font-size:14px;line-height:1.85}
+.notes-article .hero-numbers span,.notes-article .hero-step small{font-size:13px}
+.notes-article h2{font-size:28px;line-height:1.5;text-wrap:balance}
+.notes-article .section-head p{font-size:15px;line-height:1.85}
+.notes-article .content-section,.notes-article .article-section{padding-block:52px}
+.notes-article .content-section+.content-section{padding-top:48px}
+.notes-article .note-section{scroll-margin-top:100px}
+.notes-article .note-section>summary{min-height:56px;font-size:18px;line-height:1.6}
+.notes-article .note-section>summary h2{font-size:20px;line-height:1.6}
+.notes-article .note-body{max-width:none;font-size:16px;line-height:1.95}
+.notes-article .note-body p,.notes-article .note-body li{font-size:16px;line-height:1.95}
+.notes-article .note-body>p,.notes-article .note-body>ul,.notes-article .note-body>ol,.notes-article .article-section>p,.notes-article .article-section>ul,.notes-article .article-section>ol{max-width:44rem;font-size:16px;line-height:1.95}
+.notes-article .note-body h3{font-size:21px;margin-block:28px 12px;scroll-margin-top:100px}
+.notes-article .note-body pre,.notes-article pre{font-size:14px;line-height:1.8}
+.notes-article .note-body table,.notes-article table{font-size:14px;line-height:1.8}
+.notes-article .note-body th,.notes-article .note-body td{font-size:14px;line-height:1.8}
+.notes-article .article-section>h2{font-size:28px}
+.notes-article .concept p,.notes-article .subnote p,.notes-article .risk p,.notes-article .monitor-step p,.notes-article .monitor-step ul,.notes-article .step-card p{font-size:15px;line-height:1.85}
+.notes-article .callout,.notes-article .model-scope,.notes-article .demo-disclaimer,.notes-article .version-card,.notes-article .version-card p{font-size:14px;line-height:1.85}
+.notes-article .source-list a,.notes-article .source-list span,.notes-article #plane-references~ul{font-size:14px;line-height:1.85}
+.notes-article #plane-overview~ul{max-width:none}
+.notes-article #plane-overview~ul li{font-size:15px;line-height:1.85}
+.notes-article .note-body .source-list{max-width:none}
+.notes-article .small,.notes-article .lab-note,.notes-article .lab-foot,.notes-article .lab-footer,.notes-article .clock-lab-foot,.notes-article .print-hint{font-size:13px;line-height:1.85}
+.notes-article .principle,.notes-article .principles span{font-size:13px;line-height:1.8}
+.notes-article .principles strong{font-size:15px}
+.notes-article .memory-motto,.notes-article .motto{background:var(--pale);color:var(--ink);border-radius:8px;text-align:left;padding:24px;margin-top:30px}
+.notes-article .memory-motto span,.notes-article .motto small{color:var(--muted);font-size:14px}
+.notes-article button,.notes-article .btn,.notes-article .notes-toolbar button{min-height:44px;min-width:44px;font-size:14px}
+.notes-article button,.notes-article .btn,.notes-article .topbar a,.notes-article summary,.notes-article .section-nav a,.notes-article .toc a{transition:background .18s,color .18s,border-color .18s,transform .18s}
+.notes-article button:enabled:hover{filter:brightness(1.06)}
+.notes-article button:enabled:active,.notes-article .btn:active{transform:translateY(1px)}
+.notes-article button:disabled{opacity:.58}
+.notes-article .graph-node:disabled,.notes-article .work-card:disabled{opacity:1}
+.notes-article :focus-visible{outline:3px solid #ad751d;outline-offset:4px}
+.notes-article .lab :focus-visible,.notes-article .clock-lab :focus-visible{outline-color:#f0cc80}
+.notes-article .toc a,.notes-article .section-nav a{display:inline-flex;align-items:center;min-height:44px;border-radius:5px;font-size:14px;padding:8px 12px}
+.notes-article .checklist label,.notes-article .clock-check{min-height:44px;font-size:14px;line-height:1.8}
+.notes-article .clock-field label,.notes-article .clock-controls small,.notes-article .clock-node small,.notes-article .clock-node span{font-size:13px;line-height:1.6}
+.notes-article .clock-current p,.notes-article .clock-candidate,.notes-article .clock-warnings{font-size:14px;line-height:1.8}
+.notes-article .clock-node strong,.notes-article .hero-numbers strong,.notes-article .metric strong{font-variant-numeric:tabular-nums}
+.notes-article .task-option strong,.notes-article .work-card strong{font-size:14px;line-height:1.65}
+.notes-article .task-option span,.notes-article .scope-buttons small,.notes-article .card-id,.notes-article .card-project,.notes-article .card-status,.notes-article .card-tags>span,.notes-article .lane-en{font-size:12px;line-height:1.6}
+.notes-article .scope-explanation,.notes-article .detail-copy>p,.notes-article .detail .acceptance,.notes-article .state-controls>p,.notes-article .board-heading p{font-size:14px;line-height:1.8}
+.notes-article .lane h4{font-size:14px;line-height:1.5;flex-wrap:wrap}
+.notes-article .lane-count{font-size:12px}
+.notes-article .lab .task-option{min-height:96px}
+.notes-article .skills-step-card dd,.notes-article .route-pane p,.notes-article .chooser-intro,.notes-article .permissions-pane>p{font-size:14px;line-height:1.85}
+.notes-article .skills-step-card dt,.notes-article .step-counter,.notes-article .permissions-pane small,.notes-article .permission-list span,.notes-article .graph-legend,.notes-article .graph-arrow-note{font-size:13px;line-height:1.8}
+.notes-article .ui-arrow{width:18px;height:18px;display:inline-block;vertical-align:middle;flex-shrink:0}
+.notes-article .selection-jump,.notes-article .choice-result{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;padding:10px 12px;border-radius:5px;font-size:13px;font-weight:600;line-height:1.6;text-decoration:none}
+.notes-article .selection-jump{background:#22664f;color:#fff}
+.notes-article .choice-result{color:#e2efca;border:1px solid #829873;background:#173e33;margin-top:7px}
+.notes-article .task-choice{min-width:0}
+.notes-article .task-choice .task-option{width:100%}
+.notes-article .task-option[aria-pressed="false"]+.choice-result{display:none}
+.notes-article #selected-skill,.notes-article #plane-selected-title{scroll-margin-top:128px}
+.notes-article footer,.notes-article .footer{font-size:13px;line-height:1.8}
+.notes-article footer a,.notes-article .footer a{display:inline-flex;align-items:center;min-height:44px}
+.notes-article .note-body p,.notes-article .hero-intro,.notes-article .article-section>p{text-wrap:pretty}
+@media(max-width:760px){
+.notes-article .wrap{width:calc(100% - 40px)}
+.notes-article .topbar-inner{flex-wrap:wrap;gap:0;padding-top:6px}
+.notes-article .brand{min-height:44px;font-size:15px}
+.notes-article .topbar nav{width:100%;gap:12px;overflow-x:auto;flex-wrap:nowrap;padding:0 0 4px;scrollbar-width:thin}
+.notes-article .topbar nav a{font-size:13px;flex-shrink:0;padding-inline:2px}
+.notes-article .hero{grid-template-columns:1fr;gap:28px;padding-block:32px}
+.notes-article .hero h1{font-size:32px;line-height:1.4}
+.notes-article .hero-intro{font-size:16px;max-width:none;margin-block:16px}
+.notes-article .hero-figure{max-width:500px}
+.notes-article .hero .tag{margin-bottom:12px}
+.notes-article .content-section,.notes-article .article-section{padding-block:36px}
+.notes-article .content-section+.content-section{padding-top:36px}
+.notes-article h2,.notes-article .article-section>h2{font-size:24px}
+.notes-article .section-head p{font-size:15px}
+.notes-article .note-section>summary{font-size:17px}
+.notes-article .note-section>summary h2{font-size:18px}
+.notes-article .note-body p,.notes-article .note-body li{font-size:16px}
+.notes-article .note-body pre,.notes-article pre{font-size:13px}
+.notes-article .note-body th,.notes-article .note-body td{font-size:14px}
+.notes-article .principles{grid-template-columns:1fr;gap:14px}
+.notes-article .principles strong{display:inline;margin-right:8px}
+.notes-article .principles span{display:inline}
+.notes-article .task-options{grid-template-columns:1fr 1fr;align-items:start}.notes-article .lab .task-option{min-height:76px;padding:12px}
+.notes-article .board{grid-template-columns:1fr 1fr}
+.notes-article .lane:last-child .lane-cards{display:flex}
+.notes-article .lane-cards{min-height:0}
+.notes-article .lane{padding:14px}
+.notes-article .lane-en{margin-bottom:10px}
+.notes-article .work-card{padding:14px}
+.notes-article .card-tags{gap:6px}
+.notes-article .lab-top{flex-wrap:wrap}
+.notes-article .lab-top .tag{white-space:normal}
+.notes-article .note-section,.notes-article .note-body h3,.notes-article .article-section,.notes-article .article-section>h3{scroll-margin-top:124px}
+}
+@media(max-width:370px){.notes-article .task-options,.notes-article .board{grid-template-columns:1fr}.notes-article .hero h1{font-size:30px}.notes-article .topbar nav{gap:8px}}
+}
+@media(prefers-reduced-motion:reduce){.notes-article *,.notes-article *::before,.notes-article *::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+</style></head><body class="notes-article"><a class="skip" href="#main">跳到正文</a><div><header class="topbar"><div class="wrap topbar-inner"><a class="brand" href="../"><span class="brandmark" aria-hidden="true">E</span>嵌入式技术笔记</a><nav aria-label="文章导航"><a href="../learn/">返回分类</a><a href="#uart-ref-check">交互实验</a><a href="#uart-ref-contract">完整笔记</a><a href="../?search=1">搜索笔记</a></nav></div></header><main class="wrap" id="main"><header class="hero"><div><p class="tag">单元11 · 可打印速查</p><h1 id="uart-framing-reference">UART有界命令：条件与恢复</h1><p class="hero-intro">先问本次有什么新证据，再消费输出；帧、自检通过与真实命令身份仍有距离。</p></div><aside class="hero-card"><strong>4字节 / 5事件 / 1命令</strong><p>20ms观察服务不活动；失败A5不重试；所有命令按值复制。</p></aside></header><div class="notes-toolbar"><button class="btn" type="button" id="print-all">打印完整笔记</button></div><div class="content-section" id="uart-ref-contract" role="region" aria-labelledby="uart-ref-contract-title"><h2 id="uart-ref-contract-title">先核对对象与观察条件</h2><p>C11，八位字节及精确uint类型；真实存活全字段初始化state，输出可写并与整个state及彼此不重叠；init可新存储，后续调用独占不可重入。单执行上下文，不是任务/ISR/DMA或并发SPSC；volatile不补同步。固定4槽、payload8、每poll≤4字节/≤5事件/≤1命令，无堆、等待、递归或隐藏重试。硬件未验证。</p><p>1tick=1ms；真实正向接受观察间隔&lt;2^31；模差≥2^31返回UART_TIME_REJECTED且队列/残帧/应用/报告/命令输出保持。完整未观察回绕不能探测。初始应用周期1..1000ms。</p></div><div class="content-section" id="uart-ref-grammar" role="region" aria-labelledby="uart-ref-grammar-title"><h2 id="uart-ref-grammar-title">帧与命令速查</h2><p>原创协议A5 LEN(1..8) PAYLOAD[LEN] XOR(LEN及载荷)，SOF不参与；最长11字节，无转义/终止符/IDLE或read-call边界。SEEK → LENGTH → PAYLOAD → CHECKSUM；载荷A5只是数据，非法LEN或校验A5消费一次后回SEEK，不重扫。</p><p>opcode01须LEN3、小端u16周期1..1000ms；opcode02须LEN1，报告状态且不改周期。校验对不等于命令合法。A5 03 01 64 00 66→100ms；A5 01 02 03→状态；A5 03 01 A5 01 A6→421ms。校验正确的周期0、1001、未知opcode或错专属LEN仍拒绝。</p><p>XOR漏检：100ms载荷01 64 00改成01 65 01，仍校验66却变357ms；重排也保持XOR。语义检查排不了所有错误/伪帧，不提供认证、可靠交付或任意噪声下最终同步。</p></div><div class="content-section" id="uart-ref-timeout" role="region" aria-labelledby="uart-ref-timeout-title"><h2 id="uart-ref-timeout-title">20ms：先到期，再排空</h2><p>timeout为parser/service观察的不活动期限，不是线缆到达间隔或硬件IDLE。SOF接受开始age，后续预期字节接受归0，SEEK噪声不计。每poll先更新观察，即使空队列也检查age≥20清残帧，再按新SEEK消费当前字节一次。19未到，20等号到期；4294967290→13为19，14累计20。</p><p>字节FIFO无时间戳，同次poll共享now。t0解析前缀A5 03 01 64，即使后缀00 66在t1线上到达，到t20才排空仍先超时、后缀当噪声；不能据此断言物理间隔。超时后当前A5可新起帧，FIFO新状态帧可同次产生TIMEOUT+四字节事件共5项。</p></div><div class="content-section" id="uart-ref-loss" role="region" aria-labelledby="uart-ref-loss-title"><h2 id="uart-ref-loss-title">丢失、拒绝与新输出</h2><p>FIFO_FULL先由原fifo_push保持四槽与元数据，上层UART_LOSS明确丢弃队列/残帧并丢失败字节（即使A5），保留应用周期；后续新完整帧再恢复，不隐式重试。BAD_STATE是初始化元数据拒绝，不是内存修复。ORE是另一硬件丢失来源，不能精确数丢失字节。</p><p>uart_poll的report.commandPresent才授权读新命令；partial/reject/timeout/loss均不改调用者旧命令。已接受结果不能被本次更晚噪声覆盖。命令按值复制；status复制当前周期、不改应用。四计数到UINT32_MAX后饱和，再增标saturated，不默默回绕。</p></div><div class="content-section" id="uart-ref-api" role="region" aria-labelledby="uart-ref-api-title"><h2 id="uart-ref-api-title">公开接口与完整下载</h2><p>uart_init(UartState*,uint16_t period,uint32_t now)；uart_receive(UartState*,uint16_t byte,UartIngress*)；uart_poll(UartState*,uint32_t now,UartReport*,UartCommand*)。字节先验0..255；真实对象/不重叠合同见头文件。状态UART_OK、UART_LOSS、UART_INVALID_ARGUMENT、UART_BAD_STATE、UART_TIME_REJECTED；只有LOSS是明确恢复变更，其余拒绝保持命名状态/输出。</p><div class="source-downloads"><a href="../examples/uart-framing/uart.c" download>下载uart.c</a><a href="../examples/uart-framing/uart.h" download>下载uart.h</a><a href="../examples/bounded-fifo/fifo.c" download>下载fifo.c</a><a href="../examples/bounded-fifo/fifo.h" download>下载fifo.h</a><a href="../examples/timer-pwm/time.c" download>下载time.c</a><a href="../examples/timer-pwm/time.h" download>下载time.h</a><a href="../examples/uart-framing/README.txt" download>下载复现README.txt</a></div><p>下载三同级目录及六份C/H和README；分别链接真实fifo.c/time.c，不包含.c、不复制ring。UART_TEST启用测试main，不定义时为模块；严格C11/正常/NDEBUG/独立调用者经现有mcu-build validate→dry-run→build，源码/头/工具/新产物哈希分开留证。主机栈记录和启发式不证明目标最大栈或时间。</p></div><div class="content-section" id="uart-ref-check" role="region" aria-labelledby="uart-ref-check-title"><h2 id="uart-ref-check-title">折叠回忆：离开实验再解释</h2><p>seed周期100ms、phase已等状态帧校验，FIFO=03 00 A5 00。先预测本次命令和最终phase，再展开。</p><details id="uart-ref-answer"><summary>核对完整理由</summary><p>03完成状态命令，复制GET_STATUS100；00噪声、A5新起帧、最后00坏LEN回SEEK，但commandPresent仍真且不能覆盖新命令。预算4；旧帧首字节完成后只剩3，少于最短新帧4，故本次至多1命令。超时场景另可有1个预先事件，总容量5。</p></details><p>隔一天手算421ms与第五字节A5丢失路径，写明哪个是输入时间、哪个是服务观察。若卡住，向助手指出具体phase/字节/now；不记录答案或推测掌握。</p></div><div class="content-section" id="uart-ref-sources" role="region" aria-labelledby="uart-ref-sources-title"><h2 id="uart-ref-sources-title">实际读过的原厂依据与缺口</h2><p>核对日期2026-10-17。协议、图、代码、固定轨迹、策略和练习为本项目原创教学材料，不冒充厂商推荐协议，也不复制付费课程。以下技术论点限定实际阅读版本与范围。</p><ul class="source-list">
+<li><a href="https://www.keil.com/dd/docs/datashts/st/stm32f4xx/dm00031020.pdf">ST RM0090 历史归档，DocID018909 Rev5，2013-09</a>：实际阅读F405/407时钟§7.2 p213、USART§30.3 pp948–959、mute p970、状态/控制§30.6 pp987–991，关键p950/955/956/987/988整页图像核查。支持选定USART字符、PCLK域、IDLE、RXNE/ORE和限定清除条件。<strong>首选阅读：</strong>先读§30.3.3与§30.6.1，解释一次DR读取为何也改变接收状态，再对照本章四层边界。历史手册不冒充当前生产寄存器规范。</li>
+<li><a href="https://github.com/STMicroelectronics/stm32f4xx-hal-driver/blob/b6f0ed3829f3829eb358a2e7417d80bba1a42db7/Src/stm32f4xx_hal_uart.c">ST HAL UART v1.8.5固定提交实现</a>：实际读frame-format表与additional reception的一个帧时间IDLE解释；未声称完整IRQ/DMA驱动审计。M/PCE条件与非mute范围仍须保留。</li>
+<li><a href="https://github.com/STMicroelectronics/stm32f4xx-hal-driver/blob/b6f0ed3829f3829eb358a2e7417d80bba1a42db7/Inc/stm32f4xx_hal_uart.h">同提交UART头文件</a>：实际读标志与清除宏/别名/注释。它不能替代历史手册PE额外RXNE条件，更不能变成新系列ICR通用写法。</li>
+<li><a href="https://www.open-std.org/jtc1/sc22/wg14/www/docs/n1570.pdf">WG14 N1570，2011-04-12委员会草案</a>：实际重读§6.2.5p9、§6.3.1.1/6.3.1.3、§7.20.1.1，支持无符号模运算、提升与可选精确宽度类型；不冒充购买的最终ISO标准，不提供真实时间间隔保证。</li></ul>
+<p><strong>资料缺口：</strong>本轮当前官方RM请求有界失败、0字节；当前对应条款未读，仍用明确历史版本。DS8626 Rev12部分文字已核查而相关表像素未核；特定硅版本完整勘误/电气条件未审计。本章未把未读链接装饰成已验证依据。主机行为与硬件、真实线缆时间、吞吐和实体纸张检查分别报告。</p></div><div class="content-section" id="uart-ref-next" role="region" aria-labelledby="uart-ref-next-title"><h2 id="uart-ref-next-title">返回完整推导与十题</h2><p>下一批12–14仍待实现，阶段03未完成；研究与本地检查不等于正式发布、硬件或实体纸张验证。</p><div class="next-links"><a href="../learn/uart-framing.html">完整章节、实验与十题</a><a href="../learn/timer-pwm.html">上一章10</a><a href="../learn/bounded-fifo.html">复习05 FIFO</a><a href="../learn/engineering-map.html#stage-03">下一批与阶段地图</a></div></div></main><footer class="wrap">原创教学 · 公开课程覆盖，非个人学习记录 · 硬件未验证</footer></div><script id="uart-ordinary-print">(() => {document.getElementById('print-all').addEventListener('click',()=>{try{window.print();}catch{window.dispatchEvent(new Event('afterprint'));}});})();</script><script id="note-deep-links">
+(() => {
+  const reveal = () => {
+    let id;try{id=decodeURIComponent(window.location.hash.slice(1));}catch{return;}
+    if(!id) return;
+    const target=document.getElementById(id);if(!target) return;
+    let panel=target.closest('details');
+    while(panel) {panel.open=true;panel=panel.parentElement?.closest?.('details')||null;}
+    target.closest('section')?.querySelectorAll?.('details').forEach(detail=>{detail.open=true;});
+    requestAnimationFrame(()=>target.scrollIntoView({block:'start'}));
+  };
+  window.addEventListener('hashchange',reveal);window.addEventListener('pageshow',reveal);reveal();
+})();
+</script><script id="note-print">
+(() => {
+  let previous;
+  window.addEventListener('beforeprint',()=>{
+    if(previous) return;
+    previous=[...document.querySelectorAll('details')].map(panel=>[panel,panel.open]);
+    previous.forEach(([panel])=>{panel.open=true;});
+  });
+  window.addEventListener('afterprint',()=>{previous?.forEach(([panel,open])=>{panel.open=open;});previous=undefined;});
+})();
+</script></body></html>

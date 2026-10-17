@@ -30,7 +30,11 @@ export const interactiveNotes = [
   { path: notePaths[24], source: 'memory-budget.html' },
   { path: notePaths[25], source: 'memory-budget-reference.html' },
   { path: notePaths[26], source: 'clock-timebase.html' },
-  { path: notePaths[27], source: 'clock-timebase-reference.html' }
+  { path: notePaths[27], source: 'clock-timebase-reference.html' },
+  { path: notePaths[28], source: 'timer-pwm.html' },
+  { path: notePaths[29], source: 'timer-pwm-reference.html' },
+  { path: notePaths[30], source: 'uart-framing.html' },
+  { path: notePaths[31], source: 'uart-framing-reference.html' }
 ]
 
 export function readInteractiveNote(path = notePath) {

@@ -51,11 +51,11 @@ const html=await readFile(path.join(root,'index.html'),'utf8')
 assert.ok(html.includes('嵌入式技术笔记'))
 assert.ok(html.includes(base+'c-memory/heap-stack.html'))
 assert.ok(html.includes('data-no-router'))
-assert.ok(html.includes('28 篇') && html.includes('5 个主题'), 'Home must describe twenty-eight entries across five active categories')
-assert.equal(interactiveNotes.length, 28, 'Exactly twenty-eight complete standalone readers must be registered')
+assert.ok(html.includes('32 篇') && html.includes('5 个主题'), 'Home must describe thirty-two entries across five active categories')
+assert.equal(interactiveNotes.length, 32, 'Exactly thirty-two complete standalone readers must be registered')
 const learningCategory = await readFile(path.join(root, 'learn/index.html'), 'utf8')
 const learningReaders = interactiveNotes.filter(note => note.path.startsWith('learn/'))
-assert.equal(learningReaders.length, 19, 'The learning center contains nineteen complete readers')
+assert.equal(learningReaders.length, 23, 'The learning center contains twenty-three complete readers')
 for (const note of learningReaders) assert.ok(learningCategory.includes(base + note.path), 'Learning center must reach each actual reader: ' + note.path)
 const debugCategory = await readFile(path.join(root, 'debug/index.html'), 'utf8')
 assert.ok(debugCategory.includes(base + 'debug/easylogger.html'), 'Debug category must link to the full EasyLogger reader')
@@ -213,10 +213,16 @@ for (const [article, targets] of foundationSearchTargets) {
   }
 }
 for (const [folder, source] of [['c-bits-registers', 'bits.c'], ['c-objects-bounds', 'objects.c'], ['bounded-fifo', 'fifo.c']]) {
-  for (const filename of [source, 'README.txt']) {
+  for (const filename of [source, ...(folder === 'bounded-fifo' ? ['fifo.h'] : []), 'README.txt']) {
     const original = await readFile(path.resolve(import.meta.dirname, '../docs/public/examples', folder, filename))
     const published = await readFile(path.join(root, 'examples', folder, filename))
     assert.deepEqual(published, original, 'Published C foundation lab must copy exact source bytes: ' + folder + '/' + filename)
+    if (filename === 'fifo.h') {
+      for (const suffix of ['', '-reference']) {
+        const reader = await readFile(path.join(root, 'learn/bounded-fifo' + suffix + '.html'), 'utf8')
+        assert.ok(reader.includes('href="../examples/bounded-fifo/fifo.h" download'), 'Existing FIFO reader must expose the newly required native header download')
+      }
+    }
   }
   assert.ok(!files.some(file => path.relative(root, file).replaceAll('\\', '/').startsWith('examples/' + folder + '/') && file.endsWith('.html')), 'Download-only lab must not become an extra documentation reader: ' + folder)
 }
@@ -302,3 +308,63 @@ const searchEvidenceDirectory = path.resolve(import.meta.dirname, '../.scratch/b
 await mkdir(searchEvidenceDirectory, { recursive: true })
 await writeFile(path.join(searchEvidenceDirectory, 'browser-search-cases.json'), JSON.stringify(buildStartupSearchCases, null, 2) + '\n')
 console.log('PASS: eight build/startup readers have24 exact generated search targets and20 byte-identical native source/helper/instruction downloads.')
+
+const timeSerialSearchCases = [
+  ['timer-pwm', '阻塞', 'timer-counts-title'],
+  ['timer-pwm', '65536', 'timer-counts-title'],
+  ['timer-pwm', '5000', 'timer-quantization-title'],
+  ['timer-pwm', 'UDIS', 'timer-preload-title'],
+  ['timer-pwm', 'missed', 'timer-time-title'],
+  ['timer-pwm', 'time_service', 'timer-time-title'],
+  ['timer-pwm-reference', '65535', 'timer-ref-plan-title'],
+  ['timer-pwm-reference', 'CCR', 'timer-ref-plan-title'],
+  ['timer-pwm-reference', 'URS', 'timer-ref-update-title'],
+  ['timer-pwm-reference', 'remainder', 'timer-ref-time-title'],
+  ['timer-pwm-reference', 'timer.h', 'timer-ref-source-title'],
+  ['uart-framing', '8N1', 'uart-wire-title'],
+  ['uart-framing', 'A5', 'uart-frame-title'],
+  ['uart-framing', '421', 'uart-frame-title'],
+  ['uart-framing', 'XOR', 'uart-command-title'],
+  ['uart-framing', '20ms', 'uart-timeout-title'],
+  ['uart-framing', '丢失', 'uart-loss-title'],
+  ['uart-framing-reference', 'LEN', 'uart-ref-grammar-title'],
+  ['uart-framing-reference', 'XOR', 'uart-ref-grammar-title'],
+  ['uart-framing-reference', '20ms', 'uart-ref-timeout-title'],
+  ['uart-framing-reference', 'UART_LOSS', 'uart-ref-loss-title'],
+  ['uart-framing-reference', 'uart_poll', 'uart-ref-api-title'],
+  ['uart-framing-reference', 'SEEK', 'uart-ref-check-title']
+].map(([name, query, anchor]) => ({ name, query, anchor }))
+const missingTimeSerialTargets = timeSerialSearchCases.filter(({ name, query, anchor }) =>
+  !search.search(query).some(result => result.id === base + 'learn/' + name + '.html#' + anchor))
+assert.deepEqual(missingTimeSerialTargets, [], 'Time/serial search must reach actual formula, boundary, service, framing and failure sections')
+const timeSerialDownloads = [
+  ['timer-pwm', [
+    ['timer-pwm', 'timer.c'], ['timer-pwm', 'timer.h'], ['timer-pwm', 'time.c'],
+    ['timer-pwm', 'time.h'], ['timer-pwm', 'README.txt']
+  ]],
+  ['uart-framing', [
+    ['uart-framing', 'uart.c'], ['uart-framing', 'uart.h'], ['uart-framing', 'README.txt'],
+    ['bounded-fifo', 'fifo.c'], ['bounded-fifo', 'fifo.h'], ['timer-pwm', 'time.c'], ['timer-pwm', 'time.h']
+  ]]
+]
+const timeSerialUniqueDownloads = new Set()
+for (const [chapter, members] of timeSerialDownloads) {
+  for (const [folder, filename] of members) {
+    const name = folder + '/' + filename
+    const original = await readFile(path.resolve(import.meta.dirname, '../docs/public/examples', folder, filename))
+    const published = await readFile(path.join(root, 'examples', folder, filename))
+    assert.deepEqual(published, original, 'Time/serial native dependency download bytes must match: ' + name)
+    for (const suffix of ['', '-reference']) {
+      const reader = await readFile(path.join(root, 'learn', chapter + suffix + '.html'), 'utf8')
+      assert.ok(reader.includes('href="../examples/' + name + '" download'), 'Native complete source/dependency download missing: ' + chapter + suffix + '/' + name)
+    }
+    timeSerialUniqueDownloads.add(name)
+  }
+}
+for (const folder of ['timer-pwm', 'uart-framing']) {
+  assert.ok(!files.some(file => path.relative(root, file).replaceAll('\\', '/').startsWith('examples/' + folder + '/') && file.endsWith('.html')), 'Download-only time/serial example must not become another documentation reader')
+}
+const timeSerialEvidenceDirectory = path.resolve(import.meta.dirname, '../.scratch/time-serial/integration')
+await mkdir(timeSerialEvidenceDirectory, { recursive: true })
+await writeFile(path.join(timeSerialEvidenceDirectory, 'browser-search-cases.json'), JSON.stringify(timeSerialSearchCases, null, 2) + '\n')
+console.log('PASS: four time/serial readers have' + timeSerialSearchCases.length + ' exact generated search targets and' + timeSerialUniqueDownloads.size + ' unique byte-identical native source/dependency/instruction downloads; FIFO header is included in prior lab checks.')

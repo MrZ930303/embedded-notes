@@ -256,14 +256,28 @@ for(const article of [html,reference]) {
 }
 const decode=text=>text.replaceAll('&amp;','&').replaceAll('&lt;','<').replaceAll('&gt;','>').replaceAll('&quot;','"').replaceAll('&#x27;',"'")
 const cSource=await read('docs/public/examples/bounded-fifo/fifo.c')
+const headerSource=await read('docs/public/examples/bounded-fifo/fifo.h')
 assert.equal(decode(html.match(/<details id="fifo-complete-source">[\s\S]*?<pre><code>([\s\S]*?)<\/code><\/pre>/)[1]),cSource,'Complete visible source matches compiled/download source bytes')
+for (const [article,id] of [[html,'fifo-public-header'],[reference,'fifo-ref-public-header']]) {
+  const visible=article.match(new RegExp('<details id="'+id+'">[\\s\\S]*?<pre><code>([\\s\\S]*?)<\\/code><\\/pre>'))
+  assert.ok(visible,'Complete header display exists: '+id)
+  assert.equal(decode(visible[1]),headerSource,'Visible public header matches download bytes: '+id)
+  assert.ok(article.includes('<a href="../examples/bounded-fifo/fifo.h" download>'),'Native header download: '+id)
+}
 for(const name of ['bounded-fifo','bounded-fifo-reference']) {
   const md=await read('docs/learn/'+name+'.md'),article=name==='bounded-fifo'?html:reference
-  for(const file of ['fifo.c','README.txt']) assert.ok(md.includes('<a href="../examples/bounded-fifo/'+file+'" download>'),'Native static download link required: '+name+'/'+file)
+  for(const file of ['fifo.c','fifo.h','README.txt']) assert.ok(md.includes('<a href="../examples/bounded-fifo/'+file+'" download>'),'Native static download link required: '+name+'/'+file)
+  assert.ok(md.includes('```c\n'+headerSource+'\n```'),'Full exact header mirrored: '+name)
   assert.doesNotMatch(md,/\]\(\.\.\/public\/examples\/bounded-fifo\//,'No public-directory document links')
   for(const [,anchor] of md.matchAll(/\{#([^}]+)\}/g)) assert.ok(article.includes('id="'+anchor+'"'),'Search heading resolves: '+anchor)
   for(const phrase of ['不可重入','SPSC','不重叠','BAD_STATE','20000','硬件未验证']) assert.ok(md.includes(phrase),'Full mirror retains condition: '+phrase)
 }
 assert.ok((await read('docs/learn/bounded-fifo.md')).includes(cSource.trim()),'Search source is complete compiled C')
+const instructions=await read('docs/public/examples/bounded-fifo/README.txt')
+assert.ok(instructions.includes('cc -std=c11 -Wall -Wextra -Werror -pedantic -c consumer.c -o consumer.o'))
+assert.ok(instructions.includes('cc consumer.o fifo.o -o fifo-consumer'),'Caller links the original module separately')
+const consumer=instructions.match(/```c\n([\s\S]*?)```/)[1]
+assert.equal((consumer.match(/#include "fifo.h"/g)||[]).length,2,'Actual documented caller repeats the guarded header')
+assert.doesNotMatch(consumer,/#include\s*[<"][^>"\n]*\.c[>"]/,'Caller never includes implementation text')
 assert.doesNotMatch(html,/localStorage|sessionStorage|fetch\(|setInterval|XMLHttpRequest/)
 console.log('PASS FIFO exact shared layers,unique anchors,complete C/source mirrors and no persistence')

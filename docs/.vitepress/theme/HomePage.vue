@@ -29,9 +29,13 @@ const notes = [
   { n: '26', category: '学习中心', title: '静态内存、堆与调用栈预算：可打印速查', desc: '压缩回看本章前提、固定算例、拒绝条件、源码与证据限制。', path: '/learn/memory-budget-reference.html', detail: '公式与条件 · 折叠回忆 · 源码下载' },
   { n: '27', category: '学习中心', title: '时钟树、切换与时间基准', desc: '在限定 F407 条件下推导时钟、有限切换、SysTick 与 UART。', path: '/learn/clock-timebase.html', detail: '名义时钟 · 有界失败 · 时间量化' },
   { n: '28', category: '学习中心', title: '时钟树、切换与时间基准：可打印速查', desc: '压缩回看本章前提、固定算例、拒绝条件、源码与证据限制。', path: '/learn/clock-timebase-reference.html', detail: '公式与条件 · 折叠回忆 · 源码下载' },
+  { n: '29', category: '学习中心', title: '定时器、PWM 与非阻塞期限', desc: '从 TIM3 的时钟域和计数状态推导 PWM，观察预装载生效，并用有限服务报告迟到与漏期。', path: '/learn/timer-pwm.html', detail: 'PSC/ARR 加一 · 量化与编码边界 · 模32期限' },
+  { n: '30', category: '学习中心', title: '定时器、PWM 与非阻塞期限：可打印速查', desc: '回看器件条件、PWM 量化、更新事件和模32观察契约，保留完整源码与复现入口。', path: '/learn/timer-pwm-reference.html', detail: 'UDIS/URS · 相位与漏期 · 完整 C11' },
+  { n: '31', category: '学习中心', title: 'UART 字节到有界命令', desc: '把真实四字节 FIFO 接入原创长度帧，逐层检查校验、命令、服务超时与丢失恢复。', path: '/learn/uart-framing.html', detail: '分片与合并 · XOR 限制 · 有界状态与命令' },
+  { n: '32', category: '学习中心', title: 'UART 字节到有界命令：可打印速查', desc: '压缩回看帧语法、20ms 服务观察期限、队列丢失、输出所有权与独立复现。', path: '/learn/uart-framing-reference.html', detail: '先验帧再验命令 · 失败保持 · 原模块分别链接' },
 ]
 const categories = [
-  { title: '学习中心', path: '/learn/', count: '19 篇' },
+  { title: '学习中心', path: '/learn/', count: '23 篇' },
   { title: 'C 语言与内存', path: '/c-memory/', count: '1 篇' },
   { title: 'MCU 基础与外设', path: '/mcu/', count: '4 篇' },
   { title: '工程工具与协作', path: '/tools/', count: '3 篇' },
@@ -46,14 +50,14 @@ const categories = [
       <h1 id="notebook-title">嵌入式技术笔记</h1>
       <p class="intro-description">从内存到时钟，从原理到工程。<br>动手操作模型，再读懂背后的原理、代码与适用边界。</p>
       <div class="intro-actions">
-        <a class="notebook-button primary" href="#notes">浏览 28 篇笔记 <span aria-hidden="true">↓</span></a>
+        <a class="notebook-button primary" href="#notes">浏览 32 篇笔记 <span aria-hidden="true">↓</span></a>
         <a class="intro-route" :href="withBase('/learn/')">从工程学习地图开始 <svg class="ui-arrow" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-5-5 5 5-5 5"/></svg></a>
         <a class="intro-route" :href="withBase('/guide/memory-roadmap.html')">从 MCU 内存学习路线开始 <svg class="ui-arrow" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-5-5 5 5-5 5"/></svg></a>
       </div>
     </section>
 
     <section class="home-section" aria-labelledby="notes">
-      <div class="home-section-heading"><h2 id="notes">交互笔记</h2><span>28 篇 · 5 个主题</span></div>
+      <div class="home-section-heading"><h2 id="notes">交互笔记</h2><span>32 篇 · 5 个主题</span></div>
       <div class="note-list">
         <article v-for="note in notes" :key="note.path" class="note-entry">
           <span class="note-number" aria-hidden="true">{{ note.n }}</span>

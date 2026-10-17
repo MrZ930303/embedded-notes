@@ -51,6 +51,10 @@ export default defineConfig({
         { text: '静态内存、堆与调用栈预算：可打印速查', link: '/learn/memory-budget-reference.html' },
         { text: '时钟树、切换与时间基准', link: '/learn/clock-timebase.html' },
         { text: '时钟树、切换与时间基准：可打印速查', link: '/learn/clock-timebase-reference.html' },
+        { text: '定时器、PWM 与非阻塞期限', link: '/learn/timer-pwm.html' },
+        { text: '定时器、PWM 与非阻塞期限：可打印速查', link: '/learn/timer-pwm-reference.html' },
+        { text: 'UART 字节到有界命令', link: '/learn/uart-framing.html' },
+        { text: 'UART 字节到有界命令：可打印速查', link: '/learn/uart-framing-reference.html' },
         { text: 'MCU 堆栈原理与监测', link: '/c-memory/heap-stack.html' },
         { text: 'MCU 晶振与主频：从 8 MHz 到 168 MHz', link: '/mcu/crystal-pll-clock.html' },
         { text: 'Cortex-M CPU 核心寄存器', link: '/mcu/cortex-m-cpu-registers.html' },
@@ -93,6 +97,10 @@ export default defineConfig({
         { text: '静态内存、堆与调用栈预算：可打印速查', link: '/learn/memory-budget-reference.html' },
         { text: '时钟树、切换与时间基准', link: '/learn/clock-timebase.html' },
         { text: '时钟树、切换与时间基准：可打印速查', link: '/learn/clock-timebase-reference.html' },
+        { text: '定时器、PWM 与非阻塞期限', link: '/learn/timer-pwm.html' },
+        { text: '定时器、PWM 与非阻塞期限：可打印速查', link: '/learn/timer-pwm-reference.html' },
+        { text: 'UART 字节到有界命令', link: '/learn/uart-framing.html' },
+        { text: 'UART 字节到有界命令：可打印速查', link: '/learn/uart-framing-reference.html' },
       ]},
       { text: '从这里开始', items: [
         { text: 'MCU 内存学习路线', link: '/guide/memory-roadmap.html' }

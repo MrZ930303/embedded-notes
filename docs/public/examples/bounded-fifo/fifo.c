@@ -17,31 +17,11 @@
  * Define FIFO_TEST for the executable, omit it for the reusable module.
  * No hardware validation or target-specific synchronization is provided.
  *****************************************************************************/
-#include <limits.h>
+#include "fifo.h"
 #include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
 #ifdef FIFO_TEST
 #include <stdio.h>
 #endif
-#define FIFO_CAPACITY 4U
-#if CHAR_BIT != 8 || !defined(UINT8_MAX)
-#error "This example requires eight-bit bytes and uint8_t."
-#endif
-typedef enum {
-    FIFO_OK,
-    FIFO_FULL,
-    FIFO_EMPTY,
-    FIFO_INVALID_ARGUMENT,
-    FIFO_BAD_STATE
-} FifoStatus;
-
-typedef struct {
-    uint8_t slots[FIFO_CAPACITY];
-    size_t head;
-    size_t tail;
-    size_t count;
-} Fifo;
 /**
  * @brief Check metadata before any slot access in an initialized object.
  * @param[in] queue Non-null live initialized object.
