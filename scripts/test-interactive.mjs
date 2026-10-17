@@ -17,8 +17,12 @@ assert.deepEqual(interactiveNotes.slice(0, originalNotes.length), originalNotes,
 assert.deepEqual(interactiveNotes.slice(originalNotes.length), [
   { path: 'mcu/cortex-m-cpu-registers.html', source: 'cortex-m-cpu-registers.html' },
   { path: 'mcu/hardfault-stack-trace.html', source: 'hardfault-stack-trace.html' },
-  { path: 'debug/easylogger.html', source: 'easylogger.html' }
-], 'Both Cortex-M articles and EasyLogger must be registered after the stable original routes')
+  { path: 'debug/easylogger.html', source: 'easylogger.html' },
+  { path: 'mcu/mcu-ota.html', source: 'mcu-ota.html' },
+  { path: 'learn/engineering-map.html', source: 'learning-map.html' },
+  { path: 'learn/gpio-button.html', source: 'gpio-button.html' },
+  { path: 'learn/gpio-button-reference.html', source: 'gpio-button-reference.html' }
+], 'Cortex-M, EasyLogger and OTA must be registered after the stable original routes')
 
 for (const base of ['/', '/embedded-notes/']) {
   const origin = 'https://notes.example'
@@ -122,7 +126,7 @@ for (const note of interactiveNotes.slice(1)) {
     section.open = false; events.hashchange(); assert.equal(section.open, true)
     window.location.hash = '#%ZZ'; assert.doesNotThrow(events.pageshow)
   }
-  const categoryHref = note.path.startsWith('mcu/') ? '../mcu/' : note.path.startsWith('debug/') ? '../debug/' : '../tools/'
+  const categoryHref = note.path.startsWith('mcu/') ? '../mcu/' : note.path.startsWith('debug/') ? '../debug/' : note.path.startsWith('learn/') ? '../learn/' : '../tools/'
   for (const href of ['../', categoryHref, '../?search=1']) assert.ok(article.includes('href="' + href + '"'), 'Missing hub link: ' + href)
   assert.ok(!/<(?:script|iframe)[^>]+src=/i.test(article), 'Self-contained article must not load scripts or integrations')
   assert.ok(!/\b(?:fetch|XMLHttpRequest|WebSocket|localStorage|sessionStorage)\b/.test([...article.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)].map(match => match[1]).join('')), 'Teaching state stays in page memory')
@@ -203,3 +207,8 @@ priorityControls['faultmask-on'].checked = true
 priorityControls['faultmask-on'].dispatch('change')
 assert.match(priorityControls['active-handler-state'].textContent, /IRQ.*3.*Active.*BASEPRI = 0x50/, 'masking new activations must not terminate the separate already-active priority 3 Handler')
 console.log('PASS: CONTROL writes include ISB guidance; BASEPRI priority 3 activation and separate active Handler behavior are covered.')
+
+await import('./test-ota.mjs')
+
+await import('./test-learning-map.mjs')
+await import('./test-gpio-button.mjs')

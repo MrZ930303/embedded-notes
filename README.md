@@ -2,7 +2,7 @@
 
 使用 VitePress 1.6.4 稳定版构建的中文技术笔记站。依赖版本由 package-lock.json 锁定，适合部署到 GitHub Pages。
 
-当前内容：八篇完整的交互式 HTML 笔记（MCU 堆栈、Beads、Plane、Matt Pocock Skills、MCU 晶振与主频、Cortex-M CPU 核心寄存器、HardFault 栈回溯分析、EasyLogger）和一条 MCU 内存学习路线。首页按四个正式主题帮助你找到笔记，进入笔记后直接操作模型、阅读图解并展开完整正文。FreeRTOS 独立分类仍为规划中。
+当前内容：九篇技术交互笔记（MCU 堆栈、Beads、Plane、Matt Pocock Skills、MCU 晶振与主频、Cortex-M CPU 核心寄存器、HardFault 栈回溯分析、EasyLogger、MCU OTA），另有学习地图与三路资料对照、GPIO 原创小课、GPIO 打印速查三份学习中心资料，以及一条 MCU 内存学习路线。首页按五个正式主题帮助你找到笔记，进入笔记后直接操作模型、阅读图解并展开完整正文。FreeRTOS 独立分类仍为规划中。
 
 ## 本地预览（Windows / macOS / Linux）
 
@@ -46,7 +46,7 @@ npm run docs:preview
 5. 运行 npm run check，然后在浏览器检查文章、搜索、移动端布局与交互。
 6. 审阅改动后提交并推送；main 分支的推送会触发自动发布。
 
-重要：docs/public/demos/ 下的八篇 HTML 是主阅读体验的完整源码。scripts/interactive-note.mjs 注册源码和主路径；VitePress 的 transformHtml 构建钩子原样输出到 c-memory/heap-stack.html、tools/、mcu/ 与 debug/easylogger.html 等主阅读路径，开发服务提供相同 HTML。demos/ 路径保留兼容访问。docs/c-memory/heap-stack.md、docs/tools/、docs/mcu/ 与 docs/debug/easylogger.md 只提供全文搜索输入，不作为公开文档式阅读页。修改正文、代码或限定条件后必须同步 HTML 与搜索输入；新增搜索标题还需为 HTML 中对应章节添加相同 id。构建测试会核对搜索结果锚点。
+重要：docs/public/demos/ 下的十二份 HTML 是主阅读体验的完整源码。scripts/interactive-note.mjs 注册源码和主路径；VitePress 的 transformHtml 构建钩子原样输出到 c-memory/heap-stack.html、tools/、mcu/ 与 debug/easylogger.html 等主阅读路径，开发服务提供相同 HTML。demos/ 路径保留兼容访问。docs/c-memory/heap-stack.md、docs/tools/、docs/mcu/、docs/learn/ 与 docs/debug/easylogger.md 只提供全文搜索输入，不作为公开文档式阅读页。修改正文、代码或限定条件后必须同步 HTML 与搜索输入；新增搜索标题还需为 HTML 中对应章节添加相同 id。构建测试会核对搜索结果锚点。
 
 文章内链接到另一篇文章时，使用相对 Markdown 路径，如 ./heap-stack.md。主题组件中的站内链接使用 VitePress 的 withBase()。主交互笔记使用 data-no-router 和主题路由守卫进行浏览器原生导航，搜索及后退/前进也不会恢复成文档版。交互页中的搜索入口返回知识库并打开本地搜索。
 
@@ -92,11 +92,12 @@ SITE_BASE=/ npm run docs:preview
 - docs/.vitepress/theme/：首页组件与主题样式
 - docs/c-memory/：分类索引，以及交互笔记的全文搜索输入
 - docs/tools/：Beads、Plane、Matt Pocock Skills 分类与全文搜索输入
+- docs/learn/：学习地图、GPIO 小课、打印速查的分类与全文搜索输入
 - docs/guide/：学习路线
-- docs/mcu/：时钟、寄存器与 HardFault 文章的分类和全文搜索输入
+- docs/mcu/：时钟、寄存器、HardFault 与 OTA 文章的分类和全文搜索输入
 - docs/debug/：调试与实战分类、EasyLogger 全文搜索输入
 - docs/freertos/：规划中分类
-- docs/public/demos/：八篇主交互笔记 HTML 源码，样式、模型与正文完整内嵌；demos/ 保留兼容访问
+- docs/public/demos/：十二份完整 HTML 阅读页源码，样式、模型与正文完整内嵌；demos/ 保留兼容访问
 - scripts/interactive-note.mjs：主阅读 URL 的开发/生产 HTML 输出适配
 - docs/.vitepress/theme/interactive-routing.mjs：点击、搜索与历史导航保护
 - templates/note.md：新笔记模板，不会被发布
@@ -114,6 +115,10 @@ MCU 晶振与主频笔记以 STM32F407、3.3 V / Scale 1 为限定条件，按�
 教学模型和示例代码不代表真实设备测量值。移植到工程前，应检查芯片内核、编译器、链接布局、RTOS 端口与版本；不要覆盖正在使用的栈。
 
 EasyLogger 笔记的过滤、RTT、ISR 优先级和 UART 带宽均为页面内教学模拟。简短片段不构成完整板级工程；研究参考实现的主机 ASan/UBSan 烟测不覆盖页面新片段，也不代表 Keil、AC5/AC6、真实 FreeRTOS 并发或目标硬件验证。接入前固定官方源码版本并保留许可证。
+
+MCU OTA 笔记比较六类典型更新路径。双槽不等于可回滚，外部暂存不等于保留旧版，双 Bank 不等于 A/B；单槽必须保留独立救援入口。容量计算和失败模拟只说明架构条件，不执行设备操作，也不代表硬件断电测试。
+
+学习中心的首批交付为八阶段地图（含三路资料范围对照）、GPIO 按键原创小课和可打印速查；后续课程建设中。按键电路与抖动时间轴是人工教学模型，5 ms 不是通用参数，也没有经过硬件验证。站点不保存个人作答或学习记录。
 
 ## 依赖与维护
 
@@ -140,4 +145,3 @@ EasyLogger 笔记的过滤、RTT、ISR 优先级和 UART 带宽均为页面内�
 ## 授权状态
 
 本仓库暂未选择开源许可证。公开可访问不等于已授予开源授权；转载和使用请遵循作者后续声明及各引用资料本身的条款。第三方依赖保留各自许可证。
-

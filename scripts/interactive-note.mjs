@@ -10,7 +10,11 @@ export const interactiveNotes = [
   { path: notePaths[4], source: 'crystal-pll-clock.html' },
   { path: notePaths[5], source: 'cortex-m-cpu-registers.html' },
   { path: notePaths[6], source: 'hardfault-stack-trace.html' },
-  { path: notePaths[7], source: 'easylogger.html' }
+  { path: notePaths[7], source: 'easylogger.html' },
+  { path: notePaths[8], source: 'mcu-ota.html' },
+  { path: notePaths[9], source: 'learning-map.html' },
+  { path: notePaths[10], source: 'gpio-button.html' },
+  { path: notePaths[11], source: 'gpio-button-reference.html' }
 ]
 
 export function readInteractiveNote(path = notePath) {

@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="GPIO按键电路与连续稳定消抖速查：上拉下拉真值表、11ms教学例子、最小算法和上板验证清单。"><meta name="theme-color" content="#fafbf8"><link rel="icon" href="../favicon.svg" type="image/svg+xml"><title>GPIO 按键速查：电平、抖动与事件 · 嵌入式技术笔记</title><style>
+:root{--paper:#fafbf8;--ink:#21382e;--muted:#526359;--line:#dce3d7;--green:#22664f;--pale:#eef2e9;--lime:#d5e7b3;--dark:#193e33;--mono:Consolas,ui-monospace,monospace}*{box-sizing:border-box}html{scroll-padding-top:110px}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.9 system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif}a{color:var(--green);text-underline-offset:4px}.wrap{width:min(1120px,calc(100% - 64px));margin:auto}.skip{position:absolute;top:-90px;left:16px;z-index:20;padding:8px 12px;background:white}.skip:focus{top:8px}.topbar{position:sticky;top:0;z-index:10;border-bottom:1px solid var(--line);background:#fafbf8f5}.brand{text-decoration:none}.topbar nav a{white-space:nowrap}.hero{display:grid;grid-template-columns:1.2fr 1fr;gap:48px;align-items:center;padding:44px 0 34px;border-bottom:1px solid var(--line)}h1{font-size:clamp(32px,3.6vw,44px);line-height:1.35;letter-spacing:-.035em;margin:14px 0}.tag{font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--green)}.hero-intro{font-size:17px;max-width:32rem}.hero-card{background:var(--pale);padding:24px;border:1px solid var(--line);border-radius:12px}.hero-card strong{display:block;font-size:22px;margin-bottom:12px}.hero-card p{margin:0}.small{font-size:13px;color:var(--muted)}.section-nav{display:flex;flex-wrap:wrap;gap:10px;padding:16px 0}.section-nav a{text-decoration:none}.content-section{padding:38px 0;border-bottom:1px solid var(--line);scroll-margin-top:115px}h2{font-size:28px;line-height:1.5;margin:0 0 18px}h3{font-size:20px;line-height:1.5;margin:0 0 12px}p{margin:0 0 14px}section>p{max-width:44rem}.reference-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}.card{padding:22px;border:1px solid var(--line);border-radius:12px;background:#fffefb;min-width:0}.card.wide{grid-column:1/-1}.table-wrap{max-width:100%;overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:14px;text-align:left}th,td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}th{background:var(--pale)}.callout{padding:16px 20px;margin:16px 0;background:var(--pale);border-left:4px solid var(--green);font-size:14px}.equation{font:700 23px/1.7 var(--mono);letter-spacing:-.03em;margin:16px 0}.logic{display:flex;flex-wrap:wrap;gap:10px}.logic span{padding:8px 12px;border-radius:5px;background:var(--pale);font-size:14px}pre{padding:16px;background:var(--pale);border-radius:8px;font:13px/1.8 var(--mono);overflow-x:auto}.btn{min-height:44px;min-width:44px;font:14px/1.8 system-ui;padding:9px 15px;border:1px solid #b9c8ba;background:white;color:var(--ink);border-radius:6px;cursor:pointer}.btn.primary{background:var(--dark);color:white;border-color:var(--dark)}.notes-toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0}.checklist{padding-left:22px;font-size:14px}.checklist li{padding:3px 0;margin-bottom:6px}.source-list{padding-left:22px}.source-list a{overflow-wrap:anywhere}details{border:1px solid var(--line);padding:16px 20px;border-radius:8px;margin:14px 0;background:#fffefb}summary{min-height:44px;cursor:pointer;font-weight:700}details p,details ul,details ol{margin-top:12px}li{margin-bottom:8px}footer{font-size:13px;color:var(--muted);padding:24px 0 36px}button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid #ad751d;outline-offset:4px}.print-hint{font-size:13px;color:var(--muted)}
+@media(max-width:760px){.hero,.reference-grid{grid-template-columns:1fr;gap:20px}.card.wide{grid-column:auto}.hero-card{padding:20px}}@media(max-width:520px){.wrap{width:calc(100% - 36px)}.hero{padding-top:30px}.content-section{padding:30px 0}.card{padding:16px}h2{font-size:24px}.equation{font-size:20px}details{padding:14px}th,td{padding:9px}.notes-toolbar{display:grid;grid-template-columns:1fr 1fr}}
+@page{size:A4;margin:14mm}@media print{body{background:white;color:#13281a;font-size:10pt;line-height:1.55}.wrap{width:100%;max-width:none}.skip,.topbar,.section-nav,.notes-toolbar,.print-hint,.hero-card,.next-links{display:none!important}.hero{display:block;padding:0 0 10px}.hero h1{font-size:24pt;margin:7px 0}.hero-intro{font-size:10.5pt;margin:6px 0}.content-section{padding:13px 0}.reference-grid{grid-template-columns:1fr 1fr;gap:10px}.card{padding:12px;border-radius:4px}.card.wide{grid-column:1/-1}h2{font-size:16pt;margin:0 0 10px}h3{font-size:12pt;margin:0 0 8px}.tag{font-size:9pt}p{margin-bottom:8px}table,.checklist,.small{font-size:9pt;line-height:1.55}th,td{padding:6px}.logic span{padding:5px 8px;font-size:9pt}.equation{font-size:16pt;margin:8px 0}pre{white-space:pre-wrap;overflow:visible;padding:10px;font-size:8.5pt;line-height:1.55}.callout{padding:10px;font-size:9pt;margin:9px 0}details{padding:10px;margin:8px 0;break-inside:auto}summary{min-height:0}.card,table,pre{break-inside:avoid}a{color:inherit}.source-list{font-size:9pt}footer{padding:12px 0 0;font-size:8.5pt}}
+</style><style>
+/* Shared reading layer: keep this block identical in all standalone notes. */
+@media screen {
+:root{--paper:#fafbf8;--ink:#21382e;--muted:#526359;--line:#dce3d7;--green:#22664f;--pale:#eef2e9;--lime:#d5e7b3;--dark:#193e33}
+.notes-article{font-size:16px;line-height:1.9}
+.notes-article .wrap{width:min(1120px,calc(100% - 64px));max-width:none;padding-inline:0;margin-inline:auto}
+.notes-article .topbar{background:#fafbf8f5;z-index:10}
+.notes-article .topbar-inner{height:auto;min-height:68px;display:flex;align-items:center;justify-content:space-between;gap:24px;padding-block:0}
+.notes-article .brand{display:inline-flex;align-items:center;gap:10px;min-height:44px;margin:0;font-size:15px;font-weight:700;letter-spacing:0;color:var(--ink)}
+.notes-article .brandmark{display:grid;place-items:center;width:30px;height:30px;margin:0;border-radius:6px;background:var(--dark);color:#e0edcb;font:19px/1 var(--mono)}
+.notes-article .topbar nav{display:flex;align-items:center;gap:18px;margin:0;padding:0;width:auto;flex-wrap:nowrap}
+.notes-article .topbar nav a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:4px 3px;font-size:14px;font-weight:500;color:var(--muted);text-decoration:none;border-radius:4px}
+.notes-article .topbar nav a:hover,.notes-article .topbar nav a[aria-current="location"]{color:var(--green);background:var(--pale)}
+.notes-article .topbar nav a[aria-current="location"]{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:6px}
+.notes-article .hero{padding-block:48px 40px;gap:48px;grid-template-columns:1.12fr 1fr}
+.notes-article .hero h1{font-size:clamp(32px,3.6vw,44px);line-height:1.35;letter-spacing:-.035em;text-wrap:balance}
+.notes-article .hero h1 span{font-size:.78em;line-height:1.5;margin-top:8px}
+.notes-article .hero-intro{font-size:17px;line-height:1.9;max-width:32rem;margin-block:20px}
+.notes-article .hero>.hero-card,.notes-article .hero-flow,.notes-article .intro-map{box-shadow:none;border-radius:12px}
+.notes-article .hero .tag{font-size:12px;border-radius:4px;padding:4px 9px;margin:0 0 16px;line-height:1.7}
+.notes-article .hero>.hero-figure .map{transform:none;box-shadow:none}
+.notes-article .hero>div>.eyebrow{display:none}
+.notes-article .hero>.hero-card>.eyebrow,.notes-article .hero>.hero-flow>.eyebrow{display:block;font-size:12px;line-height:1.7}
+.notes-article .hero-links{gap:12px 22px;margin-top:24px}
+.notes-article .hero .text-link{display:inline-flex;align-items:center;min-height:44px;font-size:14px}
+.notes-article .hero figcaption,.notes-article .hero-figure figcaption,.notes-article .date-note{font-size:13px;line-height:1.8}
+.notes-article .hero-card p:last-child,.notes-article .hero-flow .small,.notes-article .intro-map>p:last-child{font-size:14px;line-height:1.85}
+.notes-article .hero-numbers span,.notes-article .hero-step small{font-size:13px}
+.notes-article h2{font-size:28px;line-height:1.5;text-wrap:balance}
+.notes-article .section-head p{font-size:15px;line-height:1.85}
+.notes-article .content-section,.notes-article .article-section{padding-block:52px}
+.notes-article .content-section+.content-section{padding-top:48px}
+.notes-article .note-section{scroll-margin-top:100px}
+.notes-article .note-section>summary{min-height:56px;font-size:18px;line-height:1.6}
+.notes-article .note-section>summary h2{font-size:20px;line-height:1.6}
+.notes-article .note-body{max-width:none;font-size:16px;line-height:1.95}
+.notes-article .note-body p,.notes-article .note-body li{font-size:16px;line-height:1.95}
+.notes-article .note-body>p,.notes-article .note-body>ul,.notes-article .note-body>ol,.notes-article .article-section>p,.notes-article .article-section>ul,.notes-article .article-section>ol{max-width:44rem;font-size:16px;line-height:1.95}
+.notes-article .note-body h3{font-size:21px;margin-block:28px 12px;scroll-margin-top:100px}
+.notes-article .note-body pre,.notes-article pre{font-size:14px;line-height:1.8}
+.notes-article .note-body table,.notes-article table{font-size:14px;line-height:1.8}
+.notes-article .note-body th,.notes-article .note-body td{font-size:14px;line-height:1.8}
+.notes-article .article-section>h2{font-size:28px}
+.notes-article .concept p,.notes-article .subnote p,.notes-article .risk p,.notes-article .monitor-step p,.notes-article .monitor-step ul,.notes-article .step-card p{font-size:15px;line-height:1.85}
+.notes-article .callout,.notes-article .model-scope,.notes-article .demo-disclaimer,.notes-article .version-card,.notes-article .version-card p{font-size:14px;line-height:1.85}
+.notes-article .source-list a,.notes-article .source-list span,.notes-article #plane-references~ul{font-size:14px;line-height:1.85}
+.notes-article #plane-overview~ul{max-width:none}
+.notes-article #plane-overview~ul li{font-size:15px;line-height:1.85}
+.notes-article .note-body .source-list{max-width:none}
+.notes-article .small,.notes-article .lab-note,.notes-article .lab-foot,.notes-article .lab-footer,.notes-article .clock-lab-foot,.notes-article .print-hint{font-size:13px;line-height:1.85}
+.notes-article .principle,.notes-article .principles span{font-size:13px;line-height:1.8}
+.notes-article .principles strong{font-size:15px}
+.notes-article .memory-motto,.notes-article .motto{background:var(--pale);color:var(--ink);border-radius:8px;text-align:left;padding:24px;margin-top:30px}
+.notes-article .memory-motto span,.notes-article .motto small{color:var(--muted);font-size:14px}
+.notes-article button,.notes-article .btn,.notes-article .notes-toolbar button{min-height:44px;min-width:44px;font-size:14px}
+.notes-article button,.notes-article .btn,.notes-article .topbar a,.notes-article summary,.notes-article .section-nav a,.notes-article .toc a{transition:background .18s,color .18s,border-color .18s,transform .18s}
+.notes-article button:enabled:hover{filter:brightness(1.06)}
+.notes-article button:enabled:active,.notes-article .btn:active{transform:translateY(1px)}
+.notes-article button:disabled{opacity:.58}
+.notes-article .graph-node:disabled,.notes-article .work-card:disabled{opacity:1}
+.notes-article :focus-visible{outline:3px solid #ad751d;outline-offset:4px}
+.notes-article .lab :focus-visible,.notes-article .clock-lab :focus-visible{outline-color:#f0cc80}
+.notes-article .toc a,.notes-article .section-nav a{display:inline-flex;align-items:center;min-height:44px;border-radius:5px;font-size:14px;padding:8px 12px}
+.notes-article .checklist label,.notes-article .clock-check{min-height:44px;font-size:14px;line-height:1.8}
+.notes-article .clock-field label,.notes-article .clock-controls small,.notes-article .clock-node small,.notes-article .clock-node span{font-size:13px;line-height:1.6}
+.notes-article .clock-current p,.notes-article .clock-candidate,.notes-article .clock-warnings{font-size:14px;line-height:1.8}
+.notes-article .clock-node strong,.notes-article .hero-numbers strong,.notes-article .metric strong{font-variant-numeric:tabular-nums}
+.notes-article .task-option strong,.notes-article .work-card strong{font-size:14px;line-height:1.65}
+.notes-article .task-option span,.notes-article .scope-buttons small,.notes-article .card-id,.notes-article .card-project,.notes-article .card-status,.notes-article .card-tags>span,.notes-article .lane-en{font-size:12px;line-height:1.6}
+.notes-article .scope-explanation,.notes-article .detail-copy>p,.notes-article .detail .acceptance,.notes-article .state-controls>p,.notes-article .board-heading p{font-size:14px;line-height:1.8}
+.notes-article .lane h4{font-size:14px;line-height:1.5;flex-wrap:wrap}
+.notes-article .lane-count{font-size:12px}
+.notes-article .lab .task-option{min-height:96px}
+.notes-article .skills-step-card dd,.notes-article .route-pane p,.notes-article .chooser-intro,.notes-article .permissions-pane>p{font-size:14px;line-height:1.85}
+.notes-article .skills-step-card dt,.notes-article .step-counter,.notes-article .permissions-pane small,.notes-article .permission-list span,.notes-article .graph-legend,.notes-article .graph-arrow-note{font-size:13px;line-height:1.8}
+.notes-article .ui-arrow{width:18px;height:18px;display:inline-block;vertical-align:middle;flex-shrink:0}
+.notes-article .selection-jump,.notes-article .choice-result{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;padding:10px 12px;border-radius:5px;font-size:13px;font-weight:600;line-height:1.6;text-decoration:none}
+.notes-article .selection-jump{background:#22664f;color:#fff}
+.notes-article .choice-result{color:#e2efca;border:1px solid #829873;background:#173e33;margin-top:7px}
+.notes-article .task-choice{min-width:0}
+.notes-article .task-choice .task-option{width:100%}
+.notes-article .task-option[aria-pressed="false"]+.choice-result{display:none}
+.notes-article #selected-skill,.notes-article #plane-selected-title{scroll-margin-top:128px}
+.notes-article footer,.notes-article .footer{font-size:13px;line-height:1.8}
+.notes-article footer a,.notes-article .footer a{display:inline-flex;align-items:center;min-height:44px}
+.notes-article .note-body p,.notes-article .hero-intro,.notes-article .article-section>p{text-wrap:pretty}
+@media(max-width:760px){
+.notes-article .wrap{width:calc(100% - 40px)}
+.notes-article .topbar-inner{flex-wrap:wrap;gap:0;padding-top:6px}
+.notes-article .brand{min-height:44px;font-size:15px}
+.notes-article .topbar nav{width:100%;gap:12px;overflow-x:auto;flex-wrap:nowrap;padding:0 0 4px;scrollbar-width:thin}
+.notes-article .topbar nav a{font-size:13px;flex-shrink:0;padding-inline:2px}
+.notes-article .hero{grid-template-columns:1fr;gap:28px;padding-block:32px}
+.notes-article .hero h1{font-size:32px;line-height:1.4}
+.notes-article .hero-intro{font-size:16px;max-width:none;margin-block:16px}
+.notes-article .hero-figure{max-width:500px}
+.notes-article .hero .tag{margin-bottom:12px}
+.notes-article .content-section,.notes-article .article-section{padding-block:36px}
+.notes-article .content-section+.content-section{padding-top:36px}
+.notes-article h2,.notes-article .article-section>h2{font-size:24px}
+.notes-article .section-head p{font-size:15px}
+.notes-article .note-section>summary{font-size:17px}
+.notes-article .note-section>summary h2{font-size:18px}
+.notes-article .note-body p,.notes-article .note-body li{font-size:16px}
+.notes-article .note-body pre,.notes-article pre{font-size:13px}
+.notes-article .note-body th,.notes-article .note-body td{font-size:14px}
+.notes-article .principles{grid-template-columns:1fr;gap:14px}
+.notes-article .principles strong{display:inline;margin-right:8px}
+.notes-article .principles span{display:inline}
+.notes-article .task-options{grid-template-columns:1fr 1fr;align-items:start}.notes-article .lab .task-option{min-height:76px;padding:12px}
+.notes-article .board{grid-template-columns:1fr 1fr}
+.notes-article .lane:last-child .lane-cards{display:flex}
+.notes-article .lane-cards{min-height:0}
+.notes-article .lane{padding:14px}
+.notes-article .lane-en{margin-bottom:10px}
+.notes-article .work-card{padding:14px}
+.notes-article .card-tags{gap:6px}
+.notes-article .lab-top{flex-wrap:wrap}
+.notes-article .lab-top .tag{white-space:normal}
+.notes-article .note-section,.notes-article .note-body h3,.notes-article .article-section,.notes-article .article-section>h3{scroll-margin-top:124px}
+}
+@media(max-width:370px){.notes-article .task-options,.notes-article .board{grid-template-columns:1fr}.notes-article .hero h1{font-size:30px}.notes-article .topbar nav{gap:8px}}
+}
+@media(prefers-reduced-motion:reduce){.notes-article *,.notes-article *::before,.notes-article *::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+</style>
+</head><body class="notes-article"><a class="skip" href="#main">跳到正文</a><header class="topbar"><div class="wrap topbar-inner"><a class="brand" href="../"><span class="brandmark" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span>嵌入式技术笔记</a><nav aria-label="笔记导航"><a href="../learn/">返回分类</a><a href="#quick-reference">交互实验</a><a href="#lesson-notes">完整笔记</a><a href="../?search=1">搜索笔记</a></nav></div></header><div class="wrap"><div class="hero"><div><div class="tag">可打印速查 · 原创小课 01</div><h1 id="reference-overview">GPIO 按键<br>电平、抖动与事件</h1><p class="hero-intro">一张可反复查阅的规则卡：先沿电路判断原始值，再用稳定状态的变化识别一次按下。</p><p class="small">适用：STM32 / GD32 通用输入概念。先修：允许电源、共地。型号门限与库版本须按实际工程核对；人工示例未做硬件验证。</p></div><aside class="hero-card"><strong>动作 ≠ 电压 ≠ 逻辑值 ≠ 事件</strong><p>先读 <a href="gpio-button.html">互动小课</a>，再凭这张卡解释线路和算法。速查不替代原理图与芯片手册。</p></aside></div><nav class="section-nav" aria-label="章节"><a href="#quick-reference">规则速查</a><a href="#lesson-notes">回忆迁移</a><a href="#reference-sources">官方资料</a><a href="gpio-button.html#circuit-lab">返回交互</a></nav><main id="main"><section class="content-section" id="quick-reference"><h2>从输入到事件的四步</h2><div class="logic"><span>① 找电源与地</span><span>② 判断 GPIO 电压区域</span><span>③ 读原始逻辑值</span><span>④ 稳定变化才发事件</span></div><div class="notes-toolbar"><button class="btn primary" id="print-reference">打印这张速查</button><button class="btn" id="expand-notes">展开回忆答案</button></div><p class="print-hint">打印会自动展开答案，打印结束后恢复原先展开状态。可在打印对话框选择纸张与页边距。</p><div class="reference-grid"><article class="card wide" id="truth-table"><h3>电路真值表：先把“按下”从 0/1 中拿开</h3><div class="table-wrap"><table><thead><tr><th>电路与条件</th><th>松开按钮</th><th>可靠按下</th><th>按下事件</th></tr></thead><tbody><tr><td>上拉，按钮接地</td><td>1 · 接近允许电源</td><td>0 · 接近 GND</td><td>稳定值 1→0</td></tr><tr><td>下拉，按钮接允许电源</td><td>0 · 接近 GND</td><td>1 · 接近允许电源</td><td>稳定值 0→1</td></tr><tr><td>移除电阻，无其他驱动</td><td>无法保证 · 悬空</td><td>由按钮连接的电源或地决定</td><td>先恢复可靠默认电平</td></tr></tbody></table></div><p class="small">逻辑 1 不是固定 1V。高低电平有效门限查完整料号的数据手册。悬空不等于必然随机翻转；上拉也不保证消除触点抖动。</p></article><article class="card" id="debounce-rule"><h3>连续稳定过滤</h3><p>每 1 ms 采样；原始值改变就更新候选并重新计时。候选连续不变满阈值，才替换稳定值；只有稳定值变成有效电平才发一次按下事件。</p><pre>if raw != candidate:
+  candidate = raw; since = now
+if candidate != stable
+   and now - since &gt;= threshold:
+  stable = candidate
+  if stable == 0: emit_pressed()</pre><p class="small">这里使用上拉低电平有效。示意未包含芯片驱动、计时回绕和并发；移植时分别处理。</p></article><article class="card" id="fixed-example"><h3>人工例子：记时长，不数样点</h3><p>初始 raw=stable=1。2/3/4/5/6 ms 依次变成 0/1/0/1/0，随后为 0 至 20 ms。</p><div class="equation">6 ms + 5 ms = 11 ms</div><p>原始下降沿：2、4、6 ms，共 <strong>3 个</strong>。5 ms 阈值：11 ms 确认 <strong>1 次</strong>按下。持续为 0 不重复计数。</p><p class="small">拓展：24/25/26 ms 为 1/0/1；34/35/36 ms 为 0/1/0。默认阈值在31 ms确认释放，41 ms确认第二次按下；共2次。</p><p class="callout">所有时间均为人工教学数据，非硬件波形。5 ms 不是通用建议：阈值太短可能接纳抖动，太长增加延迟并忽略短状态。</p></article><article class="card wide" id="hardware-check"><h3>上板验证清单</h3><ol class="checklist"><li>查板卡原理图、共地、完整料号、输入门限、允许电压、内部/外部上下拉与库版本。未知 5V 信号先停止接线。</li><li>测松开与按下的电压；用示波器或逻辑分析仪观察抖动。万用表不能证明短暂抖动不存在。</li><li>记录原始波形、采样周期、过滤阈值、稳定状态和事件计数。</li><li>测试按下保持、释放、第二次按下、短按；每个稳定按下只计一次，解释过滤延迟。</li><li>出现多计数时，对照原始边沿与稳定事件，保留触发条件、修复与回归证据。</li></ol></article></div></section><section class="content-section" id="lesson-notes"><h2>回忆与迁移：先说理由，再看答案</h2><p>不看上表，沿线路解释一次。稍后换个电路再问一遍，比当场顺口答对更能检验记忆。哪里不清楚，可以向助手追问线路、电平、采样与事件的具体差别。</p><details id="reference-recall"><summary>上拉移除且按钮松开，读数为什么无法保证？</summary><p>没有电阻和其他驱动提供确定电平，输入可能悬空。偶尔读到固定值不证明设计可靠；也不能声称它必然随机翻转。</p></details><details id="reference-transfer"><summary>改成下拉、按钮接允许电源，原始值与事件如何改变？</summary><p>有下拉时松开为 0，按下为 1；稳定值 0→1 是按下事件。程序应把“原始值”和“业务按下”明确转换。</p></details><details id="reference-timing"><summary>阈值改成 10 ms，人工例子何时确认？为何可能漏掉短状态？</summary><p>最后变化发生在 6 ms，连续满 10 ms 是 16 ms。持续不足阈值的候选不会被接受；拓展中释放候选从 26 到 34 ms 仅有 8 ms，10 ms 阈值会把它忽略，因此没有第二次稳定按下。</p></details></section><section class="content-section" id="reference-sources"><h2>原理与方法来源</h2><ul class="source-list"><li><a href="https://www.st.com.cn/resource/en/application_note/an4899-guidelines-for-gpio-hardware-settings-and-lowpower-consumption-on-stm32-mcus-stmicroelectronics.pdf" target="_blank" rel="noopener noreferrer">ST AN4899：GPIO 输入模式与硬件设置</a>。具体门限查所选芯片数据手册。</li><li><a href="https://www.ti.com/document-viewer/lit/html/scea094" target="_blank" rel="noopener noreferrer">TI：Debounce a Switch</a>。机械触点抖动与消抖原理。</li><li><a href="https://github.com/mattpocock/skills/blob/main/skills/productivity/teach/SKILL.md?plain=1" target="_blank" rel="noopener noreferrer">Matt Pocock teach</a>。单一成果、紧密反馈、回忆迁移与独立打印速查的教学组织方法。</li></ul></section><section class="content-section" id="reference-next"><h2>回到主线</h2><p>下一课“GPIO 输出与 LED 限流”建设中。先解释本页三个电路状态和一次稳定按下，再继续外设主线。</p><p class="next-links"><a href="gpio-button.html">返回互动小课</a> · <a href="../learn/engineering-map.html#stage-01">学习地图 · 第 01 阶段</a></p></section></main><footer>GPIO 按键速查 · 原创内容 · 2026-10-17<br>人工逻辑模型未做硬件验证；按实际板卡与芯片条件验证电气与时序。</footer></div>
+<script id="note-deep-links">
+(() => {
+  const reveal = () => {
+    let id;try{id=decodeURIComponent(window.location.hash.slice(1));}catch{return;}
+    if(!id) return;
+    const target=document.getElementById(id);if(!target) return;
+    let panel=target.closest('details');
+    while(panel) {panel.open=true;panel=panel.parentElement?.closest?.('details')||null;}
+    target.closest('section')?.querySelectorAll?.('details').forEach(detail=>{detail.open=true;});
+    requestAnimationFrame(()=>target.scrollIntoView({block:'start'}));
+  };
+  window.addEventListener('hashchange',reveal);window.addEventListener('pageshow',reveal);reveal();
+})();
+</script>
+<script id="note-print">
+(() => {
+  let previous;
+  window.addEventListener('beforeprint',()=>{
+    if(previous) return;
+    previous=[...document.querySelectorAll('details')].map(panel=>[panel,panel.open]);
+    previous.forEach(([panel])=>{panel.open=true;});
+  });
+  window.addEventListener('afterprint',()=>{previous?.forEach(([panel,open])=>{panel.open=open;});previous=undefined;});
+})();
+</script>
+<script id="reference-reader">(()=>{document.getElementById('print-reference').onclick=()=>window.print();document.getElementById('expand-notes').onclick=()=>document.querySelectorAll('details').forEach(panel=>{panel.open=true;});})();</script>
+</body></html>

@@ -9,10 +9,15 @@ const notes = [
   { n: '06', category: 'MCU 基础与外设', title: 'Cortex-M CPU 核心寄存器', desc: '点选 R0–PC、xPSR、屏蔽寄存器与 CONTROL，理解调用约定、异常和栈选择。', path: '/mcu/cortex-m-cpu-registers.html', detail: 'Armv7-M · Cortex-M3/M4 · 交互示意模型' },
   { n: '07', category: 'MCU 基础与外设', title: 'HardFault 栈回溯分析', desc: '从 EXC_RETURN 选择异常入口栈，核对硬件帧偏移、stacked PC 与实际固件证据。', path: '/mcu/hardfault-stack-trace.html', detail: 'Armv7-M · 基本帧与可选 M4F 扩展帧' },
   { n: '08', category: '调试与实战', title: 'EasyLogger：从第一行日志到可维护的固件诊断', desc: '分清格式化、日志策略与传输，动手比较过滤、RTT 缓冲、ISR 优先级和 UART 带宽。', path: '/debug/easylogger.html', detail: 'STM32 / GD32 Cortex-M · FreeRTOS · J-Link · 四个教学实验' },
+  { n: '09', category: 'MCU 基础与外设', title: 'MCU OTA：从分区到回滚', desc: '逐步观察六类更新方案的分区与断电逻辑，区分安装恢复、试运行回滚和独立救援。', path: '/mcu/mcu-ota.html', detail: '六类架构 · 断电与失败模拟 · 容量估算' },
+  { n: '10', category: '学习中心', title: 'MCU 工程学习地图', desc: '沿八阶段完善可升级的数据采集终端，按证据使用三路资料，找到现有笔记的学习位置。', path: '/learn/engineering-map.html', detail: '八阶段主线 · 三路资料对照 · 验收与建设状态' },
+  { n: '11', category: '学习中心', title: '按下按钮，为什么读到 0？', desc: '先预测上拉与按键电路，再用人工时间轴理解抖动、稳定过滤与一次可靠按下。', path: '/learn/gpio-button.html', detail: '原创 GPIO 小课 · 先预测再解释 · 人工抖动示例' },
+  { n: '12', category: '学习中心', title: 'GPIO 按键：可打印速查', desc: '回看电平、悬空和连续稳定过滤规则，用回忆与迁移题检验理解。', path: '/learn/gpio-button-reference.html', detail: '电路状态 · 11 ms 固定样例 · 上板验证清单' },
 ]
 const categories = [
+  { title: '学习中心', path: '/learn/', count: '3 篇' },
   { title: 'C 语言与内存', path: '/c-memory/', count: '1 篇' },
-  { title: 'MCU 基础与外设', path: '/mcu/', count: '3 篇' },
+  { title: 'MCU 基础与外设', path: '/mcu/', count: '4 篇' },
   { title: '工程工具与协作', path: '/tools/', count: '3 篇' },
   { title: '调试与实战', path: '/debug/', count: '1 篇' }
 ]
@@ -25,13 +30,14 @@ const categories = [
       <h1 id="notebook-title">嵌入式技术笔记</h1>
       <p class="intro-description">从内存到时钟，从原理到工程。<br>动手操作模型，再读懂背后的原理、代码与适用边界。</p>
       <div class="intro-actions">
-        <a class="notebook-button primary" href="#notes">浏览 8 篇笔记 <span aria-hidden="true">↓</span></a>
+        <a class="notebook-button primary" href="#notes">浏览 12 篇笔记 <span aria-hidden="true">↓</span></a>
+        <a class="intro-route" :href="withBase('/learn/')">从工程学习地图开始 <svg class="ui-arrow" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-5-5 5 5-5 5"/></svg></a>
         <a class="intro-route" :href="withBase('/guide/memory-roadmap.html')">从 MCU 内存学习路线开始 <svg class="ui-arrow" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-5-5 5 5-5 5"/></svg></a>
       </div>
     </section>
 
     <section class="home-section" aria-labelledby="notes">
-      <div class="home-section-heading"><h2 id="notes">交互笔记</h2><span>8 篇 · 4 个主题</span></div>
+      <div class="home-section-heading"><h2 id="notes">交互笔记</h2><span>12 篇 · 5 个主题</span></div>
       <div class="note-list">
         <article v-for="note in notes" :key="note.path" class="note-entry">
           <span class="note-number" aria-hidden="true">{{ note.n }}</span>

@@ -30,11 +30,16 @@ export default defineConfig({
     siteTitle: '嵌入式技术笔记',
     nav: [
       { text: '首页', link: '/' },
+      { text: '学习中心', link: '/learn/' },
       { text: '交互笔记', items: [
+        { text: 'MCU 工程学习地图', link: '/learn/engineering-map.html' },
+        { text: '按下按钮，为什么读到 0？', link: '/learn/gpio-button.html' },
+        { text: 'GPIO 按键：可打印速查', link: '/learn/gpio-button-reference.html' },
         { text: 'MCU 堆栈原理与监测', link: '/c-memory/heap-stack.html' },
         { text: 'MCU 晶振与主频：从 8 MHz 到 168 MHz', link: '/mcu/crystal-pll-clock.html' },
         { text: 'Cortex-M CPU 核心寄存器', link: '/mcu/cortex-m-cpu-registers.html' },
         { text: 'HardFault 栈回溯分析', link: '/mcu/hardfault-stack-trace.html' },
+        { text: 'MCU OTA：从分区到回滚', link: '/mcu/mcu-ota.html' },
         { text: 'EasyLogger：从第一行日志到可维护的固件诊断', link: '/debug/easylogger.html' },
         { text: 'Beads：任务依赖与就绪队列', link: '/tools/beads.html' },
         { text: 'Plane：项目协作与工作流', link: '/tools/plane.html' },
@@ -42,6 +47,7 @@ export default defineConfig({
       ] },
       { text: '学习路线', link: '/guide/memory-roadmap.html' },
       { text: '笔记分类', items: [
+        { text: '学习中心', link: '/learn/' },
         { text: 'C 语言与内存', link: '/c-memory/' },
         { text: '工程工具与协作', link: '/tools/' },
         { text: 'MCU 基础与外设', link: '/mcu/' },
@@ -50,6 +56,12 @@ export default defineConfig({
       ]}
     ],
     sidebar: [
+      { text: '学习中心', items: [
+        { text: '分类概览', link: '/learn/' },
+        { text: 'MCU 工程学习地图', link: '/learn/engineering-map.html' },
+        { text: '按下按钮，为什么读到 0？', link: '/learn/gpio-button.html' },
+        { text: 'GPIO 按键：可打印速查', link: '/learn/gpio-button-reference.html' },
+      ]},
       { text: '从这里开始', items: [
         { text: 'MCU 内存学习路线', link: '/guide/memory-roadmap.html' }
       ]},
@@ -68,6 +80,7 @@ export default defineConfig({
         { text: 'MCU 晶振与主频', link: '/mcu/crystal-pll-clock.html' },
         { text: 'Cortex-M CPU 核心寄存器', link: '/mcu/cortex-m-cpu-registers.html' },
         { text: 'HardFault 栈回溯分析', link: '/mcu/hardfault-stack-trace.html' },
+        { text: 'MCU OTA：从分区到回滚', link: '/mcu/mcu-ota.html' },
       ]},
       { text: '调试与实战', items: [
         { text: '分类总览', link: '/debug/' },
@@ -131,4 +144,3 @@ export default defineConfig({
     }
   }
 })
-

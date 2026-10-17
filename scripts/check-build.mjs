@@ -51,7 +51,7 @@ const html=await readFile(path.join(root,'index.html'),'utf8')
 assert.ok(html.includes('嵌入式技术笔记'))
 assert.ok(html.includes(base+'c-memory/heap-stack.html'))
 assert.ok(html.includes('data-no-router'))
-assert.ok(html.includes('8 篇') && html.includes('4 个主题'), 'Home must describe eight articles across four active categories')
+assert.ok(html.includes('12 篇') && html.includes('5 个主题'), 'Home must describe twelve entries across five active categories')
 const debugCategory = await readFile(path.join(root, 'debug/index.html'), 'utf8')
 assert.ok(debugCategory.includes(base + 'debug/easylogger.html'), 'Debug category must link to the full EasyLogger reader')
 assert.ok(!debugCategory.includes('这个分类尚未发布独立文章'), 'Debug must be an active category')
@@ -96,6 +96,10 @@ const queries = {
   'mcu/crystal-pll-clock.html': ['晶体', '晶振', 'PLL', 'VCO', 'HSE', 'SYSCLK', '等待周期', '168'],
   'mcu/cortex-m-cpu-registers.html': ['R13', 'BASEPRI', 'CONTROL', 'EXC_RETURN'],
   'mcu/hardfault-stack-trace.html': ['HardFault', 'EXC_RETURN', 'CFSR', 'MMFAR', 'BFAR', 'LSPACT', 'STKERR', 'Fault Reports'],
+  'learn/engineering-map.html': ['先修', 'F103', 'F407', '数据采集', '建设中'],
+  'learn/gpio-button.html': ['GPIO', '上拉', '悬空', '抖动', '11'],
+  'learn/gpio-button-reference.html': ['GPIO', '速查', '稳定', '11'],
+  'mcu/mcu-ota.html': ['OTA', 'Bootloader', '暂存', 'Swap', 'A/B', '回滚', 'KiB', 'CRC'],
   'debug/easylogger.html': ['EasyLogger', 'Mutex', 'SEGGER_RTT_SetFlagsUpBuffer', 'NOINIT', 'MicroLIB', 'pendingWrite', 'LeakSanitizer']
 }
 for (const [article, terms] of Object.entries(queries)) {
@@ -130,6 +134,15 @@ for (const [query, anchor] of Object.entries(hardFaultSearchTargets)) {
   assert.ok(results.some(result => result.id.startsWith(base + 'mcu/hardfault-stack-trace.html#' + anchor)), 'Search result must open the matching HardFault section: ' + query + ' -> ' + anchor)
 }
 assert.equal(search.search('zzzxxyyunknownquery').length, 0)
+for (const [query, anchor] of Object.entries({
+  'KiB': 'capacity',
+  'CRC': 'image-trust',
+  '防降级': 'image-trust',
+  '差分': 'package-formats',
+  'RAM-load': 'terminology'
+})) {
+  assert.ok(search.search(query).some(result => result.id.startsWith(base + 'mcu/mcu-ota.html#' + anchor)), 'OTA search must open the matching section: ' + query)
+}
 const easyLoggerSearchTargets = {
   '编译删除': 'filter-lab',
   'LOG_LVL': 'filter-lab',
@@ -148,4 +161,3 @@ for (const [query, anchor] of Object.entries(easyLoggerSearchTargets)) {
 }
 for (const excluded of ['C51', '8051', 'ML51']) assert.equal(search.search(excluded).length, 0, 'Excluded architecture search result: ' + excluded)
 console.log('PASS: generated Chinese/English/API full-text search, client tokenizer serialization and empty-result query.')
-
