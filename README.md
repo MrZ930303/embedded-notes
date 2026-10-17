@@ -2,7 +2,7 @@
 
 使用 VitePress 1.6.4 稳定版构建的中文技术笔记站。依赖版本由 package-lock.json 锁定，适合部署到 GitHub Pages。
 
-当前内容：九篇技术交互笔记（MCU 堆栈、Beads、Plane、Matt Pocock Skills、MCU 晶振与主频、Cortex-M CPU 核心寄存器、HardFault 栈回溯分析、EasyLogger、MCU OTA），另有学习地图与三路资料对照、GPIO 输入和 LED 输出、位与寄存器、C 对象与边界、单上下文有界 FIFO 五章及各自速查，共十一份学习中心资料，以及一条 MCU 内存学习路线。首页按五个正式主题帮助你找到笔记，进入笔记后直接操作模型、阅读图解并展开完整正文。FreeRTOS 独立分类仍为规划中。
+当前内容：九篇技术交互笔记（MCU 堆栈、Beads、Plane、Matt Pocock Skills、MCU 晶振与主频、Cortex-M CPU 核心寄存器、HardFault 栈回溯分析、EasyLogger、MCU OTA），另有学习地图与三路资料对照、GPIO、C 基础、构建与启动九章及各自速查，共十九份学习中心资料，以及一条 MCU 内存学习路线。首页按五个正式主题帮助你找到笔记，进入笔记后直接操作模型、阅读图解并展开完整正文。FreeRTOS 独立分类仍为规划中。
 
 ## 本地预览（Windows / macOS / Linux）
 
@@ -47,6 +47,18 @@ npm run test:c-foundations -- --compiler cc
 
 该脚本依次检查 bits.c、objects.c、fifo.c 的严格 C11、NDEBUG 测试运行与独立模块编译。它通过已有 mcu-build 的 validate → dry-run → build 路由；可用 --router 指定 build_router.py、--python 指定已有 Python，也支持 CC、MCU_BUILD_ROUTER、PYTHON 环境变量。缺少工具会明确失败，不自行安装。运行证据保存在本地 .scratch/c-foundations/code-evidence/result.json，含编译器身份、源/产物哈希、返回码和日志，不随公开阅读页发布。主机通过不代表目标固件、RTOS 或硬件验证。
 
+## 构建与启动 C 实验
+
+使用已有 GCC 兼容 C11 编译器及对应 GNU nm/objdump 直接运行可选门禁，不改变网站的可移植 npm 检查：
+
+```powershell
+node scripts/test-build-startup-c.mjs --compiler cc --router /path/to/build_router.py --python python
+```
+
+用 `--arm-compiler /path/to/arm-none-eabi-gcc` 启用已安装工具链的人工 ARM 产物与栈对象检查；宿主 `--nm` / `--objdump` 和 ARM `--arm-nm` / `--arm-readelf` / `--arm-objcopy` / `--arm-objdump` 可显式指定，默认从对应编译器推导同目录工具。也支持 CC、MCU_BUILD_ROUTER、PYTHON、ARM_CC。每次编译、预处理、汇编、链接与探针编译均经 mcu-build validate → dry-run → build。两类真实链接失败保留非零原始状态，绝不执行失败目的地。缺工具明确失败或记为未请求的可选范围，不自动安装。
+
+证据保存到本地 `.scratch/build-startup/integration/c-evidence/run-*`，含源、工具、profile、返回状态、新鲜产物哈希和原始日志；可用 `--output` 指定其他工作区内私有目录。普通/NDEBUG/独立模块、描述符改动后的生成身份、阶段产物、人工 ARM ELF/bin/map 与编译器 `.su` 各自记录。ARM 产物不可启动且从未执行，栈报告是所选编译器/参数的逐函数结果，均不证明目标启动、全程序最坏栈、硬件或发布。06—09 范围见 curriculum/stage02-evidence.md。
+
 ## 新增笔记
 
 1. 把 templates/note.md 复制到对应分类，例如 docs/c-memory/pointers.md。
@@ -56,7 +68,7 @@ npm run test:c-foundations -- --compiler cc
 5. 运行 npm run check，然后在浏览器检查文章、搜索、移动端布局与交互。
 6. 审阅改动后提交并推送；main 分支的推送会触发自动发布。
 
-重要：docs/public/demos/ 下的二十份 HTML 是主阅读体验的完整源码。scripts/interactive-note.mjs 注册源码和主路径；VitePress 的 transformHtml 构建钩子原样输出到 c-memory/heap-stack.html、tools/、mcu/ 与 debug/easylogger.html 等主阅读路径，开发服务提供相同 HTML。demos/ 路径保留兼容访问。docs/c-memory/heap-stack.md、docs/tools/、docs/mcu/、docs/learn/ 与 docs/debug/easylogger.md 只提供全文搜索输入，不作为公开文档式阅读页。修改正文、代码或限定条件后必须同步 HTML 与搜索输入；新增搜索标题还需为 HTML 中对应章节添加相同 id。构建测试会核对搜索结果锚点。
+重要：docs/public/demos/ 下的二十八份 HTML 是主阅读体验的完整源码。scripts/interactive-note.mjs 注册源码和主路径；VitePress 的 transformHtml 构建钩子原样输出到 c-memory/heap-stack.html、tools/、mcu/ 与 debug/easylogger.html 等主阅读路径，开发服务提供相同 HTML。demos/ 路径保留兼容访问。docs/c-memory/heap-stack.md、docs/tools/、docs/mcu/、docs/learn/ 与 docs/debug/easylogger.md 只提供全文搜索输入，不作为公开文档式阅读页。修改正文、代码或限定条件后必须同步 HTML 与搜索输入；新增搜索标题还需为 HTML 中对应章节添加相同 id。构建测试会核对搜索结果锚点。
 
 文章内链接到另一篇文章时，使用相对 Markdown 路径，如 ./heap-stack.md。主题组件中的站内链接使用 VitePress 的 withBase()。主交互笔记使用 data-no-router 和主题路由守卫进行浏览器原生导航，搜索及后退/前进也不会恢复成文档版。交互页中的搜索入口返回知识库并打开本地搜索。
 
@@ -102,14 +114,15 @@ SITE_BASE=/ npm run docs:preview
 - docs/.vitepress/theme/：首页组件与主题样式
 - docs/c-memory/：分类索引，以及交互笔记的全文搜索输入
 - docs/tools/：Beads、Plane、Matt Pocock Skills 分类与全文搜索输入
-- docs/learn/：学习地图、GPIO 与 C 基础五章、打印速查的分类与全文搜索输入
+- docs/learn/：学习地图、GPIO、C 基础与构建启动九章、打印速查的分类与全文搜索输入
 - docs/guide/：学习路线
 - docs/mcu/：时钟、寄存器、HardFault 与 OTA 文章的分类和全文搜索输入
 - docs/debug/：调试与实战分类、EasyLogger 全文搜索输入
 - docs/freertos/：规划中分类
-- docs/public/demos/：二十份完整 HTML 阅读页源码，样式、模型与正文完整内嵌；demos/ 保留兼容访问
-- docs/public/examples/：按键与三个 C 基础实验的可下载 C11 源码和复现说明
+- docs/public/demos/：二十八份完整 HTML 阅读页源码，样式、模型与正文完整内嵌；demos/ 保留兼容访问
+- docs/public/examples/：按键、三个 C 基础实验及构建启动四章的可下载 C11 源码、生成器、人工链接布局与复现说明
 - scripts/test-c-foundations-c.mjs：独立主机 C 门禁，使用已有 mcu-build custom profile 路由
+- scripts/test-build-startup-c.mjs：构建启动四章的可选统一 C/产物证据门禁，编译、链接和二进制转换均经同一路由
 - scripts/interactive-note.mjs：主阅读 URL 的开发/生产 HTML 输出适配
 - docs/.vitepress/theme/interactive-routing.mjs：点击、搜索与历史导航保护
 - templates/note.md：新笔记模板，不会被发布
@@ -130,7 +143,7 @@ EasyLogger 笔记的过滤、RTT、ISR 优先级和 UART 带宽均为页面内�
 
 MCU OTA 笔记比较六类典型更新路径。双槽不等于可回滚，外部暂存不等于保留旧版，双 Bank 不等于 A/B；单槽必须保留独立救援入口。容量计算和失败模拟只说明架构条件，不执行设备操作，也不代表硬件断电测试。
 
-学习中心现有八阶段地图（含三路资料范围对照）、01—05 五章与各自速查，和九篇专题笔记合计二十份完整阅读页，仍为五个正式主题。03—05 的主机 C 与 JavaScript 检查分开；单上下文 FIFO 不可共享给任务、ISR 或 DMA。下一批 06—09 构建与启动待写，定时器在 10；32 单元与八阶段的完整状态见 curriculum/coverage.md。本地检查、审查、发布和硬件分别记录，不推定整个阶段或课程完成。按键电路与抖动时间轴是人工教学模型，5 ms 不是通用参数，也没有经过硬件验证。站点不保存个人作答或学习记录。
+学习中心现有八阶段地图（含三路资料范围对照）、01—09 九章与各自速查，和九篇专题笔记合计二十八份完整阅读页，仍为五个正式主题。03—05 的主机 C 与 JavaScript 检查分开；单上下文 FIFO 不可共享给任务、ISR 或 DMA。03—05 已有基线78723d5与CI/Pages39058801087及父任务线上核验，06—09 构建与启动为本地候选。下一阶段 10—14 待建设，定时器在 10；32 单元与八阶段的完整状态见 curriculum/coverage.md。本地检查、审查、发布和硬件分别记录，不推定整个阶段或课程完成。按键电路与抖动时间轴是人工教学模型，5 ms 不是通用参数，也没有经过硬件验证。站点不保存个人作答或学习记录。
 
 ## 依赖与维护
 

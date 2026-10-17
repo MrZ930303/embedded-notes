@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="RAM预留包络、活跃生命线、连续碎片与UNKNOWN栈边界"><link rel="icon" href="../favicon.svg" type="image/svg+xml"><title>内存预算速查 — 嵌入式工程笔记</title><style>
+:root{--paper:#fafbf8;--ink:#21382e;--muted:#526359;--line:#dce3d7;--green:#22664f;--pale:#eef2e9;--lime:#d5e7b3;--dark:#193e33;--mono:Consolas,monospace}*{box-sizing:border-box}html{scroll-padding-top:120px}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.9 system-ui,"Microsoft YaHei",sans-serif}a{color:var(--green);text-underline-offset:4px}p{margin:0 0 16px}.wrap{width:min(1120px,calc(100% - 64px));margin:auto}.skip{position:absolute;top:-100px;z-index:20;background:white;padding:10px}.skip:focus{top:5px}.topbar{position:sticky;top:0;border-bottom:1px solid var(--line)}.brand{text-decoration:none}.hero{display:grid;grid-template-columns:1.12fr 1fr;gap:48px;padding:48px 0 40px;border-bottom:1px solid var(--line)}h1{font-size:40px;line-height:1.35}h2{font-size:28px;line-height:1.5;margin:0 0 18px}h3{font-size:21px;line-height:1.5;margin:28px 0 12px}.tag,.small{color:var(--muted);font-size:13px}.hero-card,.lab,.callout{border:1px solid var(--line);border-radius:12px;padding:24px;background:var(--pale)}.hero-card strong{font-size:26px}.content-section{padding:48px 0;border-bottom:1px solid var(--line)}.section-nav,.controls,.notes-toolbar,.next-links{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.field{display:grid;gap:6px;min-width:0}.field.full{grid-column:1/-1}button,input,select{font:inherit;color:inherit}input,select{width:100%;min-width:0;min-height:44px;padding:8px;border:1px solid #aabaad;border-radius:6px;background:white}.btn{min-height:44px;min-width:44px;padding:9px 14px;background:white;border:1px solid #aabaad;border-radius:6px;cursor:pointer}.btn.primary{background:var(--dark);color:white}.btn:disabled{opacity:.55;cursor:default}.feedback,.applied-result{padding:16px;border:1px solid var(--line);border-radius:8px;background:#fffefb;margin:16px 0;overflow-wrap:anywhere}.pending{color:#7c581d}.lab{background:#fffefb}.lab>p{max-width:44rem}details{margin:16px 0;padding:16px;border:1px solid var(--line);border-radius:8px;background:#fffefb}summary{min-height:44px;cursor:pointer;font-weight:650}details p{margin-top:12px}.table-wrap{max-width:100%;overflow:auto}table{border-collapse:collapse;width:100%;font-size:14px;text-align:left}th,td{padding:10px;border-bottom:1px solid var(--line);vertical-align:top;white-space:nowrap}th{background:var(--pale)}figure{margin:20px 0;border:1px solid var(--line);border-radius:10px;padding:14px;background:white}svg{display:block;width:100%;height:auto}svg text{font:18px system-ui,"Microsoft YaHei",sans-serif;fill:#21382e}figcaption{font-size:13px;color:var(--muted);margin-top:12px}pre{max-width:100%;overflow:auto;padding:18px;background:var(--pale);font:14px/1.7 var(--mono);border-radius:8px}code{font-family:var(--mono)}li{margin-bottom:8px}.source-list a{overflow-wrap:anywhere}footer{padding:28px 0;font-size:13px;color:var(--muted)}:focus-visible{outline:3px solid #ad751d;outline-offset:4px}.exercise{padding:14px 0;border-bottom:1px solid var(--line)}.exercise h3{margin-top:14px}.exercise-answer{margin-bottom:20px}
+@media(max-width:760px){.hero,.fields{grid-template-columns:1fr}.hero{gap:24px}.field.full{grid-column:auto}.wrap{width:calc(100% - 40px)}.lab{padding:16px}}@media(max-width:370px){.lab{padding:12px}.btn{padding-inline:10px}svg text{font-size:20px}}
+@media print{body{background:white;color:#15251b;font-size:11pt}.wrap{width:100%;max-width:none}.topbar,.skip,.section-nav,.controls,.fields,.notes-toolbar,.next-links{display:none!important}.hero{display:block;padding:0 0 14px}.hero-card{display:none}.content-section{padding:18px 0}h1{font-size:25pt}h2{font-size:17pt}h3{font-size:13pt}.lab{padding:12px}pre{white-space:pre-wrap;overflow:visible;font-size:9pt}table{font-size:10pt}.table-wrap{overflow:visible}th,td{white-space:normal;padding:6px}a{color:inherit}details{break-inside:auto}.exercise{break-inside:avoid}}
+
+.notes-article .lab :focus-visible{outline-color:#8b5917}.content-section p,.content-section li{max-width:48rem;overflow-wrap:anywhere}.api{overflow-wrap:anywhere}main,main>*{min-width:0}pre{overscroll-behavior-x:contain}.legend{font-size:14px}.trace{font-variant-numeric:tabular-nums}.diagram-grid{display:grid;grid-template-columns:1fr;gap:8px}.diagram-row{border:1px solid #aabaad;padding:12px;border-radius:6px;background:#eef2e9}.diagram-row strong{display:block}.status-box{border-left:4px solid #22664f;padding:16px;background:#eef2e9}.trace-list{max-height:26rem;overflow:auto}.fields legend{font-size:15px}.applied-result[hidden]{display:none}
+@media print{body.exercise-print main>.hero,body.exercise-print main>.section-nav,body.exercise-print main>.content-section:not(#memory-practice),body.exercise-print .practice-intro,body.exercise-print footer{display:none!important}body.exercise-print .exercise-answer{display:none!important}body.exercise-print .applied-result,body.exercise-print .feedback{display:none!important}body.exercise-print #memory-practice{border:0;padding:0}.trace-list{max-height:none;overflow:visible}}
+</style><style>
+/* Shared reading layer: keep this block identical in all standalone notes. */
+@media screen {
+:root{--paper:#fafbf8;--ink:#21382e;--muted:#526359;--line:#dce3d7;--green:#22664f;--pale:#eef2e9;--lime:#d5e7b3;--dark:#193e33}
+.notes-article{font-size:16px;line-height:1.9}
+.notes-article .wrap{width:min(1120px,calc(100% - 64px));max-width:none;padding-inline:0;margin-inline:auto}
+.notes-article .topbar{background:#fafbf8f5;z-index:10}
+.notes-article .topbar-inner{height:auto;min-height:68px;display:flex;align-items:center;justify-content:space-between;gap:24px;padding-block:0}
+.notes-article .brand{display:inline-flex;align-items:center;gap:10px;min-height:44px;margin:0;font-size:15px;font-weight:700;letter-spacing:0;color:var(--ink)}
+.notes-article .brandmark{display:grid;place-items:center;width:30px;height:30px;margin:0;border-radius:6px;background:var(--dark);color:#e0edcb;font:19px/1 var(--mono)}
+.notes-article .topbar nav{display:flex;align-items:center;gap:18px;margin:0;padding:0;width:auto;flex-wrap:nowrap}
+.notes-article .topbar nav a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:4px 3px;font-size:14px;font-weight:500;color:var(--muted);text-decoration:none;border-radius:4px}
+.notes-article .topbar nav a:hover,.notes-article .topbar nav a[aria-current="location"]{color:var(--green);background:var(--pale)}
+.notes-article .topbar nav a[aria-current="location"]{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:6px}
+.notes-article .hero{padding-block:48px 40px;gap:48px;grid-template-columns:1.12fr 1fr}
+.notes-article .hero h1{font-size:clamp(32px,3.6vw,44px);line-height:1.35;letter-spacing:-.035em;text-wrap:balance}
+.notes-article .hero h1 span{font-size:.78em;line-height:1.5;margin-top:8px}
+.notes-article .hero-intro{font-size:17px;line-height:1.9;max-width:32rem;margin-block:20px}
+.notes-article .hero>.hero-card,.notes-article .hero-flow,.notes-article .intro-map{box-shadow:none;border-radius:12px}
+.notes-article .hero .tag{font-size:12px;border-radius:4px;padding:4px 9px;margin:0 0 16px;line-height:1.7}
+.notes-article .hero>.hero-figure .map{transform:none;box-shadow:none}
+.notes-article .hero>div>.eyebrow{display:none}
+.notes-article .hero>.hero-card>.eyebrow,.notes-article .hero>.hero-flow>.eyebrow{display:block;font-size:12px;line-height:1.7}
+.notes-article .hero-links{gap:12px 22px;margin-top:24px}
+.notes-article .hero .text-link{display:inline-flex;align-items:center;min-height:44px;font-size:14px}
+.notes-article .hero figcaption,.notes-article .hero-figure figcaption,.notes-article .date-note{font-size:13px;line-height:1.8}
+.notes-article .hero-card p:last-child,.notes-article .hero-flow .small,.notes-article .intro-map>p:last-child{font-size:14px;line-height:1.85}
+.notes-article .hero-numbers span,.notes-article .hero-step small{font-size:13px}
+.notes-article h2{font-size:28px;line-height:1.5;text-wrap:balance}
+.notes-article .section-head p{font-size:15px;line-height:1.85}
+.notes-article .content-section,.notes-article .article-section{padding-block:52px}
+.notes-article .content-section+.content-section{padding-top:48px}
+.notes-article .note-section{scroll-margin-top:100px}
+.notes-article .note-section>summary{min-height:56px;font-size:18px;line-height:1.6}
+.notes-article .note-section>summary h2{font-size:20px;line-height:1.6}
+.notes-article .note-body{max-width:none;font-size:16px;line-height:1.95}
+.notes-article .note-body p,.notes-article .note-body li{font-size:16px;line-height:1.95}
+.notes-article .note-body>p,.notes-article .note-body>ul,.notes-article .note-body>ol,.notes-article .article-section>p,.notes-article .article-section>ul,.notes-article .article-section>ol{max-width:44rem;font-size:16px;line-height:1.95}
+.notes-article .note-body h3{font-size:21px;margin-block:28px 12px;scroll-margin-top:100px}
+.notes-article .note-body pre,.notes-article pre{font-size:14px;line-height:1.8}
+.notes-article .note-body table,.notes-article table{font-size:14px;line-height:1.8}
+.notes-article .note-body th,.notes-article .note-body td{font-size:14px;line-height:1.8}
+.notes-article .article-section>h2{font-size:28px}
+.notes-article .concept p,.notes-article .subnote p,.notes-article .risk p,.notes-article .monitor-step p,.notes-article .monitor-step ul,.notes-article .step-card p{font-size:15px;line-height:1.85}
+.notes-article .callout,.notes-article .model-scope,.notes-article .demo-disclaimer,.notes-article .version-card,.notes-article .version-card p{font-size:14px;line-height:1.85}
+.notes-article .source-list a,.notes-article .source-list span,.notes-article #plane-references~ul{font-size:14px;line-height:1.85}
+.notes-article #plane-overview~ul{max-width:none}
+.notes-article #plane-overview~ul li{font-size:15px;line-height:1.85}
+.notes-article .note-body .source-list{max-width:none}
+.notes-article .small,.notes-article .lab-note,.notes-article .lab-foot,.notes-article .lab-footer,.notes-article .clock-lab-foot,.notes-article .print-hint{font-size:13px;line-height:1.85}
+.notes-article .principle,.notes-article .principles span{font-size:13px;line-height:1.8}
+.notes-article .principles strong{font-size:15px}
+.notes-article .memory-motto,.notes-article .motto{background:var(--pale);color:var(--ink);border-radius:8px;text-align:left;padding:24px;margin-top:30px}
+.notes-article .memory-motto span,.notes-article .motto small{color:var(--muted);font-size:14px}
+.notes-article button,.notes-article .btn,.notes-article .notes-toolbar button{min-height:44px;min-width:44px;font-size:14px}
+.notes-article button,.notes-article .btn,.notes-article .topbar a,.notes-article summary,.notes-article .section-nav a,.notes-article .toc a{transition:background .18s,color .18s,border-color .18s,transform .18s}
+.notes-article button:enabled:hover{filter:brightness(1.06)}
+.notes-article button:enabled:active,.notes-article .btn:active{transform:translateY(1px)}
+.notes-article button:disabled{opacity:.58}
+.notes-article .graph-node:disabled,.notes-article .work-card:disabled{opacity:1}
+.notes-article :focus-visible{outline:3px solid #ad751d;outline-offset:4px}
+.notes-article .lab :focus-visible,.notes-article .clock-lab :focus-visible{outline-color:#f0cc80}
+.notes-article .toc a,.notes-article .section-nav a{display:inline-flex;align-items:center;min-height:44px;border-radius:5px;font-size:14px;padding:8px 12px}
+.notes-article .checklist label,.notes-article .clock-check{min-height:44px;font-size:14px;line-height:1.8}
+.notes-article .clock-field label,.notes-article .clock-controls small,.notes-article .clock-node small,.notes-article .clock-node span{font-size:13px;line-height:1.6}
+.notes-article .clock-current p,.notes-article .clock-candidate,.notes-article .clock-warnings{font-size:14px;line-height:1.8}
+.notes-article .clock-node strong,.notes-article .hero-numbers strong,.notes-article .metric strong{font-variant-numeric:tabular-nums}
+.notes-article .task-option strong,.notes-article .work-card strong{font-size:14px;line-height:1.65}
+.notes-article .task-option span,.notes-article .scope-buttons small,.notes-article .card-id,.notes-article .card-project,.notes-article .card-status,.notes-article .card-tags>span,.notes-article .lane-en{font-size:12px;line-height:1.6}
+.notes-article .scope-explanation,.notes-article .detail-copy>p,.notes-article .detail .acceptance,.notes-article .state-controls>p,.notes-article .board-heading p{font-size:14px;line-height:1.8}
+.notes-article .lane h4{font-size:14px;line-height:1.5;flex-wrap:wrap}
+.notes-article .lane-count{font-size:12px}
+.notes-article .lab .task-option{min-height:96px}
+.notes-article .skills-step-card dd,.notes-article .route-pane p,.notes-article .chooser-intro,.notes-article .permissions-pane>p{font-size:14px;line-height:1.85}
+.notes-article .skills-step-card dt,.notes-article .step-counter,.notes-article .permissions-pane small,.notes-article .permission-list span,.notes-article .graph-legend,.notes-article .graph-arrow-note{font-size:13px;line-height:1.8}
+.notes-article .ui-arrow{width:18px;height:18px;display:inline-block;vertical-align:middle;flex-shrink:0}
+.notes-article .selection-jump,.notes-article .choice-result{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;padding:10px 12px;border-radius:5px;font-size:13px;font-weight:600;line-height:1.6;text-decoration:none}
+.notes-article .selection-jump{background:#22664f;color:#fff}
+.notes-article .choice-result{color:#e2efca;border:1px solid #829873;background:#173e33;margin-top:7px}
+.notes-article .task-choice{min-width:0}
+.notes-article .task-choice .task-option{width:100%}
+.notes-article .task-option[aria-pressed="false"]+.choice-result{display:none}
+.notes-article #selected-skill,.notes-article #plane-selected-title{scroll-margin-top:128px}
+.notes-article footer,.notes-article .footer{font-size:13px;line-height:1.8}
+.notes-article footer a,.notes-article .footer a{display:inline-flex;align-items:center;min-height:44px}
+.notes-article .note-body p,.notes-article .hero-intro,.notes-article .article-section>p{text-wrap:pretty}
+@media(max-width:760px){
+.notes-article .wrap{width:calc(100% - 40px)}
+.notes-article .topbar-inner{flex-wrap:wrap;gap:0;padding-top:6px}
+.notes-article .brand{min-height:44px;font-size:15px}
+.notes-article .topbar nav{width:100%;gap:12px;overflow-x:auto;flex-wrap:nowrap;padding:0 0 4px;scrollbar-width:thin}
+.notes-article .topbar nav a{font-size:13px;flex-shrink:0;padding-inline:2px}
+.notes-article .hero{grid-template-columns:1fr;gap:28px;padding-block:32px}
+.notes-article .hero h1{font-size:32px;line-height:1.4}
+.notes-article .hero-intro{font-size:16px;max-width:none;margin-block:16px}
+.notes-article .hero-figure{max-width:500px}
+.notes-article .hero .tag{margin-bottom:12px}
+.notes-article .content-section,.notes-article .article-section{padding-block:36px}
+.notes-article .content-section+.content-section{padding-top:36px}
+.notes-article h2,.notes-article .article-section>h2{font-size:24px}
+.notes-article .section-head p{font-size:15px}
+.notes-article .note-section>summary{font-size:17px}
+.notes-article .note-section>summary h2{font-size:18px}
+.notes-article .note-body p,.notes-article .note-body li{font-size:16px}
+.notes-article .note-body pre,.notes-article pre{font-size:13px}
+.notes-article .note-body th,.notes-article .note-body td{font-size:14px}
+.notes-article .principles{grid-template-columns:1fr;gap:14px}
+.notes-article .principles strong{display:inline;margin-right:8px}
+.notes-article .principles span{display:inline}
+.notes-article .task-options{grid-template-columns:1fr 1fr;align-items:start}.notes-article .lab .task-option{min-height:76px;padding:12px}
+.notes-article .board{grid-template-columns:1fr 1fr}
+.notes-article .lane:last-child .lane-cards{display:flex}
+.notes-article .lane-cards{min-height:0}
+.notes-article .lane{padding:14px}
+.notes-article .lane-en{margin-bottom:10px}
+.notes-article .work-card{padding:14px}
+.notes-article .card-tags{gap:6px}
+.notes-article .lab-top{flex-wrap:wrap}
+.notes-article .lab-top .tag{white-space:normal}
+.notes-article .note-section,.notes-article .note-body h3,.notes-article .article-section,.notes-article .article-section>h3{scroll-margin-top:124px}
+}
+@media(max-width:370px){.notes-article .task-options,.notes-article .board{grid-template-columns:1fr}.notes-article .hero h1{font-size:30px}.notes-article .topbar nav{gap:8px}}
+}
+@media(prefers-reduced-motion:reduce){.notes-article *,.notes-article *::before,.notes-article *::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+</style><style>.notes-article .lab :focus-visible{outline-color:#8b5917}</style></head><body class="notes-article"><a class="skip" href="#main">跳到正文</a><div><header class="topbar"><div class="wrap topbar-inner"><a class="brand" href="../"><span class="brandmark" aria-hidden="true">E</span>嵌入式技术笔记</a><nav aria-label="文章导航"><a href="../learn/">返回分类</a><a href="#memory-ref-fixtures">交互实验</a><a href="#memory-ref-contract">完整笔记</a><a href="../?search=1">搜索笔记</a></nav></div></header><main class="wrap" id="main"><header class="hero"><div><p class="tag">阶段02 · 单元08 · 构建与启动</p><h1 id="memory-budget-reference">内存预算速查</h1><p class="hero-intro">预留只算一次，峰值按生命期，栈按最大可达路径。</p><p class="small">有限工作负载 · 原创C11 · 本地候选 · 硬件未验证</p></div><aside class="hero-card"><strong>先圈容量，再求同时需求</strong><p>包络能放下、arena能容纳、路径边界齐全，是三个需要分别回答的问题。</p></aside></header><div class="content-section" id="memory-ref-contract" role="region" aria-labelledby="memory-ref-contract-title"><h2 id="memory-ref-contract-title">先读条件，再用公式</h2><p>本页压缩单元08的完整推导。任务是采集终端的RAM预算；单上下文、有限声明工作负载、真实且不重叠的C对象。布局与生命周期条件不能从公式中删去。text/rodata常驻Flash；data可同时有Flash初值LMA及RAM运行VMA；BSS占RAM零填充。map只证明选定链接的放置，不证明动态峰值、DMA可达或最坏调用路径。</p><p>包络=data+BSS+heap预留+stack预留+guard；各区不重叠，对齐/填充另有归属。另比heap live peak≤heap reservation、stack bounded demand≤stack reservation，不能重复加live，也不能自动跨arena借空闲。</p><p>FITS包括等于；EXCEEDS表示新数字超容量。INVALID/OVERFLOW/UNKNOWN保持旧数值报告。heap只有FITS提交state+report，其EXCEEDS也保持旧值。NULL检查不能验证伪造/悬空指针、虚假跨度或别名；heap仅允许init/step建立有效表示。</p></div><div class="content-section" id="memory-ref-fixtures" role="region" aria-labelledby="memory-ref-fixtures-title"><h2 id="memory-ref-fixtures-title">可独立复算的固定夹具</h2><div class="table-wrap" role="region" tabindex="0" aria-label="数字均为教学声明，非真实地址/硬件帧"><table><caption>数字均为教学声明，非真实地址/硬件帧</caption><thead><tr><th scope="col">夹具</th><th scope="col">独立结论</th></tr></thead><tbody><tr><td>1024容量=128data+256BSS+256heap+256stack+128guard</td><td>FITS，unreserved0；guard129→1025、EXCEEDS1</td></tr><tr><td>heap128、overhead0、alignment1，A/B/C/D各32；释放A/C</td><td>live64、free64、largest32、peak128；连续E48拒绝</td></tr><tr><td>再释放B，再分配E48</td><td>largest96后成功；live80/free48/largest48/peak128</td></tr><tr><td>payload5、overhead4、alignment8</td><td>每块span16；两块32</td></tr><tr><td>互斥路径80+64+32与80+48，aggregate IRQ64</td><td>max176+64=240；stack256余16</td></tr><tr><td>路径176，IRQ每层64，2层</td><td>304，超256共48；未知嵌套→UNKNOWN</td></tr></tbody></table></div><p>finite trace：A32→B32→C32→D32→releaseA→releaseC→E48拒绝→releaseB→E48成功→releaseD。生命周期峰值是同时live的最大128，不是成功申请过的累计176。first-fit需连续洞，相邻洞合并、非相邻不合并，不移动活对象；释放终止引用有效期，泄漏与悬空风险仍由调用者避免。</p></div><div class="content-section" id="memory-ref-stack" role="region" aria-labelledby="memory-ref-stack-title"><h2 id="memory-ref-stack-title">路径边界与实际证据</h2><p>max-of-paths先找同时活跃帧；siblings互斥则不相加。声明repetitions乘整路径，IRQ每层完整成本×最大嵌套；都先检查乘法和加法。未给递归次数、未知目标、缺少IRQ边界→UNKNOWN，绝不是安全0。C最多8路径，每路径16帧；无自动调用图分析。</p><p>AAPCS32 2025Q1 §6.2.1.1/.2：SP始终4字节对齐，public interface8字节。PM0214 Rev10 §2.3.7 pp.42–44：基本8-word硬件异常帧32字节，padding/FP扩展依配置与状态，handler软件帧及嵌套另算；图12浮点保存扩展18字=72。PSP被打断保存与Handler MSP成本要分别记账。64只是本章aggregate IRQ假定。</p><p>GCC13.1.0/x86_64，O0/no-inline/no-tail-call/fstack-usage真实host报告leaf48、middle96、root112，均static，不能替代toy80/64/32。GCC10.3/13.1：static固定帧；dynamic,bounded含动态调整上界；dynamic未bounded只给有界部分。逐函数报告缺完整调用/库/IRQ覆盖，水位只说明已执行条件，map只说明放置。可选ARM交叉对象使用GCC10.3.1/Cortex-M4/Thumb/soft-float及相同O0/no-inline/no-tail-call/fstack-usage，报告leaf40/middle64/root80 static；未链接、未执行。默认沙箱先拒绝启动，限定批准执行上下文后经同一router成功；不是工具损坏诊断。本章没有目标运行、水位、硬件或物理打印证明。</p></div><div class="content-section" id="memory-ref-api" role="region" aria-labelledby="memory-ref-api-title"><h2 id="memory-ref-api-title">受检运算与复用</h2><p><a href="../examples/memory-budget/memory_budget.h" download>下载 memory_budget.h</a> · <a href="../examples/memory-budget/memory_budget.c" download>下载 memory_budget.c</a> · <a href="../examples/memory-budget/stack_probe.c" download>下载 stack_probe.c</a> · <a href="../examples/memory-budget/README.txt" download>下载 README.txt</a></p><p>头文件、实现、probe与说明均为本项目原创，无虚构第三方版权/许可。size_t非负；addition先right≤SIZE_MAX−left，multiplication先value≤SIZE_MAX/numerator。memory_scale_ceil检查分母非零及选定中间乘积，再商+非零余数；可约分比值也可能因中间乘积返回OVERFLOW。</p><p>memory_envelope；memory_scale_ceil；memory_stack；memory_heap_init；memory_heap_step完整合同见主章。heap最多8槽、payload>0、alignment非零2的幂；span=round_up(payload+overhead,alignment)，元数据在fictional arena外。模块独立编译不定义MEMORY_BUDGET_TEST，测试定义该宏；probe运行只定义STACK_PROBE_TEST。严格C11、NDEBUG运行检查、I/O失败非零；完整复现参数在README.txt。</p><p>首选读<a href="https://github.com/ARM-software/abi-aa/blob/c51addc3dc03e73a016a1e4edf25440bcac76431/aapcs32/aapcs32.rst#L1053">AAPCS32 2025Q1 §6.2.1.1/.2</a>区分4/8条件，再核对<a href="https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/Developer-Options.html#index-fstack-usage">GCC13.1 §3.19</a>三种qualifier。原章列出已读ST PM0214、GNU ld2.36与Arm AN316 V1.3的版本、范围和证据局限。</p></div><div class="content-section" id="memory-ref-recall" role="region" aria-labelledby="memory-ref-recall-title"><h2 id="memory-ref-recall-title">遮住答案，保留所有前提</h2><p>RAM1024含data128/BSS256/heap256/stack256/guard128；heap128 arena中A/B/C/D各32，释放A/C；两条互斥路径80+64+32与80+48，aggregate IRQ64，stack256。分别给出包络、连续48分配和栈结论。</p><details id="memory-ref-answer"><summary>展开独立核对</summary><p>包络1024，FITS/余0；64free但largest32，48拒绝；max176+64=240，余16。若路径未知则UNKNOWN，不用240继续宣称安全。</p></details><p>隔天更改生命线和路径再算。一次看懂不等于长期掌握；把不清楚的“分账/碎片/UNKNOWN”交给助手追问。</p><div class="next-links"><a href="../learn/memory-budget.html">返回完整章节</a><a href="../c-memory/heap-stack.html">专题桥接：堆与栈</a><a href="../learn/clock-timebase.html">下一章：时钟树、切换与时基</a><a href="../learn/engineering-map.html#stage-02">阶段02地图</a></div></div></main><footer class="wrap">原创嵌入式教材 · 不保存个人作答或掌握记录 · 硬件未验证</footer></div><script id="note-deep-links">
+(() => {
+  const reveal = () => {
+    let id;try{id=decodeURIComponent(window.location.hash.slice(1));}catch{return;}
+    if(!id) return;
+    const target=document.getElementById(id);if(!target) return;
+    let panel=target.closest('details');
+    while(panel) {panel.open=true;panel=panel.parentElement?.closest?.('details')||null;}
+    target.closest('section')?.querySelectorAll?.('details').forEach(detail=>{detail.open=true;});
+    requestAnimationFrame(()=>target.scrollIntoView({block:'start'}));
+  };
+  window.addEventListener('hashchange',reveal);window.addEventListener('pageshow',reveal);reveal();
+})();
+</script>
+<script id="note-print">
+(() => {
+  let previous;
+  window.addEventListener('beforeprint',()=>{
+    if(previous) return;
+    previous=[...document.querySelectorAll('details')].map(panel=>[panel,panel.open]);
+    previous.forEach(([panel])=>{panel.open=true;});
+  });
+  window.addEventListener('afterprint',()=>{previous?.forEach(([panel,open])=>{panel.open=open;});previous=undefined;});
+})();
+</script></body></html>

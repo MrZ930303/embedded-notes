@@ -1,0 +1,156 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="先分清哪个阶段，才能解释哪个文件代表哪次构建。"><meta name="theme-color" content="#fafbf8"><link rel="icon" href="../favicon.svg" type="image/svg+xml"><title>构建阶段与身份 · 打印速查 · 嵌入式技术笔记</title><style>
+:root{--paper:#fafbf8;--ink:#21382e;--muted:#526359;--line:#dce3d7;--green:#22664f;--pale:#eef2e9;--lime:#d5e7b3;--dark:#193e33;--mono:Consolas,monospace}*{box-sizing:border-box}html{scroll-padding-top:120px}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.9 system-ui,"Microsoft YaHei",sans-serif}a{color:var(--green);text-underline-offset:4px}p{margin:0 0 16px}.wrap{width:min(1120px,calc(100% - 64px));margin:auto}.skip{position:absolute;top:-100px;z-index:20;background:white;padding:10px}.skip:focus{top:5px}.topbar{position:sticky;top:0;border-bottom:1px solid var(--line)}.brand{text-decoration:none}.hero{display:grid;grid-template-columns:1.12fr 1fr;gap:48px;padding:48px 0 40px;border-bottom:1px solid var(--line)}h1{font-size:40px;line-height:1.35}h2{font-size:28px;line-height:1.5;margin:0 0 18px}h3{font-size:21px;line-height:1.5;margin:28px 0 12px}.tag,.small{color:var(--muted);font-size:13px}.hero-card,.lab,.callout{border:1px solid var(--line);border-radius:12px;padding:24px;background:var(--pale)}.hero-card strong{font-size:26px}.content-section{padding:48px 0;border-bottom:1px solid var(--line)}.section-nav,.controls,.notes-toolbar,.next-links{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.field{display:grid;gap:6px;min-width:0}.field.full{grid-column:1/-1}button,input,select{font:inherit;color:inherit}input,select{width:100%;min-width:0;min-height:44px;padding:8px;border:1px solid #aabaad;border-radius:6px;background:white}.btn{min-height:44px;min-width:44px;padding:9px 14px;background:white;border:1px solid #aabaad;border-radius:6px;cursor:pointer}.btn.primary{background:var(--dark);color:white}.btn:disabled{opacity:.55;cursor:default}.feedback,.applied-result{padding:16px;border:1px solid var(--line);border-radius:8px;background:#fffefb;margin:16px 0;overflow-wrap:anywhere}.pending{color:#7c581d}.lab{background:#fffefb}.lab>p{max-width:44rem}details{margin:16px 0;padding:16px;border:1px solid var(--line);border-radius:8px;background:#fffefb}summary{min-height:44px;cursor:pointer;font-weight:650}details p{margin-top:12px}.table-wrap{max-width:100%;overflow:auto}table{border-collapse:collapse;width:100%;font-size:14px;text-align:left}th,td{padding:10px;border-bottom:1px solid var(--line);vertical-align:top;white-space:nowrap}th{background:var(--pale)}figure{margin:20px 0;border:1px solid var(--line);border-radius:10px;padding:14px;background:white}svg{display:block;width:100%;height:auto}svg text{font:18px system-ui,"Microsoft YaHei",sans-serif;fill:#21382e}figcaption{font-size:13px;color:var(--muted);margin-top:12px}pre{max-width:100%;overflow:auto;padding:18px;background:var(--pale);font:14px/1.7 var(--mono);border-radius:8px}code{font-family:var(--mono)}li{margin-bottom:8px}.source-list a{overflow-wrap:anywhere}footer{padding:28px 0;font-size:13px;color:var(--muted)}:focus-visible{outline:3px solid #ad751d;outline-offset:4px}.exercise{padding:14px 0;border-bottom:1px solid var(--line)}.exercise h3{margin-top:14px}.exercise-answer{margin-bottom:20px}
+@media(max-width:760px){.hero,.fields{grid-template-columns:1fr}.hero{gap:24px}.field.full{grid-column:auto}.wrap{width:calc(100% - 40px)}.lab{padding:16px}}@media(max-width:370px){.lab{padding:12px}.btn{padding-inline:10px}svg text{font-size:20px}}
+@media print{body{background:white;color:#15251b;font-size:11pt}.wrap{width:100%;max-width:none}.topbar,.skip,.section-nav,.controls,.fields,.notes-toolbar,.next-links{display:none!important}.hero{display:block;padding:0 0 14px}.hero-card{display:none}.content-section{padding:18px 0}h1{font-size:25pt}h2{font-size:17pt}h3{font-size:13pt}.lab{padding:12px}pre{white-space:pre-wrap;overflow:visible;font-size:9pt}table{font-size:10pt}.table-wrap{overflow:visible}th,td{white-space:normal;padding:6px}a{color:inherit}details{break-inside:auto}.exercise{break-inside:avoid}body.exercise-print main>.hero,body.exercise-print main>.section-nav,body.exercise-print main>.content-section:not(#build-practice),body.exercise-print .practice-intro,body.exercise-print footer{display:none!important}body.exercise-print .exercise-answer{display:none!important}body.exercise-print .applied-result,body.exercise-print .feedback{display:none!important}body.exercise-print #build-practice{border:0;padding:0}}
+</style><style>
+/* Shared reading layer: keep this block identical in all standalone notes. */
+@media screen {
+:root{--paper:#fafbf8;--ink:#21382e;--muted:#526359;--line:#dce3d7;--green:#22664f;--pale:#eef2e9;--lime:#d5e7b3;--dark:#193e33}
+.notes-article{font-size:16px;line-height:1.9}
+.notes-article .wrap{width:min(1120px,calc(100% - 64px));max-width:none;padding-inline:0;margin-inline:auto}
+.notes-article .topbar{background:#fafbf8f5;z-index:10}
+.notes-article .topbar-inner{height:auto;min-height:68px;display:flex;align-items:center;justify-content:space-between;gap:24px;padding-block:0}
+.notes-article .brand{display:inline-flex;align-items:center;gap:10px;min-height:44px;margin:0;font-size:15px;font-weight:700;letter-spacing:0;color:var(--ink)}
+.notes-article .brandmark{display:grid;place-items:center;width:30px;height:30px;margin:0;border-radius:6px;background:var(--dark);color:#e0edcb;font:19px/1 var(--mono)}
+.notes-article .topbar nav{display:flex;align-items:center;gap:18px;margin:0;padding:0;width:auto;flex-wrap:nowrap}
+.notes-article .topbar nav a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:4px 3px;font-size:14px;font-weight:500;color:var(--muted);text-decoration:none;border-radius:4px}
+.notes-article .topbar nav a:hover,.notes-article .topbar nav a[aria-current="location"]{color:var(--green);background:var(--pale)}
+.notes-article .topbar nav a[aria-current="location"]{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:6px}
+.notes-article .hero{padding-block:48px 40px;gap:48px;grid-template-columns:1.12fr 1fr}
+.notes-article .hero h1{font-size:clamp(32px,3.6vw,44px);line-height:1.35;letter-spacing:-.035em;text-wrap:balance}
+.notes-article .hero h1 span{font-size:.78em;line-height:1.5;margin-top:8px}
+.notes-article .hero-intro{font-size:17px;line-height:1.9;max-width:32rem;margin-block:20px}
+.notes-article .hero>.hero-card,.notes-article .hero-flow,.notes-article .intro-map{box-shadow:none;border-radius:12px}
+.notes-article .hero .tag{font-size:12px;border-radius:4px;padding:4px 9px;margin:0 0 16px;line-height:1.7}
+.notes-article .hero>.hero-figure .map{transform:none;box-shadow:none}
+.notes-article .hero>div>.eyebrow{display:none}
+.notes-article .hero>.hero-card>.eyebrow,.notes-article .hero>.hero-flow>.eyebrow{display:block;font-size:12px;line-height:1.7}
+.notes-article .hero-links{gap:12px 22px;margin-top:24px}
+.notes-article .hero .text-link{display:inline-flex;align-items:center;min-height:44px;font-size:14px}
+.notes-article .hero figcaption,.notes-article .hero-figure figcaption,.notes-article .date-note{font-size:13px;line-height:1.8}
+.notes-article .hero-card p:last-child,.notes-article .hero-flow .small,.notes-article .intro-map>p:last-child{font-size:14px;line-height:1.85}
+.notes-article .hero-numbers span,.notes-article .hero-step small{font-size:13px}
+.notes-article h2{font-size:28px;line-height:1.5;text-wrap:balance}
+.notes-article .section-head p{font-size:15px;line-height:1.85}
+.notes-article .content-section,.notes-article .article-section{padding-block:52px}
+.notes-article .content-section+.content-section{padding-top:48px}
+.notes-article .note-section{scroll-margin-top:100px}
+.notes-article .note-section>summary{min-height:56px;font-size:18px;line-height:1.6}
+.notes-article .note-section>summary h2{font-size:20px;line-height:1.6}
+.notes-article .note-body{max-width:none;font-size:16px;line-height:1.95}
+.notes-article .note-body p,.notes-article .note-body li{font-size:16px;line-height:1.95}
+.notes-article .note-body>p,.notes-article .note-body>ul,.notes-article .note-body>ol,.notes-article .article-section>p,.notes-article .article-section>ul,.notes-article .article-section>ol{max-width:44rem;font-size:16px;line-height:1.95}
+.notes-article .note-body h3{font-size:21px;margin-block:28px 12px;scroll-margin-top:100px}
+.notes-article .note-body pre,.notes-article pre{font-size:14px;line-height:1.8}
+.notes-article .note-body table,.notes-article table{font-size:14px;line-height:1.8}
+.notes-article .note-body th,.notes-article .note-body td{font-size:14px;line-height:1.8}
+.notes-article .article-section>h2{font-size:28px}
+.notes-article .concept p,.notes-article .subnote p,.notes-article .risk p,.notes-article .monitor-step p,.notes-article .monitor-step ul,.notes-article .step-card p{font-size:15px;line-height:1.85}
+.notes-article .callout,.notes-article .model-scope,.notes-article .demo-disclaimer,.notes-article .version-card,.notes-article .version-card p{font-size:14px;line-height:1.85}
+.notes-article .source-list a,.notes-article .source-list span,.notes-article #plane-references~ul{font-size:14px;line-height:1.85}
+.notes-article #plane-overview~ul{max-width:none}
+.notes-article #plane-overview~ul li{font-size:15px;line-height:1.85}
+.notes-article .note-body .source-list{max-width:none}
+.notes-article .small,.notes-article .lab-note,.notes-article .lab-foot,.notes-article .lab-footer,.notes-article .clock-lab-foot,.notes-article .print-hint{font-size:13px;line-height:1.85}
+.notes-article .principle,.notes-article .principles span{font-size:13px;line-height:1.8}
+.notes-article .principles strong{font-size:15px}
+.notes-article .memory-motto,.notes-article .motto{background:var(--pale);color:var(--ink);border-radius:8px;text-align:left;padding:24px;margin-top:30px}
+.notes-article .memory-motto span,.notes-article .motto small{color:var(--muted);font-size:14px}
+.notes-article button,.notes-article .btn,.notes-article .notes-toolbar button{min-height:44px;min-width:44px;font-size:14px}
+.notes-article button,.notes-article .btn,.notes-article .topbar a,.notes-article summary,.notes-article .section-nav a,.notes-article .toc a{transition:background .18s,color .18s,border-color .18s,transform .18s}
+.notes-article button:enabled:hover{filter:brightness(1.06)}
+.notes-article button:enabled:active,.notes-article .btn:active{transform:translateY(1px)}
+.notes-article button:disabled{opacity:.58}
+.notes-article .graph-node:disabled,.notes-article .work-card:disabled{opacity:1}
+.notes-article :focus-visible{outline:3px solid #ad751d;outline-offset:4px}
+.notes-article .lab :focus-visible,.notes-article .clock-lab :focus-visible{outline-color:#f0cc80}
+.notes-article .toc a,.notes-article .section-nav a{display:inline-flex;align-items:center;min-height:44px;border-radius:5px;font-size:14px;padding:8px 12px}
+.notes-article .checklist label,.notes-article .clock-check{min-height:44px;font-size:14px;line-height:1.8}
+.notes-article .clock-field label,.notes-article .clock-controls small,.notes-article .clock-node small,.notes-article .clock-node span{font-size:13px;line-height:1.6}
+.notes-article .clock-current p,.notes-article .clock-candidate,.notes-article .clock-warnings{font-size:14px;line-height:1.8}
+.notes-article .clock-node strong,.notes-article .hero-numbers strong,.notes-article .metric strong{font-variant-numeric:tabular-nums}
+.notes-article .task-option strong,.notes-article .work-card strong{font-size:14px;line-height:1.65}
+.notes-article .task-option span,.notes-article .scope-buttons small,.notes-article .card-id,.notes-article .card-project,.notes-article .card-status,.notes-article .card-tags>span,.notes-article .lane-en{font-size:12px;line-height:1.6}
+.notes-article .scope-explanation,.notes-article .detail-copy>p,.notes-article .detail .acceptance,.notes-article .state-controls>p,.notes-article .board-heading p{font-size:14px;line-height:1.8}
+.notes-article .lane h4{font-size:14px;line-height:1.5;flex-wrap:wrap}
+.notes-article .lane-count{font-size:12px}
+.notes-article .lab .task-option{min-height:96px}
+.notes-article .skills-step-card dd,.notes-article .route-pane p,.notes-article .chooser-intro,.notes-article .permissions-pane>p{font-size:14px;line-height:1.85}
+.notes-article .skills-step-card dt,.notes-article .step-counter,.notes-article .permissions-pane small,.notes-article .permission-list span,.notes-article .graph-legend,.notes-article .graph-arrow-note{font-size:13px;line-height:1.8}
+.notes-article .ui-arrow{width:18px;height:18px;display:inline-block;vertical-align:middle;flex-shrink:0}
+.notes-article .selection-jump,.notes-article .choice-result{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;padding:10px 12px;border-radius:5px;font-size:13px;font-weight:600;line-height:1.6;text-decoration:none}
+.notes-article .selection-jump{background:#22664f;color:#fff}
+.notes-article .choice-result{color:#e2efca;border:1px solid #829873;background:#173e33;margin-top:7px}
+.notes-article .task-choice{min-width:0}
+.notes-article .task-choice .task-option{width:100%}
+.notes-article .task-option[aria-pressed="false"]+.choice-result{display:none}
+.notes-article #selected-skill,.notes-article #plane-selected-title{scroll-margin-top:128px}
+.notes-article footer,.notes-article .footer{font-size:13px;line-height:1.8}
+.notes-article footer a,.notes-article .footer a{display:inline-flex;align-items:center;min-height:44px}
+.notes-article .note-body p,.notes-article .hero-intro,.notes-article .article-section>p{text-wrap:pretty}
+@media(max-width:760px){
+.notes-article .wrap{width:calc(100% - 40px)}
+.notes-article .topbar-inner{flex-wrap:wrap;gap:0;padding-top:6px}
+.notes-article .brand{min-height:44px;font-size:15px}
+.notes-article .topbar nav{width:100%;gap:12px;overflow-x:auto;flex-wrap:nowrap;padding:0 0 4px;scrollbar-width:thin}
+.notes-article .topbar nav a{font-size:13px;flex-shrink:0;padding-inline:2px}
+.notes-article .hero{grid-template-columns:1fr;gap:28px;padding-block:32px}
+.notes-article .hero h1{font-size:32px;line-height:1.4}
+.notes-article .hero-intro{font-size:16px;max-width:none;margin-block:16px}
+.notes-article .hero-figure{max-width:500px}
+.notes-article .hero .tag{margin-bottom:12px}
+.notes-article .content-section,.notes-article .article-section{padding-block:36px}
+.notes-article .content-section+.content-section{padding-top:36px}
+.notes-article h2,.notes-article .article-section>h2{font-size:24px}
+.notes-article .section-head p{font-size:15px}
+.notes-article .note-section>summary{font-size:17px}
+.notes-article .note-section>summary h2{font-size:18px}
+.notes-article .note-body p,.notes-article .note-body li{font-size:16px}
+.notes-article .note-body pre,.notes-article pre{font-size:13px}
+.notes-article .note-body th,.notes-article .note-body td{font-size:14px}
+.notes-article .principles{grid-template-columns:1fr;gap:14px}
+.notes-article .principles strong{display:inline;margin-right:8px}
+.notes-article .principles span{display:inline}
+.notes-article .task-options{grid-template-columns:1fr 1fr;align-items:start}.notes-article .lab .task-option{min-height:76px;padding:12px}
+.notes-article .board{grid-template-columns:1fr 1fr}
+.notes-article .lane:last-child .lane-cards{display:flex}
+.notes-article .lane-cards{min-height:0}
+.notes-article .lane{padding:14px}
+.notes-article .lane-en{margin-bottom:10px}
+.notes-article .work-card{padding:14px}
+.notes-article .card-tags{gap:6px}
+.notes-article .lab-top{flex-wrap:wrap}
+.notes-article .lab-top .tag{white-space:normal}
+.notes-article .note-section,.notes-article .note-body h3,.notes-article .article-section,.notes-article .article-section>h3{scroll-margin-top:124px}
+}
+@media(max-width:370px){.notes-article .task-options,.notes-article .board{grid-template-columns:1fr}.notes-article .hero h1{font-size:30px}.notes-article .topbar nav{gap:8px}}
+}
+@media(prefers-reduced-motion:reduce){.notes-article *,.notes-article *::before,.notes-article *::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+</style><style>
+.notes-article main,.notes-article .hero>*{min-width:0}.notes-article p,.notes-article li,.notes-article a,.notes-article td,.notes-article code:not(pre code){overflow-wrap:anywhere}.notes-article .lab :focus-visible{outline-color:#815410}.notes-article pre{white-space:pre;max-width:100%}.stage-flow{display:grid;gap:12px;grid-template-columns:repeat(4,minmax(0,1fr))}.stage-flow div{padding:14px;border:1px solid var(--line);background:var(--pale);border-radius:8px}.stage-flow b,.stage-flow span{display:block}.stage-flow span{font-size:14px}.manifest{font-family:var(--mono);font-size:13px;overflow-wrap:anywhere}.trace-log{padding-left:24px}.source-disclosure{min-width:0}.next-links a{min-height:44px}.notes-article .source-disclosure pre{max-width:100%}.notes-article [hidden]{display:none!important}
+@media(max-width:760px){.stage-flow{grid-template-columns:1fr 1fr}}@media(max-width:370px){.stage-flow{grid-template-columns:1fr}.stage-flow div{padding:12px}}
+@media print{.notes-article pre{white-space:pre-wrap;overflow-wrap:anywhere}.stage-flow{display:block}.stage-flow div{margin:6px 0}.trace-log{display:none}body.exercise-print .practice-intro{display:none!important}}
+</style></head><body class="notes-article"><a class="skip" href="#main">跳到正文</a><div><header class="topbar"><div class="wrap topbar-inner"><a class="brand" href="../"><span class="brandmark" aria-hidden="true">E</span>嵌入式技术笔记</a><nav aria-label="文章导航"><a href="../learn/">返回分类</a><a href="#build-ref-recall">交互实验</a><a href="#build-ref-contract">完整笔记</a><a href="../?search=1">搜索笔记</a></nav></div></header><main class="wrap" id="main"><header class="hero"><div><p class="tag">阶段02 · 单元06 · 构建与启动</p><h1 id="build-link-identity-reference">构建阶段与身份 · 打印速查</h1><p class="hero-intro">先分清哪个阶段，才能解释哪个文件代表哪次构建。</p><p class="small">真实多文件 · 宿主执行 · 人工ARM仅检查 · 硬件未验证</p></div><aside class="hero-card"><strong>有.o ≠ 已有可运行程序</strong><p>先追踪输入与定义，再把版本、清单和最终字节关联起来。</p></aside></header><nav class="section-nav" aria-label="本章段落"><a href="#build-ref-contract">速查合同：先问阶段，再问身份</a><a href="#build-ref-recall">折叠回忆：带着条件说原因</a></nav><div class="content-section" id="build-ref-contract" role="region" aria-labelledby="build-ref-contract-title"><h2 id="build-ref-contract-title">速查合同：先问阶段，再问身份</h2><p>前置：先完成本章四字节跨文件实验；本页用于压缩回忆，不替代完整因果解释。采集终端的一个运行记录至少关联源清单、工具/选项、生成源和最终产物。首要成果是一张“输入→阶段→产物→局限”卡片。主机执行、浏览器模型、人工ARM链接、目标启动彼此独立。</p><p>声明让当前翻译单元检查名字/类型；定义提供实际函数体。每个.c在展开其头文件后分别编译，头文件声明不是另一个自动链接的实现。main.o引用measurement_sum；measurement.o提供本例唯一外部强定义。缺少它在链接失败；两个独立目标均提供它会重复强定义失败。static/weak/common规则不能拿来替换本例。</p><div class="table-wrap" role="region" tabindex="0" aria-label="阶段、证据与不能推出的结论"><table><caption>阶段、证据与不能推出的结论</caption><thead><tr><th scope="col">阶段</th><th scope="col">证据</th><th scope="col">界限</th></tr></thead><tbody><tr><td>预处理-E</td><td>main.i展开文本</td><td>不证明完整定义已链接</td></tr><tr><td>编译-S</td><td>measurement.s汇编文本</td><td>还没有最终地址归属</td></tr><tr><td>编译/汇编-c</td><td>三个可重定位.o</td><td>仍允许未解析外部引用</td></tr><tr><td>链接</td><td>宿主PE/COFF、map、nm</td><td>不证明ARM或硬件启动</td></tr></tbody></table></div><p>运行条件：对象先编译成功，链接必须本次成功且目的地新鲜；失败样本从未运行。每个实际编译/链接沿既有custom profile validate→dry-run→build，保留raw返回与错误，不把预期链接失败改写成成功构建。完整操作与文件在下方下载。</p></div><div class="content-section" id="build-ref-worked" role="region" aria-labelledby="build-ref-worked-title"><h2 id="build-ref-worked-title">固定例子：170、4080与拒绝保持</h2><p>uint8_t真实数组[17,34,51,68]，独立uint32_t输出999；17+34+51+68=170。16个255总和4080，是本模块有界最大值；count=0可配NULL输入并输出0且不做指针运算。输入为NULL且count>0、输出NULL、count>16返回INVALID_ARGUMENT，拒绝不改输出。容量外测试使用真实17字节已初始化对象，不伪造地址或虚假跨度。</p><p>measurement_sum是可独立复用的C11模块；所有非空对象须真实存活、容量真实、输出与输入字节对象不重叠且单执行上下文。NULL检查不能证明这些调用者前提。正常/NDEBUG检查均在普通分支，立即检查所有可能失败的I/O及最终flush；不能只看到PASS字样而忽略退出码。</p><p>两个失败构建先有有效组件：missing链接省measurement.o；duplicate另编一个measurement-second.o再把两份强函数体一起链接。分别保留undefined reference / multiple definition与measurement_sum的真实原始诊断；新失败目的地无旧可执行件，绝不运行。</p></div><div class="content-section" id="build-ref-identity" role="region" aria-labelledby="build-ref-identity-title"><h2 id="build-ref-identity-title">八成员清单与三份不同摘要</h2><p>描述符准确四字段schema/product/version/sourceManifest；schema1，product acquisition-terminal，三段版本每段规范十进制0..9999。固定八成员顺序：build.json、build_identity.h、entry.c、generate_identity.mjs、lesson.ld、main.c、measurement.c、measurement.h。逐文件SHA256后按“name 空格 lowercase digest LF”组成UTF-8文本，再SHA256。生成build_identity.c不纳入清单，避免循环；README/页面另入完整交付清单。</p><p>有限顺序：固定输入 → 校验并生成身份.c → 编译生成源与其他源 → 链接 → 分别记录生成源/最终文件SHA256。--check用当前输入比较保存生成源，失配非零STALE_IDENTITY；它不证明旧exe已经重建。1.0.0旧exe配期望1.0.1会非零IDENTITY_MISMATCH；私有副本改descriptor为1.0.1后必须生成并重建，输出才变1.0.1。仅版本相等还需核对清单与artifact摘要。</p><p>version是标签，manifest只含列明源，generated-source hash标识生成字节，artifact SHA256标识最终字节。GNU ld2.36 build-ID不是完整文件校验，可在后处理修改后保留。哈希依赖可信预期，CRC不是认证；签名需要可信钥匙，版本授权与防回滚属于后续25—28。两次干净构建实际比字节才可称那两次相同；相同指令本身不证明，时间戳/路径/选项/工具版本仍有影响。</p></div><div class="content-section" id="build-ref-arm" role="region" aria-labelledby="build-ref-arm-title"><h2 id="build-ref-arm-title">人工ARM：可检查的ELF，不是可启动固件</h2><p>已安装ARM GCC10.3.1与GNU ld2.36.1工具实验使用-mcpu=cortex-m4 -mthumb -ffreestanding，-nostdlib与lesson.ld。FLASH标签0x08000000/16KiB，RAM0x20000000/4KiB；.data为RAM VMA、FLASH LMA，.bss为NOLOAD预留。链接器排位置不自动复制或清零。缺少向量表/复位startup/C运行环境，明确NOT BOOTABLE，从未执行/烧录；芯片物理容量、重启和硬件均未验证。</p><p>readelf -h/-S/-l/-s/-n分别看ELF头/节/段/符号/notes，nm看符号，objdump -h比VMA/LMA，objcopy -O binary导出选中装载内容并丢符号/重定位。ELF/bin/map不同文件，不能互换摘要或假定bin自带装载地址。map/nm地址仅在匹配本次产物身份时有意义；旧map不能定位新程序。</p></div><div class="content-section" id="build-ref-recall" role="region" aria-labelledby="build-ref-recall-title"><h2 id="build-ref-recall-title">折叠回忆：带着条件说原因</h2><p>合上速查先写结论，再展开解释。普通打印展开后恢复原折叠；本参考不再设置另一份模拟器。</p><details id="build-ref-answer-one"><summary>旧1.0.0程序，描述符已改1.0.1；--check与旧程序参数1.0.1分别会怎样？</summary><p>--check非零STALE_IDENTITY，旧程序非零IDENTITY_MISMATCH；前者比生成源，后者比链接标签。必须生成、编译、链接、运行并核对清单与artifact摘要，两个检查对象不同。</p></details><details id="build-ref-answer-two"><summary>人工ARM有ELF/bin/map与ENTRY，但无向量表/startup，.data的VMA在RAM。能否说main已就绪？</summary><p>不能。链接只排位置；没有复位上下文及数据复制/BSS清零运行时条件。NOT BOOTABLE、从未执行/烧录。下一步读07的职责分工，不能把产物检查替代硬件证据。</p></details><p>隔一天换一个错误对象组合，再不看表解释失败边界。若仍混淆“可重定位目标”或“清单自引用”，带着具体输入向助手追问；本页不保存个人作答或掌握记录。</p></div><div class="content-section" id="build-ref-downloads" role="region" aria-labelledby="build-ref-downloads-title"><h2 id="build-ref-downloads-title">源码、操作、来源与下一步</h2><div class="next-links"><a href="../examples/build-link-identity/measurement.h" download>下载measurement.h</a><a href="../examples/build-link-identity/measurement.c" download>下载measurement.c</a><a href="../examples/build-link-identity/build_identity.h" download>下载build_identity.h</a><a href="../examples/build-link-identity/build_identity.c" download>下载build_identity.c</a><a href="../examples/build-link-identity/build.json" download>下载build.json</a><a href="../examples/build-link-identity/generate_identity.mjs" download>下载generate_identity.mjs</a><a href="../examples/build-link-identity/main.c" download>下载main.c</a><a href="../examples/build-link-identity/entry.c" download>下载entry.c</a><a href="../examples/build-link-identity/lesson.ld" download>下载lesson.ld</a><a href="../examples/build-link-identity/README.txt" download>下载README.txt</a></div><p>所有文件完整显示于<a href="../learn/build-link-identity.html#build-c-lab-title">本章源码与复做说明</a>；measurement.h/c可独立复用，main是宿主验证入口，entry/lesson.ld仅人工产物检查。先生成build_identity.c再编译。原始来源/条件详见<a href="../learn/build-link-identity.html#build-sources-title">本章来源</a>：GCC13.1与已安装10.3系§3.2；GNU ld/binutils2.36的Map、强定义、build-ID、nm/readelf/objcopy及LMA条款。首选对照GCC三个停止选项，然后亲自解释缺少定义为何到链接才失败。</p><p>本地内容/模型/宿主/人工目标证据分别记录，全站浏览器、独立评审、发布另验；硬件与实体纸张未验证。本参考保留每条使用前提，不把压缩表格当作安全认证或启动保证。</p><div class="next-links"><a href="../learn/build-link-identity.html">回到完整章节</a><a href="../learn/bounded-fifo.html">上一章：有界FIFO</a><a href="../learn/reset-runtime.html">下一章：复位与C运行环境</a></div><a href="../learn/engineering-map.html#stage-02">阶段02地图</a></div></main><footer class="wrap">原创嵌入式教材 · 不保存个人作答、进度或掌握记录 · 硬件未验证</footer></div><script id="note-deep-links">
+(() => {
+  const reveal = () => {
+    let id;try{id=decodeURIComponent(window.location.hash.slice(1));}catch{return;}
+    if(!id) return;
+    const target=document.getElementById(id);if(!target) return;
+    let panel=target.closest('details');
+    while(panel) {panel.open=true;panel=panel.parentElement?.closest?.('details')||null;}
+    target.closest('section')?.querySelectorAll?.('details').forEach(detail=>{detail.open=true;});
+    requestAnimationFrame(()=>target.scrollIntoView({block:'start'}));
+  };
+  window.addEventListener('hashchange',reveal);window.addEventListener('pageshow',reveal);reveal();
+})();
+</script><script id="note-print">
+(() => {
+  let previous;
+  window.addEventListener('beforeprint',()=>{
+    if(previous) return;
+    previous=[...document.querySelectorAll('details')].map(panel=>[panel,panel.open]);
+    previous.forEach(([panel])=>{panel.open=true;});
+  });
+  window.addEventListener('afterprint',()=>{previous?.forEach(([panel,open])=>{panel.open=open;});previous=undefined;});
+})();
+</script></body></html>

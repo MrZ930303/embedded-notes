@@ -1,4 +1,4 @@
-import { readFile, readdir, access } from 'node:fs/promises'
+import { readFile, readdir, access, mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import assert from 'node:assert/strict'
 import { pathToFileURL } from 'node:url'
@@ -20,7 +20,7 @@ const ids = new Map()
 let checked = 0
 const pages = files.filter(p=>p.endsWith('.html'))
 for (const file of files) {
-  if (!/\.(?:html|js|json|css|svg|c|h|txt)$/.test(file)) continue
+  if (!/\.(?:html|m?js|json|css|svg|c|h|txt|ld)$/.test(file)) continue
   const text=await readFile(file,'utf8')
   assert.ok(!/\b(?:C51|8051|ML51)\b/i.test(text), 'Excluded architecture content in public output: ' + file)
   assert.ok(!/https?:\/\/(?:chatgpt|chat)\.com\/(?:share|space)\//i.test(text), 'Private link in output')
@@ -51,11 +51,11 @@ const html=await readFile(path.join(root,'index.html'),'utf8')
 assert.ok(html.includes('嵌入式技术笔记'))
 assert.ok(html.includes(base+'c-memory/heap-stack.html'))
 assert.ok(html.includes('data-no-router'))
-assert.ok(html.includes('20 篇') && html.includes('5 个主题'), 'Home must describe twenty entries across five active categories')
-assert.equal(interactiveNotes.length, 20, 'Exactly twenty complete standalone readers must be registered')
+assert.ok(html.includes('28 篇') && html.includes('5 个主题'), 'Home must describe twenty-eight entries across five active categories')
+assert.equal(interactiveNotes.length, 28, 'Exactly twenty-eight complete standalone readers must be registered')
 const learningCategory = await readFile(path.join(root, 'learn/index.html'), 'utf8')
 const learningReaders = interactiveNotes.filter(note => note.path.startsWith('learn/'))
-assert.equal(learningReaders.length, 11, 'The learning center contains eleven complete readers')
+assert.equal(learningReaders.length, 19, 'The learning center contains nineteen complete readers')
 for (const note of learningReaders) assert.ok(learningCategory.includes(base + note.path), 'Learning center must reach each actual reader: ' + note.path)
 const debugCategory = await readFile(path.join(root, 'debug/index.html'), 'utf8')
 assert.ok(debugCategory.includes(base + 'debug/easylogger.html'), 'Debug category must link to the full EasyLogger reader')
@@ -250,3 +250,55 @@ for (const [query, anchor] of Object.entries(easyLoggerSearchTargets)) {
 for (const excluded of ['C51', '8051', 'ML51']) assert.equal(search.search(excluded, { fuzzy: false, prefix: false }).length, 0, 'Excluded architecture exact search result: ' + excluded)
 assert.ok(search.search('C11', { fuzzy: false, prefix: false }).some(result => result.id.startsWith(base + 'learn/gpio-button.html#')), 'Exact C11 search must reach the GPIO chapter')
 console.log('PASS: generated Chinese/English/API full-text search, client tokenizer serialization and empty-result query.')
+
+const buildStartupSearchCases = [
+  ['build-link-identity', '缺少定义', 'build-real-experiment-title'],
+  ['build-link-identity', 'ELF', 'build-artifacts-title'],
+  ['build-link-identity', 'STALE_IDENTITY', 'build-identity-title'],
+  ['build-link-identity-reference', '4080', 'build-ref-worked-title'],
+  ['build-link-identity-reference', 'build-ID', 'build-ref-identity-title'],
+  ['build-link-identity-reference', 'ELF', 'build-ref-arm-title'],
+  ['reset-runtime', '重叠', 'runtime-contract-title'],
+  ['reset-runtime', 'LMA', 'runtime-storage-title'],
+  ['reset-runtime', '0x2040', 'runtime-fixture-title'],
+  ['reset-runtime-reference', 'mainReady', 'reference-contract-title'],
+  ['reset-runtime-reference', '8256', 'reference-fixture-title'],
+  ['reset-runtime-reference', 'runtime_image_initialize', 'reference-source-title'],
+  ['memory-budget', 'UNKNOWN', 'memory-stack-title'],
+  ['memory-budget', '连续', 'memory-lifetimes-title'],
+  ['memory-budget', 'fstack', 'memory-evidence-title'],
+  ['memory-budget-reference', '1025', 'memory-ref-fixtures-title'],
+  ['memory-budget-reference', 'UNKNOWN', 'memory-ref-stack-title'],
+  ['memory-budget-reference', 'memory_envelope', 'memory-ref-api-title'],
+  ['clock-timebase', 'SysTick', 'clock-tick-title'],
+  ['clock-timebase', 'BRR', 'clock-uart-title'],
+  ['clock-timebase', 'VOSRDY', 'clock-switch-title'],
+  ['clock-timebase-reference', 'NO_EVENT', 'clock-tick-title'],
+  ['clock-timebase-reference', '115200', 'clock-uart-title'],
+  ['clock-timebase-reference', '超时', 'clock-switch-title']
+].map(([name, query, anchor]) => ({ name, query, anchor }))
+const missingBuildStartupTargets = buildStartupSearchCases.filter(({ name, query, anchor }) =>
+  !search.search(query).some(result => result.id === base + 'learn/' + name + '.html#' + anchor))
+assert.deepEqual(missingBuildStartupTargets, [], 'Build/startup search must open every actual normal/boundary/failure section')
+const buildStartupDownloads = [
+  ['build-link-identity', ['measurement.h', 'measurement.c', 'build_identity.h', 'build_identity.c', 'build.json', 'generate_identity.mjs', 'main.c', 'entry.c', 'lesson.ld', 'README.txt']],
+  ['reset-runtime', ['runtime_image.h', 'runtime_image.c', 'README.txt']],
+  ['memory-budget', ['memory_budget.h', 'memory_budget.c', 'stack_probe.c', 'README.txt']],
+  ['clock-timebase', ['clock_plan.h', 'clock_plan.c', 'README.txt']]
+]
+for (const [folder, members] of buildStartupDownloads) {
+  for (const filename of members) {
+    const original = await readFile(path.resolve(import.meta.dirname, '../docs/public/examples', folder, filename))
+    const published = await readFile(path.join(root, 'examples', folder, filename))
+    assert.deepEqual(published, original, 'Build/startup download bytes must match: ' + folder + '/' + filename)
+    for (const suffix of ['', '-reference']) {
+      const reader = await readFile(path.join(root, 'learn', folder + suffix + '.html'), 'utf8')
+      assert.ok(reader.includes('href="../examples/' + folder + '/' + filename + '" download'), 'Native download missing: ' + folder + suffix + '/' + filename)
+    }
+  }
+  assert.ok(!files.some(file => path.relative(root, file).replaceAll('\\', '/').startsWith('examples/' + folder + '/') && file.endsWith('.html')), 'Download-only lab must not become an extra docs reader: ' + folder)
+}
+const searchEvidenceDirectory = path.resolve(import.meta.dirname, '../.scratch/build-startup/integration')
+await mkdir(searchEvidenceDirectory, { recursive: true })
+await writeFile(path.join(searchEvidenceDirectory, 'browser-search-cases.json'), JSON.stringify(buildStartupSearchCases, null, 2) + '\n')
+console.log('PASS: eight build/startup readers have24 exact generated search targets and20 byte-identical native source/helper/instruction downloads.')

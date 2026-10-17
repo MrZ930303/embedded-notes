@@ -21,9 +21,17 @@ const notes = [
   { n: '18', category: '学习中心', title: 'C 对象、指针与边界：可打印速查', desc: '用对象审计、字节序和整数类别检查表，保留真实存储与调用者前提。', path: '/learn/c-objects-bounds-reference.html', detail: '长度与生命周期 · 零长度 · 整数转换边界' },
   { n: '19', category: '学习中心', title: '单执行上下文的有界 FIFO', desc: '先预测四字节队列的状态和顺序，再重放装满、拒绝、回绕与排空。', path: '/learn/bounded-fifo.html', detail: '固定容量 · 值所有权 · 单上下文 C11 模块' },
   { n: '20', category: '学习中心', title: '有界 FIFO：可打印速查', desc: '压缩回看 head、tail、count、不变量和失败保持规则，明确并发使用限制。', path: '/learn/bounded-fifo-reference.html', detail: '14 步轨迹 · 空满边界 · 复现与条件' },
+  { n: '21', category: '学习中心', title: '预处理、编译、链接与构建身份', desc: '跟随真实多文件实验，区分链接错误、产物格式、生成身份与信任。', path: '/learn/build-link-identity.html', detail: '构建阶段 · 真实链接失败 · 身份与产物' },
+  { n: '22', category: '学习中心', title: '预处理、编译、链接与构建身份：可打印速查', desc: '压缩回看本章前提、固定算例、拒绝条件、源码与证据限制。', path: '/learn/build-link-identity-reference.html', detail: '公式与条件 · 折叠回忆 · 源码下载' },
+  { n: '23', category: '学习中心', title: '从复位向量到 C 运行环境', desc: '解码虚构向量，解释 data 复制、BSS 清零与事务提交。', path: '/learn/reset-runtime.html', detail: '初始上下文 · 有界 RAM · 失败保持' },
+  { n: '24', category: '学习中心', title: '从复位向量到 C 运行环境：可打印速查', desc: '压缩回看本章前提、固定算例、拒绝条件、源码与证据限制。', path: '/learn/reset-runtime-reference.html', detail: '公式与条件 · 折叠回忆 · 源码下载' },
+  { n: '25', category: '学习中心', title: '静态内存、堆与调用栈预算', desc: '核算有限 RAM 包络、同时存活需求与有界调用路径。', path: '/learn/memory-budget.html', detail: '布局与峰值 · 碎片 · 未知边界' },
+  { n: '26', category: '学习中心', title: '静态内存、堆与调用栈预算：可打印速查', desc: '压缩回看本章前提、固定算例、拒绝条件、源码与证据限制。', path: '/learn/memory-budget-reference.html', detail: '公式与条件 · 折叠回忆 · 源码下载' },
+  { n: '27', category: '学习中心', title: '时钟树、切换与时间基准', desc: '在限定 F407 条件下推导时钟、有限切换、SysTick 与 UART。', path: '/learn/clock-timebase.html', detail: '名义时钟 · 有界失败 · 时间量化' },
+  { n: '28', category: '学习中心', title: '时钟树、切换与时间基准：可打印速查', desc: '压缩回看本章前提、固定算例、拒绝条件、源码与证据限制。', path: '/learn/clock-timebase-reference.html', detail: '公式与条件 · 折叠回忆 · 源码下载' },
 ]
 const categories = [
-  { title: '学习中心', path: '/learn/', count: '11 篇' },
+  { title: '学习中心', path: '/learn/', count: '19 篇' },
   { title: 'C 语言与内存', path: '/c-memory/', count: '1 篇' },
   { title: 'MCU 基础与外设', path: '/mcu/', count: '4 篇' },
   { title: '工程工具与协作', path: '/tools/', count: '3 篇' },
@@ -38,14 +46,14 @@ const categories = [
       <h1 id="notebook-title">嵌入式技术笔记</h1>
       <p class="intro-description">从内存到时钟，从原理到工程。<br>动手操作模型，再读懂背后的原理、代码与适用边界。</p>
       <div class="intro-actions">
-        <a class="notebook-button primary" href="#notes">浏览 20 篇笔记 <span aria-hidden="true">↓</span></a>
+        <a class="notebook-button primary" href="#notes">浏览 28 篇笔记 <span aria-hidden="true">↓</span></a>
         <a class="intro-route" :href="withBase('/learn/')">从工程学习地图开始 <svg class="ui-arrow" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-5-5 5 5-5 5"/></svg></a>
         <a class="intro-route" :href="withBase('/guide/memory-roadmap.html')">从 MCU 内存学习路线开始 <svg class="ui-arrow" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-5-5 5 5-5 5"/></svg></a>
       </div>
     </section>
 
     <section class="home-section" aria-labelledby="notes">
-      <div class="home-section-heading"><h2 id="notes">交互笔记</h2><span>20 篇 · 5 个主题</span></div>
+      <div class="home-section-heading"><h2 id="notes">交互笔记</h2><span>28 篇 · 5 个主题</span></div>
       <div class="note-list">
         <article v-for="note in notes" :key="note.path" class="note-entry">
           <span class="note-number" aria-hidden="true">{{ note.n }}</span>

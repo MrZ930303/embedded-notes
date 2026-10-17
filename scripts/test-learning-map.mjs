@@ -65,6 +65,10 @@ for (const name of ['c-bits-registers', 'c-objects-bounds', 'bounded-fifo']) {
     assert.ok(focus['.focus-notes'].innerHTML.includes('href="' + name + suffix + '.html"'), 'Stage01 must reach each actual C foundation reader: ' + name + suffix)
   }
 }
+buttons[1].click()
+for (const name of ['build-link-identity', 'reset-runtime', 'memory-budget', 'clock-timebase']) {
+  for (const suffix of ['', '-reference']) assert.ok(focus['.focus-notes'].innerHTML.includes('href="' + name + suffix + '.html"'), 'Stage02 must reach each actual build/startup reader: ' + name + suffix)
+}
 for (const source of [html, markdown]) {
   for (const phrase of ['03—05', '06—09', '第 10 单元']) assert.ok(source.includes(phrase), 'Course order must retain the next C prerequisites before timers: ' + phrase)
 }
@@ -104,7 +108,10 @@ const unitRows = coverage.match(/^\| \d{2} \|.+$/gm) || []
 assert.deepEqual(unitRows.map(row => row.split('|')[1].trim()), Array.from({ length: 32 }, (_, index) => String(index + 1).padStart(2, '0')), 'The finite course ledger must retain all thirty-two ordered units')
 assert.equal((coverage.match(/^### 阶段 \d{2} /gm) || []).length, 8, 'All eight stage evidence scopes must remain')
 assert.match(unitRows[1], /\| 完整 \| 已通过 \| 本单元无新工作 \| 未验 \| 已发布 \|$/, 'Unit02 publication must retain its no-new-C and hardware limits')
-for (const row of unitRows.slice(2, 5)) assert.match(row, /\| 本地完整 \| 已通过 \| 已有 C 证据 \| 未验 \| 本地候选 \|$/, 'Units03–05 remain local candidates after actual host checks')
-for (const row of unitRows.slice(5)) assert.match(row, /\| 待写 \| 未做 \| 未做 \| 未验 \| 未发布 \|$/, 'Units06–32 remain pending; existing topic notes do not earn course credit')
+for (const row of unitRows.slice(2, 5)) assert.match(row, /\| 完整 \| 已通过 \| 已有 C 证据 \| 未验 \| 已发布 \|$/, 'Units03–05 publication uses parent-confirmed78723d5 evidence and retains hardware limits')
+for (const row of unitRows.slice(5, 9)) assert.match(row, /\| 本地完整 \| 已通过 \| 已有 C 证据 \| 未验 \| 本地候选 \|$/, 'Units06–09 remain local candidates after bounded chapter checks')
+for (const row of unitRows.slice(9)) assert.match(row, /\| 待写 \| 未做 \| 未做 \| 未验 \| 未发布 \|$/, 'Units10–32 remain pending; existing topic notes do not earn course credit')
 await access(new URL('../curriculum/stage01-evidence.md', import.meta.url))
-console.log('PASS course ledger:32 ordered units,8 stages,02 published with bounded evidence,03–05 local only,06–32 and all hardware pending.')
+await access(new URL('../curriculum/stage02-evidence.md', import.meta.url))
+assert.ok(coverage.includes('10—14') && coverage.includes('39058801087') && coverage.includes('78723d525775feb83b91071b3f634a9c65863a1a'))
+console.log('PASS course ledger:32 ordered units,8 stages,01–05 published with bounded evidence,06–09 local only,10–32 and all hardware pending.')

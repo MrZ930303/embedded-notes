@@ -1,0 +1,931 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="复位向量、运行环境、真实对象与事务初始化的完整原创教材。"><link rel="icon" href="../favicon.svg" type="image/svg+xml"><title>复位与C运行环境 · 可打印速查 · 嵌入式技术笔记</title><style>
+:root{--paper:#fafbf8;--ink:#21382e;--muted:#526359;--line:#dce3d7;--green:#22664f;--pale:#eef2e9;--lime:#d5e7b3;--dark:#193e33;--mono:Consolas,monospace}*{box-sizing:border-box}html{scroll-padding-top:120px}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.9 system-ui,"Microsoft YaHei",sans-serif}a{color:var(--green);text-underline-offset:4px}p{margin:0 0 16px}.wrap{width:min(1120px,calc(100% - 64px));margin:auto}.skip{position:absolute;top:-100px;z-index:20;background:white;padding:10px}.skip:focus{top:5px}.topbar{position:sticky;top:0;border-bottom:1px solid var(--line)}.brand{text-decoration:none}.hero{display:grid;grid-template-columns:1.12fr 1fr;gap:48px;padding:48px 0 40px;border-bottom:1px solid var(--line)}h1{font-size:40px;line-height:1.35}h2{font-size:28px;line-height:1.5;margin:0 0 18px}h3{font-size:21px;line-height:1.5;margin:28px 0 12px}.tag,.small{color:var(--muted);font-size:13px}.hero-card,.lab,.callout{border:1px solid var(--line);border-radius:12px;padding:24px;background:var(--pale)}.hero-card strong{font-size:26px}.content-section{padding:48px 0;border-bottom:1px solid var(--line)}.section-nav,.controls,.notes-toolbar,.next-links{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.field{display:grid;gap:6px;min-width:0}.field.full{grid-column:1/-1}button,input,select{font:inherit;color:inherit}input,select{width:100%;min-width:0;min-height:44px;padding:8px;border:1px solid #aabaad;border-radius:6px;background:white}.btn{min-height:44px;min-width:44px;padding:9px 14px;background:white;border:1px solid #aabaad;border-radius:6px;cursor:pointer}.btn.primary{background:var(--dark);color:white}.btn:disabled{opacity:.55;cursor:default}.feedback,.applied-result{padding:16px;border:1px solid var(--line);border-radius:8px;background:#fffefb;margin:16px 0;overflow-wrap:anywhere}.pending{color:#7c581d}.lab{background:#fffefb}.lab>p{max-width:44rem}details{margin:16px 0;padding:16px;border:1px solid var(--line);border-radius:8px;background:#fffefb}summary{min-height:44px;cursor:pointer;font-weight:650}details p{margin-top:12px}.table-wrap{max-width:100%;overflow:auto}table{border-collapse:collapse;width:100%;font-size:14px;text-align:left}th,td{padding:10px;border-bottom:1px solid var(--line);vertical-align:top;white-space:nowrap}th{background:var(--pale)}figure{margin:20px 0;border:1px solid var(--line);border-radius:10px;padding:14px;background:white}svg{display:block;width:100%;height:auto}svg text{font:18px system-ui,"Microsoft YaHei",sans-serif;fill:#21382e}figcaption{font-size:13px;color:var(--muted);margin-top:12px}pre{max-width:100%;overflow:auto;padding:18px;background:var(--pale);font:14px/1.7 var(--mono);border-radius:8px}code{font-family:var(--mono)}li{margin-bottom:8px}.source-list a{overflow-wrap:anywhere}footer{padding:28px 0;font-size:13px;color:var(--muted)}:focus-visible{outline:3px solid #ad751d;outline-offset:4px}.exercise{padding:14px 0;border-bottom:1px solid var(--line)}.exercise h3{margin-top:14px}.exercise-answer{margin-bottom:20px}
+@media(max-width:760px){.hero,.fields{grid-template-columns:1fr}.hero{gap:24px}.field.full{grid-column:auto}.wrap{width:calc(100% - 40px)}.lab{padding:16px}}@media(max-width:370px){.lab{padding:12px}.btn{padding-inline:10px}svg text{font-size:20px}}
+@media print{body{background:white;color:#15251b;font-size:11pt}.wrap{width:100%;max-width:none}.topbar,.skip,.section-nav,.controls,.fields,.notes-toolbar,.next-links{display:none!important}.hero{display:block;padding:0 0 14px}.hero-card{display:none}.content-section{padding:18px 0}h1{font-size:25pt}h2{font-size:17pt}h3{font-size:13pt}.lab{padding:12px}pre{white-space:pre-wrap;overflow:visible;font-size:9pt}table{font-size:10pt}.table-wrap{overflow:visible}th,td{white-space:normal;padding:6px}a{color:inherit}details{break-inside:auto}.exercise{break-inside:avoid}body.exercise-print main>.hero,body.exercise-print main>.section-nav,body.exercise-print main>.content-section:not(#runtime-practice),body.exercise-print .practice-intro,body.exercise-print footer{display:none!important}body.exercise-print .exercise-answer{display:none!important}body.exercise-print .applied-result,body.exercise-print .feedback{display:none!important}body.exercise-print #runtime-practice{border:0;padding:0}}
+</style><style>
+/* Shared reading layer: keep this block identical in all standalone notes. */
+@media screen {
+:root{--paper:#fafbf8;--ink:#21382e;--muted:#526359;--line:#dce3d7;--green:#22664f;--pale:#eef2e9;--lime:#d5e7b3;--dark:#193e33}
+.notes-article{font-size:16px;line-height:1.9}
+.notes-article .wrap{width:min(1120px,calc(100% - 64px));max-width:none;padding-inline:0;margin-inline:auto}
+.notes-article .topbar{background:#fafbf8f5;z-index:10}
+.notes-article .topbar-inner{height:auto;min-height:68px;display:flex;align-items:center;justify-content:space-between;gap:24px;padding-block:0}
+.notes-article .brand{display:inline-flex;align-items:center;gap:10px;min-height:44px;margin:0;font-size:15px;font-weight:700;letter-spacing:0;color:var(--ink)}
+.notes-article .brandmark{display:grid;place-items:center;width:30px;height:30px;margin:0;border-radius:6px;background:var(--dark);color:#e0edcb;font:19px/1 var(--mono)}
+.notes-article .topbar nav{display:flex;align-items:center;gap:18px;margin:0;padding:0;width:auto;flex-wrap:nowrap}
+.notes-article .topbar nav a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:4px 3px;font-size:14px;font-weight:500;color:var(--muted);text-decoration:none;border-radius:4px}
+.notes-article .topbar nav a:hover,.notes-article .topbar nav a[aria-current="location"]{color:var(--green);background:var(--pale)}
+.notes-article .topbar nav a[aria-current="location"]{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:6px}
+.notes-article .hero{padding-block:48px 40px;gap:48px;grid-template-columns:1.12fr 1fr}
+.notes-article .hero h1{font-size:clamp(32px,3.6vw,44px);line-height:1.35;letter-spacing:-.035em;text-wrap:balance}
+.notes-article .hero h1 span{font-size:.78em;line-height:1.5;margin-top:8px}
+.notes-article .hero-intro{font-size:17px;line-height:1.9;max-width:32rem;margin-block:20px}
+.notes-article .hero>.hero-card,.notes-article .hero-flow,.notes-article .intro-map{box-shadow:none;border-radius:12px}
+.notes-article .hero .tag{font-size:12px;border-radius:4px;padding:4px 9px;margin:0 0 16px;line-height:1.7}
+.notes-article .hero>.hero-figure .map{transform:none;box-shadow:none}
+.notes-article .hero>div>.eyebrow{display:none}
+.notes-article .hero>.hero-card>.eyebrow,.notes-article .hero>.hero-flow>.eyebrow{display:block;font-size:12px;line-height:1.7}
+.notes-article .hero-links{gap:12px 22px;margin-top:24px}
+.notes-article .hero .text-link{display:inline-flex;align-items:center;min-height:44px;font-size:14px}
+.notes-article .hero figcaption,.notes-article .hero-figure figcaption,.notes-article .date-note{font-size:13px;line-height:1.8}
+.notes-article .hero-card p:last-child,.notes-article .hero-flow .small,.notes-article .intro-map>p:last-child{font-size:14px;line-height:1.85}
+.notes-article .hero-numbers span,.notes-article .hero-step small{font-size:13px}
+.notes-article h2{font-size:28px;line-height:1.5;text-wrap:balance}
+.notes-article .section-head p{font-size:15px;line-height:1.85}
+.notes-article .content-section,.notes-article .article-section{padding-block:52px}
+.notes-article .content-section+.content-section{padding-top:48px}
+.notes-article .note-section{scroll-margin-top:100px}
+.notes-article .note-section>summary{min-height:56px;font-size:18px;line-height:1.6}
+.notes-article .note-section>summary h2{font-size:20px;line-height:1.6}
+.notes-article .note-body{max-width:none;font-size:16px;line-height:1.95}
+.notes-article .note-body p,.notes-article .note-body li{font-size:16px;line-height:1.95}
+.notes-article .note-body>p,.notes-article .note-body>ul,.notes-article .note-body>ol,.notes-article .article-section>p,.notes-article .article-section>ul,.notes-article .article-section>ol{max-width:44rem;font-size:16px;line-height:1.95}
+.notes-article .note-body h3{font-size:21px;margin-block:28px 12px;scroll-margin-top:100px}
+.notes-article .note-body pre,.notes-article pre{font-size:14px;line-height:1.8}
+.notes-article .note-body table,.notes-article table{font-size:14px;line-height:1.8}
+.notes-article .note-body th,.notes-article .note-body td{font-size:14px;line-height:1.8}
+.notes-article .article-section>h2{font-size:28px}
+.notes-article .concept p,.notes-article .subnote p,.notes-article .risk p,.notes-article .monitor-step p,.notes-article .monitor-step ul,.notes-article .step-card p{font-size:15px;line-height:1.85}
+.notes-article .callout,.notes-article .model-scope,.notes-article .demo-disclaimer,.notes-article .version-card,.notes-article .version-card p{font-size:14px;line-height:1.85}
+.notes-article .source-list a,.notes-article .source-list span,.notes-article #plane-references~ul{font-size:14px;line-height:1.85}
+.notes-article #plane-overview~ul{max-width:none}
+.notes-article #plane-overview~ul li{font-size:15px;line-height:1.85}
+.notes-article .note-body .source-list{max-width:none}
+.notes-article .small,.notes-article .lab-note,.notes-article .lab-foot,.notes-article .lab-footer,.notes-article .clock-lab-foot,.notes-article .print-hint{font-size:13px;line-height:1.85}
+.notes-article .principle,.notes-article .principles span{font-size:13px;line-height:1.8}
+.notes-article .principles strong{font-size:15px}
+.notes-article .memory-motto,.notes-article .motto{background:var(--pale);color:var(--ink);border-radius:8px;text-align:left;padding:24px;margin-top:30px}
+.notes-article .memory-motto span,.notes-article .motto small{color:var(--muted);font-size:14px}
+.notes-article button,.notes-article .btn,.notes-article .notes-toolbar button{min-height:44px;min-width:44px;font-size:14px}
+.notes-article button,.notes-article .btn,.notes-article .topbar a,.notes-article summary,.notes-article .section-nav a,.notes-article .toc a{transition:background .18s,color .18s,border-color .18s,transform .18s}
+.notes-article button:enabled:hover{filter:brightness(1.06)}
+.notes-article button:enabled:active,.notes-article .btn:active{transform:translateY(1px)}
+.notes-article button:disabled{opacity:.58}
+.notes-article .graph-node:disabled,.notes-article .work-card:disabled{opacity:1}
+.notes-article :focus-visible{outline:3px solid #ad751d;outline-offset:4px}
+.notes-article .lab :focus-visible,.notes-article .clock-lab :focus-visible{outline-color:#f0cc80}
+.notes-article .toc a,.notes-article .section-nav a{display:inline-flex;align-items:center;min-height:44px;border-radius:5px;font-size:14px;padding:8px 12px}
+.notes-article .checklist label,.notes-article .clock-check{min-height:44px;font-size:14px;line-height:1.8}
+.notes-article .clock-field label,.notes-article .clock-controls small,.notes-article .clock-node small,.notes-article .clock-node span{font-size:13px;line-height:1.6}
+.notes-article .clock-current p,.notes-article .clock-candidate,.notes-article .clock-warnings{font-size:14px;line-height:1.8}
+.notes-article .clock-node strong,.notes-article .hero-numbers strong,.notes-article .metric strong{font-variant-numeric:tabular-nums}
+.notes-article .task-option strong,.notes-article .work-card strong{font-size:14px;line-height:1.65}
+.notes-article .task-option span,.notes-article .scope-buttons small,.notes-article .card-id,.notes-article .card-project,.notes-article .card-status,.notes-article .card-tags>span,.notes-article .lane-en{font-size:12px;line-height:1.6}
+.notes-article .scope-explanation,.notes-article .detail-copy>p,.notes-article .detail .acceptance,.notes-article .state-controls>p,.notes-article .board-heading p{font-size:14px;line-height:1.8}
+.notes-article .lane h4{font-size:14px;line-height:1.5;flex-wrap:wrap}
+.notes-article .lane-count{font-size:12px}
+.notes-article .lab .task-option{min-height:96px}
+.notes-article .skills-step-card dd,.notes-article .route-pane p,.notes-article .chooser-intro,.notes-article .permissions-pane>p{font-size:14px;line-height:1.85}
+.notes-article .skills-step-card dt,.notes-article .step-counter,.notes-article .permissions-pane small,.notes-article .permission-list span,.notes-article .graph-legend,.notes-article .graph-arrow-note{font-size:13px;line-height:1.8}
+.notes-article .ui-arrow{width:18px;height:18px;display:inline-block;vertical-align:middle;flex-shrink:0}
+.notes-article .selection-jump,.notes-article .choice-result{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;padding:10px 12px;border-radius:5px;font-size:13px;font-weight:600;line-height:1.6;text-decoration:none}
+.notes-article .selection-jump{background:#22664f;color:#fff}
+.notes-article .choice-result{color:#e2efca;border:1px solid #829873;background:#173e33;margin-top:7px}
+.notes-article .task-choice{min-width:0}
+.notes-article .task-choice .task-option{width:100%}
+.notes-article .task-option[aria-pressed="false"]+.choice-result{display:none}
+.notes-article #selected-skill,.notes-article #plane-selected-title{scroll-margin-top:128px}
+.notes-article footer,.notes-article .footer{font-size:13px;line-height:1.8}
+.notes-article footer a,.notes-article .footer a{display:inline-flex;align-items:center;min-height:44px}
+.notes-article .note-body p,.notes-article .hero-intro,.notes-article .article-section>p{text-wrap:pretty}
+@media(max-width:760px){
+.notes-article .wrap{width:calc(100% - 40px)}
+.notes-article .topbar-inner{flex-wrap:wrap;gap:0;padding-top:6px}
+.notes-article .brand{min-height:44px;font-size:15px}
+.notes-article .topbar nav{width:100%;gap:12px;overflow-x:auto;flex-wrap:nowrap;padding:0 0 4px;scrollbar-width:thin}
+.notes-article .topbar nav a{font-size:13px;flex-shrink:0;padding-inline:2px}
+.notes-article .hero{grid-template-columns:1fr;gap:28px;padding-block:32px}
+.notes-article .hero h1{font-size:32px;line-height:1.4}
+.notes-article .hero-intro{font-size:16px;max-width:none;margin-block:16px}
+.notes-article .hero-figure{max-width:500px}
+.notes-article .hero .tag{margin-bottom:12px}
+.notes-article .content-section,.notes-article .article-section{padding-block:36px}
+.notes-article .content-section+.content-section{padding-top:36px}
+.notes-article h2,.notes-article .article-section>h2{font-size:24px}
+.notes-article .section-head p{font-size:15px}
+.notes-article .note-section>summary{font-size:17px}
+.notes-article .note-section>summary h2{font-size:18px}
+.notes-article .note-body p,.notes-article .note-body li{font-size:16px}
+.notes-article .note-body pre,.notes-article pre{font-size:13px}
+.notes-article .note-body th,.notes-article .note-body td{font-size:14px}
+.notes-article .principles{grid-template-columns:1fr;gap:14px}
+.notes-article .principles strong{display:inline;margin-right:8px}
+.notes-article .principles span{display:inline}
+.notes-article .task-options{grid-template-columns:1fr 1fr;align-items:start}.notes-article .lab .task-option{min-height:76px;padding:12px}
+.notes-article .board{grid-template-columns:1fr 1fr}
+.notes-article .lane:last-child .lane-cards{display:flex}
+.notes-article .lane-cards{min-height:0}
+.notes-article .lane{padding:14px}
+.notes-article .lane-en{margin-bottom:10px}
+.notes-article .work-card{padding:14px}
+.notes-article .card-tags{gap:6px}
+.notes-article .lab-top{flex-wrap:wrap}
+.notes-article .lab-top .tag{white-space:normal}
+.notes-article .note-section,.notes-article .note-body h3,.notes-article .article-section,.notes-article .article-section>h3{scroll-margin-top:124px}
+}
+@media(max-width:370px){.notes-article .task-options,.notes-article .board{grid-template-columns:1fr}.notes-article .hero h1{font-size:30px}.notes-article .topbar nav{gap:8px}}
+}
+@media(prefers-reduced-motion:reduce){.notes-article *,.notes-article *::before,.notes-article *::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+</style><style>
+.notes-article main,.notes-article main>*{min-width:0}.content-section p,.content-section li{max-width:49rem}.content-section h3{margin-top:28px}.content-section code,.content-section a,.applied-result,.feedback{overflow-wrap:anywhere}.runtime-diagram{margin:24px 0;border:1px solid var(--line);padding:20px;border-radius:10px}.diagram-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}.diagram-grid>div{background:var(--pale);padding:18px;border-radius:8px;min-width:0}.diagram-grid strong{display:block;font-size:19px}.diagram-grid p{font-size:14px}.runtime-diagram figcaption{font-size:14px;margin-top:12px}.exercise{margin:20px 0;padding:18px;border:1px solid var(--line);border-radius:8px}.exercise h3{margin-top:0}.exercise-answer{background:var(--pale)}.code-wrap,.table-wrap{max-width:100%;overflow-x:auto}.code-wrap pre{margin:0;overflow:visible}.code-wrap{margin:20px 0;border-radius:8px}.code-wrap:focus-visible,.table-wrap:focus-visible{outline:3px solid #895112;outline-offset:4px}.notes-article .lab :focus-visible{outline-color:#895112}.lab p,.lab label{overflow-wrap:anywhere}.trace-readout{white-space:pre-wrap;line-height:1.9}.applied-result{padding:18px;background:var(--pale);border-radius:8px}.lab form{margin:0}.notes-toolbar{margin-top:20px}.topbar-inner{display:flex;align-items:center;justify-content:space-between;gap:18px}.fields{grid-template-columns:repeat(2,minmax(0,1fr))}[hidden]{display:none!important}
+@media(max-width:760px){.diagram-grid{grid-template-columns:1fr}.runtime-diagram{padding:14px}.fields{grid-template-columns:1fr}}
+@media print{.content-section{padding:18px 0}.code-wrap,.table-wrap{overflow:visible}.code-wrap pre{white-space:pre-wrap;overflow-wrap:anywhere}.exercise{break-inside:avoid}.diagram-grid{grid-template-columns:1fr}.runtime-diagram{break-inside:avoid}.lab,.feedback{display:none!important}body.exercise-print main>header,body.exercise-print main>nav,body.exercise-print main>.content-section:not(#runtime-practice),body.exercise-print .practice-intro,body.exercise-print footer{display:none!important}body.exercise-print .exercise-answer,body.exercise-print .applied-result{display:none!important}body.exercise-print #runtime-practice{border:0;padding:0}}
+</style></head><body class="notes-article"><a class="skip" href="#main">跳到正文</a><div><header class="topbar"><div class="wrap topbar-inner"><a class="brand" href="../"><span class="brandmark" aria-hidden="true">E</span>嵌入式技术笔记</a><nav aria-label="文章导航"><a href="../learn/">返回分类</a><a href="../learn/reset-runtime.html#runtime-lab">交互实验</a><a href="../learn/reset-runtime.html#runtime-actors">完整笔记</a><a href="../?search=1">搜索笔记</a></nav></div></header><main class="wrap" id="main"><header class="hero"><div><p class="tag">阶段02 · 单元07 · 启动与内存</p><h1 id="reset-runtime-reference">复位与C运行环境 · 可打印速查</h1><p class="hero-intro">先解释谁准备初始上下文，再证明每个RAM字节的来处。</p><p class="small">原创64字节模型 · 无硬件操作 · 本地候选</p></div><aside class="hero-card"><strong>放置 ≠ 初始化 ≠ 执行</strong><p>校验完整请求，准备私有副本，最后一起提交。</p></aside></header><nav class="section-nav" aria-label="本章段落"><a href="#reference-contract">输入合同</a><a href="#reference-fixture">固定答案</a><a href="#reference-recall">折叠自检</a></nav><div class="content-section" id="reference-contract" role="region" aria-labelledby="reference-contract-title"><h2 id="reference-contract-title">速查：真实对象、初始上下文与失败保持</h2><p><code>runtime_image_initialize</code>只在整个请求有效后改变输出。它先检查四个空参数，再检查容量、向量长度、32位标签端点、SP和入口，然后检查每个区间和目标交集；最后形成私有64字节暂存并提交。报告mainReady在失败时也保持原值，所以旧true不等于这次请求成功。调用者必须先看返回状态，再把报告与其已接受输入配对。</p>
+<div class="table-wrap" role="region" tabindex="0" aria-label="可横向滚动的数据表"><table>
+<thead>
+<tr>
+<th>条件</th>
+<th>本模型的明确处理</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Flash少于8字节；或大于64；RAM不在1..64</td>
+<td>BAD_VECTOR或BAD_LENGTH；不读不存在的向量字</td>
+</tr>
+<tr>
+<td>base+length不能表示为uint32_t排他端点</td>
+<td>ADDRESS_OVERFLOW；先比较UINT32_MAX-base再相加</td>
+</tr>
+<tr>
+<td>SP超出含顶端边界区间、或不按8对齐</td>
+<td>BAD_SP；对齐为教学政策，不承诺栈需求充足</td>
+</tr>
+<tr>
+<td>缺Thumb位、目标不在执行范围、仅剩1字节、目标在末端</td>
+<td>BAD_ENTRY；最小2字节检查不证明指令正确</td>
+</tr>
+<tr>
+<td>offset+length将溢出size_t；或完整区间越界</td>
+<td>ADDRESS_OVERFLOW或BAD_RANGE；不能先加再看包回的小数</td>
+</tr>
+<tr>
+<td>data与BSS非空目标相交</td>
+<td>OVERLAP；即使复制阶段看似正确，也不能先写后拒绝</td>
+</tr>
+<tr>
+<td>data/BSS长度0</td>
+<td>仍要求offset≤对应对象长度；exact endpoint64可用，65不可用；不形成该空区间的指针</td>
+</tr>
+</tbody>
+</table></div>
+<p>独立故障例：保持向量有效，把BSS起点从16改为10、长度仍4，则data[8,12)与BSS[10,14)交于10..11。不能让后来的零填充悄悄破坏51、68；应在任何RAM/报告写入前拒绝。端点相接如data[8,12)、BSS[12,16)则不重叠。若data与BSS都为空、起点都64，其他上下文有效，允许main-ready但copied=zeroed=0。</p>
+<p><strong>非空指针不足以证明安全。</strong>Flash、request、RAM与report必须是四个存活、完整初始化、互不重叠的真实对象；实际数组必须覆盖声明的flashLength/ramLength，调用期间不得并发修改。函数可以检查NULL和整数范围，不能通用识别伪造/悬空指针、谎报长度或别名。不要把地址标签强转指针来“测试错误”，也不要让report位于RAM里。失败夹具只改变真实已初始化对象中的元数据。C使用size_t上限，JS使用Number.MAX_SAFE_INTEGER上限，数值表示不同；两者在本章0..64的有限合法域与32位标签合同一致。</p>
+<p>这里的事务性依赖单执行上下文和非重叠所有权；不是线程同步、断电原子性或真实启动回滚承诺。最多复制64个旧RAM字节，最多复制64个data字节，最多清零64个字节，再最多提交64字节；所有循环都有已验证上界，没有探测内存或等待硬件。</p></div><div class="content-section" id="reference-fixture" role="region" aria-labelledby="reference-fixture-title"><h2 id="reference-fixture-title">速查：64字节固定例与完整解释</h2><p>固定前提：Flash和RAM各为真实64字节对象，标签分别从0x1000和0x2000开始；标签宽32位，向量采用小端字节序。RAM种子全部为0xA5=165。向量位于Flash偏移0..3与4..7；可执行范围为<strong>[0x1010,0x1012)</strong>，方括号含起点、圆括号不含末端。Flash其余字节可有0xA5，但不分析其是否可执行。</p>
+<div class="table-wrap" role="region" tabindex="0" aria-label="可横向滚动的数据表"><table>
+<thead>
+<tr>
+<th>Flash偏移 / 十六进制字节</th>
+<th>小端解码</th>
+<th>解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0..3：40 20 00 00（十进制64,32,0,0）</td>
+<td>0x00002040=8256</td>
+<td>0x40+0x20×256；是栈顶边界值</td>
+</tr>
+<tr>
+<td>4..7：11 10 00 00（十进制17,16,0,0）</td>
+<td>0x00001011=4113</td>
+<td>0x11+0x10×256；bit0=1，目标0x1010</td>
+</tr>
+<tr>
+<td>32..35：11 22 33 44（十进制17,34,51,68）</td>
+<td>四个独立字节</td>
+<td>源0x1020..0x1023，复制到0x2008..0x200B</td>
+</tr>
+</tbody>
+</table></div>
+<p>SP0x2040位于[0x2000,0x2040]边界区间且8256除8余0。入口清状态位后为4112，末端4114减4112=2，所以完整最小单元恰好容纳。若末端改为4113只剩1字节；若入口字为4115，目标4114正好等于末端；两者都拒绝。</p>
+<figure class="runtime-diagram" aria-labelledby="runtime-diagram-title"><div class="diagram-grid"><div><strong>① 虚构Flash · 64字节</strong><p>标签0x1000..0x103F<br>0..7：SP与入口<br>32..35：17,34,51,68</p></div><div><strong>② 校验 → 私有准备</strong><p>先查完整请求<br>32..35 → 8..11<br>16..19 → 写零<br>失败：不提交</p></div><div><strong>③ 虚构RAM · 64字节</strong><p>标签0x2000..0x203F<br>8..11：17,34,51,68<br>16..19：0,0,0,0<br>其余：165</p></div></div><figcaption id="runtime-diagram-title">原创事务图。箭头表示有限字节复制或处理顺序，不表示总线访问、寄存器赋值或CPU跳转。所有偏移单位为byte；0x前缀为十六进制标签。虚线概念由“失败：不提交”文字表达，无色彩依赖。</figcaption></figure>
+
+<p>图的文字等价：先验证上下文和两个不相交目标，后在私有副本里从Flash32..35复制四字节到RAM8..11，再把RAM16..19写零；直到所有准备结束才公开RAM与报告。源Flash不改变，目标外没有字节被授权写入。</p>
+<div class="table-wrap" role="region" tabindex="0" aria-label="可横向滚动的数据表"><table>
+<thead>
+<tr>
+<th>RAM偏移 / 标签</th>
+<th>种子</th>
+<th>成功后的完整区间结果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0..7 / 0x2000..0x2007</td>
+<td>全165</td>
+<td>全165</td>
+</tr>
+<tr>
+<td>8..11 / 0x2008..0x200B</td>
+<td>全165</td>
+<td>17,34,51,68</td>
+</tr>
+<tr>
+<td>12..15 / 0x200C..0x200F</td>
+<td>全165</td>
+<td>全165</td>
+</tr>
+<tr>
+<td>16..19 / 0x2010..0x2013</td>
+<td>全165</td>
+<td>0,0,0,0</td>
+</tr>
+<tr>
+<td>20..63 / 0x2014..0x203F</td>
+<td>全165</td>
+<td>全165</td>
+</tr>
+</tbody>
+</table></div>
+<p>共64字节：4个data、4个BSS、56个保持165；报告initialSp=8256、entryWord=4113、entryTarget=4112、copied=4、zeroed=4、mainReady=true。可先盖住表最后一列自己填完，之后再进入控制器。这个静态例子在无JavaScript时也完整可读。</p></div><div class="content-section" id="reference-actors" role="region" aria-labelledby="reference-actors-title"><h2 id="reference-actors-title">速查：核心与所选CMSIS运行时</h2><p><strong>复位向量</strong>是复位入口的初始上下文数据，不是“先调用main”的同义词。以<a href="https://www.st.com/resource/en/programming_manual/pm0214-stm32-cortexm4-mcus-and-mpus-programming-manual-stmicroelectronics.pdf">ST PM0214 Rev10，2020年3月，§2.1.3 p19、§2.3.4 p40</a>描述的Cortex-M4为例，复位时从核心可见0x00000000取得MSP初值，从0x00000004取得入口；入口bit0用于Thumb状态，必须为1。最前面的SP字本身不是处理函数指针。这个核心规则并不说明哪一块物理存储器出现在零地址。</p>
+<p>芯片负责复位可见的启动映射。历史<a href="https://www.keil.com/dd/docs/datashts/st/stm32f4xx/dm00031020.pdf">RM0090 Rev5，2013年9月，§2.4 pp69–70</a>对其STM32F4范围说明BOOT选择的Flash、系统存储器、SRAM启动空间，以及F405/407的物理重映射。这里仅把它作为版本明确的映射例子；不是当前所有STM32的引脚或启动配置指南，更不把本章0x1000当成STM32真实Flash基址。核心取向量的角色与芯片映射到什么字节，是两个证据问题。</p>
+<p><strong>链接器</strong>决定符号、段和地址关系，不在芯片复位时主动执行复制。<strong>启动代码</strong>是入口以后实际运行的指令；<strong>C运行环境</strong>指普通C代码依赖的存储初始化及所选运行库约定。它们可能分散在启动文件、编译器运行库和链接脚本中。托管操作系统的装载器还有自己的装载合同，不能拿主机可执行程序的启动方式替代Flash固件。</p>
+<p>小产物：用四行写出“核心取上下文→芯片映射提供字节→入口执行启动代码→所选运行时建立C前提”。其中映射是取字节条件，不是核心之后顺序执行的另一个软件函数。</p>
+<p>选定Arm <strong>CMSIS5.9.0</strong>，发布标签2022-05-02，对应commit <code>2b7495b8535bdcb306dac29b9ded4cfb679d7e5c</code>。其<a href="https://github.com/ARM-software/CMSIS_5/blob/2b7495b8535bdcb306dac29b9ded4cfb679d7e5c/Device/ARM/ARMCM4/Source/startup_ARMCM4.c">ARMCM4启动例子V2.0.3，2020-03-31</a>的<code>Reset_Handler</code>先<code>SystemInit()</code>再<code>__PROGRAM_START()</code>。这是所选设备/工具链例子的顺序；不是所有C程序或所有厂商启动文件的通用顺序。尤其不能因此假定SystemInit调用时所有普通全局初值已经可用。</p>
+<p>同一commit的<a href="https://github.com/ARM-software/CMSIS_5/blob/2b7495b8535bdcb306dac29b9ded4cfb679d7e5c/CMSIS/Core/Include/cmsis_gcc.h#L117">cmsis_gcc.h启动段</a>在未覆盖宏时将<code>__PROGRAM_START</code>映射到<code>__cmsis_start</code>：遍历copy-table，遍历zero-table，然后调用<code>_start()</code>。这些表依实际链接脚本才有内容，长度为word而不是本模型的byte。</p>
+<p>必须同时看<a href="https://github.com/ARM-software/CMSIS_5/blob/2b7495b8535bdcb306dac29b9ded4cfb679d7e5c/Device/ARM/ARMCM4/Source/GCC/gcc_arm.ld">gcc_arm.ld V2.1.0，2020-08-04</a>：<code>.data : AT(__etext)</code>放在RAM，copy-table给出Flash源与RAM目标；模板zero-table只留了额外BSS条目的可选示例，普通<code>.bss</code>不必出现在该表中。因此<strong>不能声称__cmsis_start的zero-table循环单独清除了每个普通.bss</strong>；必须继续核对实际选择的<code>_start</code>和C运行库合同。本章未执行该目标运行库，不补写一个“必然调用main”的虚假目标轨迹。</p>
+<p>本章模型有自己的明确合同：全部校验→私有data复制→私有BSS清零→提交main-ready。它用这个顺序解释存储责任；它没有声称复刻上述CMSIS例子的全部库步骤、构造器、设备设置或真实复位路径。</p></div><div class="content-section" id="reference-bridge" role="region" aria-labelledby="reference-bridge-title"><h2 id="reference-bridge-title">速查：MSP/PC与bootloader转交</h2><p>先回看<a href="../mcu/cortex-m-cpu-registers.html#stack-link-pc-title">CPU核心寄存器的SP、LR、PC段</a>。R13/SP有MSP与PSP的架构角色，R15/PC参与取指和控制流。C变量<code>uint32_t spLabel</code>则是普通对象，保存一个数；改变这个对象不会改变处理器的MSP。C指针也有对象、类型和有效期前提，不能因画了0x2000就获得访问该地址的权限。</p>
+<p>为什么SP要先有值？函数调用可能需要保存返回现场和局部临时存储；在这些操作发生前，活动栈必须有可靠的边界。为什么入口有状态位？入口数值同时携带控制流目标和Thumb状态信息，不能把奇数入口字直接解释为普通字节下标。本模型把0x1011清除bit0得到0x1010，再要求完整的最小2字节单元；这只验证有限入口范围，不分析其指令、后续分支或栈深度。<a href="https://www.st.com/resource/en/programming_manual/pm0214-stm32-cortexm4-mcus-and-mpus-programming-manual-stmicroelectronics.pdf">PM0214 Rev10 §2.1.3 pp19、23</a>给出该核心的Thumb状态条件；本模型的完整两字节检查和8字节SP对齐是额外教学政策。</p>
+<p>声明向下增长的虚构栈时，0x2040可作为64字节RAM的顶端边界，虽然它是一过末端、不是可读取的RAM字节。模型也允许底端0x2000作为边界；这不保证有空间容纳一次调用。模型对齐8字节不能推广成“每条指令都由ABI要求8字节对齐”。通过入口检查更不能推出真实板上向量位置、所有异常向量、权限、栈容量或运行库都正确。</p>
+<p><strong>复位与bootloader受控转交</strong>有不同前提。普通分支或函数调用不会自动重演复位的寄存器、时钟、外设、中断或存储状态变化。转交的两端必须明确谁准备活动栈、向量、执行状态与运行库，如何处理仍活跃的中断、外设和DMA，以及哪些状态由目标保留。此处是对责任的推导，不是可直接复制的跳转流程；本章不提供MSP赋值、伪造函数指针或MMIO代码。</p>
+<p><strong>Flash</strong>在这里存放镜像字节；<strong>RAM</strong>在这里是可写运行存储。初始化的静态对象如<code>uint8_t samples[4]={17,34,51,68}</code>需要这些初值在运行前到达可写目标。<strong>LMA（装载地址）</strong>描述初值在装载镜像中的位置，<strong>VMA（运行地址）</strong>描述运行时的地址；在ROM到RAM的安排中二者不同。依据是<a href="https://www.sourceware.org/binutils/docs-2.36/ld.html#Output-Section-LMA">GNU ld2.36 §3.1、§3.6.8.2</a>的定义和启动复制示例。</p>
+<p>本章data初值的LMA标签是0x1020，即Flash偏移32；运行目标VMA标签为0x2008，即RAM偏移8。每复制一个字节，源偏移和目标偏移都前进1，四字节对应关系为32→8、33→9、34→10、35→11。不是把“地址数0x1020”存入RAM，也不是把整个Flash搬进RAM。</p>
+<p><strong>BSS</strong>通常为需要零初始化的静态存储保留RAM空间，其零值可由运行时写入，不必在Flash为每个零都存一份同尺寸的有效载荷。本例只声明RAM偏移16..19清零。<strong>noinit/保留区</strong>依工程链接与运行时合同选择不初始化；不是ISO C给任意未初始化读取的通行证。这里未被data/BSS拥有的字节保留0xA5，用来证明模型没有擅自清空全部RAM，也不把这个图案当成真实硬件复位值。</p>
+<p>小产物：写两列“Flash负载字节”和“RAM运行保留”，data在两列各有四字节，BSS只有四字节RAM目标和零填充责任。map能说明本次链接的布局；仍需实际启动代码履行复制/清零合同。</p></div><div class="content-section" id="reference-source" role="region" aria-labelledby="reference-source-title"><h2 id="reference-source-title">可复用模块与完整下载</h2><p>先准备已有C11编译器；源代码中的测试宏RUNTIME_IMAGE_TEST打开main，模块使用时不定义它。正常和NDEBUG检查均有实际运行证据；所有编译按项目的统一路由执行。每次立即检查状态，失败不运行旧产物。main-ready始终是有限模型状态。</p>
+<p><a href="../examples/reset-runtime/runtime_image.h" download>下载runtime_image.h</a> · <a href="../examples/reset-runtime/runtime_image.c" download>下载runtime_image.c</a> · <a href="../examples/reset-runtime/README.txt" download>下载复现说明README.txt</a></p>
+<div class="code-wrap" role="region" aria-label="完整runtime_image.h，可横向滚动" tabindex="0"><pre data-source="runtime_image.h"><code>/******************************************************************************
+ * @file runtime_image.h
+ * @brief Original embedded-notes fictional image transaction interface.
+ * @author embedded-notes project contributors
+ * @version V1.0 2026-10-17
+ * Original project teaching code; no third-party authorship or license implied.
+ *****************************************************************************/
+#ifndef RUNTIME_IMAGE_H
+#define RUNTIME_IMAGE_H
+#include &lt;stdbool.h&gt;
+#include &lt;stddef.h&gt;
+#include &lt;stdint.h&gt;
+#define RUNTIME_CAPACITY 64U
+typedef enum {
+    RUNTIME_OK,
+    RUNTIME_INVALID_ARGUMENT,
+    RUNTIME_BAD_LENGTH,
+    RUNTIME_ADDRESS_OVERFLOW,
+    RUNTIME_BAD_VECTOR,
+    RUNTIME_BAD_SP,
+    RUNTIME_BAD_ENTRY,
+    RUNTIME_BAD_RANGE,
+    RUNTIME_OVERLAP
+} RuntimeStatus;
+typedef struct {
+    uint32_t flashBase;
+    uint32_t ramBase;
+    size_t flashLength;
+    size_t ramLength;
+    uint32_t execStart;
+    uint32_t execEnd;
+    size_t dataSource;
+    size_t dataDestination;
+    size_t dataLength;
+    size_t bssDestination;
+    size_t bssLength;
+} RuntimeRequest;
+typedef struct {
+    uint32_t initialSp;
+    uint32_t entryWord;
+    uint32_t entryTarget;
+    size_t copied;
+    size_t zeroed;
+    bool mainReady;
+} RuntimeReport;
+/**
+ * @brief Validate a complete request, prepare private RAM, then commit on OK.
+ * @param[in] flash Live readable initialized byte object, truthful flashLength.
+ * @param[in] request Live fully initialized request. Lengths are at most64.
+ * @param[in,out] ram Live writable initialized object, truthful ramLength.
+ * @param[in,out] report Live writable initialized report; unchanged on rejection.
+ * @return Explicit status; OK means fictional main-ready, never a branch.
+ * All four objects must be distinct, nonoverlapping and live throughout the call.
+ * One execution context, no concurrent mutation. NULL is checked. Forged/dangling
+ * pointers, dishonest spans and caller alias violations are not detected.
+ * Labels are32-bit integers, not pointers. Eight-byte SP alignment and an
+ * inclusive RAM boundary interval are model policies. Endpoints must be
+ * representable as uint32_t; empty regions still need in-object endpoints.
+ */
+RuntimeStatus runtime_image_initialize(const uint8_t *flash, const RuntimeRequest *request,
+                                       uint8_t *ram, RuntimeReport *report);
+#endif
+</code></pre></div>
+
+<div class="code-wrap" role="region" aria-label="完整runtime_image.c，可横向滚动" tabindex="0"><pre data-source="runtime_image.c"><code>/******************************************************************************
+ * @file runtime_image.c
+ * @brief Original embedded-notes bounded fictional reset/runtime transaction.
+ * @author embedded-notes project contributors
+ * @version V1.0 2026-10-17
+ * No MCU-address dereference, real reset, register write or function-pointer call.
+ * Define RUNTIME_IMAGE_TEST for live runtime checks; omit it for module use.
+ * Original project teaching code; no third-party authorship or license implied.
+ *****************************************************************************/
+#include &quot;runtime_image.h&quot;
+#include &lt;limits.h&gt;
+#if CHAR_BIT != 8 || !defined(UINT8_MAX) || !defined(UINT32_MAX)
+#error &quot;This model requires eight-bit bytes, uint8_t and uint32_t.&quot;
+#endif
+#ifdef RUNTIME_IMAGE_TEST
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+#endif
+/**
+ * @brief Decode one little-endian vector word from an already checked span.
+ * @param[in] bytes Four live initialized bytes.
+ * @return Decoded32-bit value; no alignment-dependent typed dereference.
+ */
+static uint32_t read_le32(const uint8_t *bytes)
+{
+    /**
+     * Promote before shifting so narrow integer promotions cannot overflow.
+     **/
+    return (uint32_t)bytes[0] | ((uint32_t)bytes[1] &lt;&lt; 8U) |
+           ((uint32_t)bytes[2] &lt;&lt; 16U) | ((uint32_t)bytes[3] &lt;&lt; 24U);
+}
+/**
+ * @brief Validate region metadata before any offset addition or byte access.
+ * @param[in] request Live initialized request with bounded object lengths.
+ * @return Range, arithmetic or overlap status.
+ */
+static RuntimeStatus validate_regions(const RuntimeRequest *request)
+{
+    size_t dataEnd;
+    size_t bssEnd;
+    /**
+     * Empty spans still require offset &lt;= object length; no pointer is formed.
+     **/
+    if (request-&gt;dataLength &gt; SIZE_MAX - request-&gt;dataSource ||
+        request-&gt;dataLength &gt; SIZE_MAX - request-&gt;dataDestination ||
+        request-&gt;bssLength &gt; SIZE_MAX - request-&gt;bssDestination) {
+        return RUNTIME_ADDRESS_OVERFLOW;
+    }
+    if (request-&gt;dataSource &gt; request-&gt;flashLength ||
+        request-&gt;dataLength &gt; request-&gt;flashLength - request-&gt;dataSource ||
+        request-&gt;dataDestination &gt; request-&gt;ramLength ||
+        request-&gt;dataLength &gt; request-&gt;ramLength - request-&gt;dataDestination ||
+        request-&gt;bssDestination &gt; request-&gt;ramLength ||
+        request-&gt;bssLength &gt; request-&gt;ramLength - request-&gt;bssDestination) {
+        return RUNTIME_BAD_RANGE;
+    }
+    dataEnd = request-&gt;dataDestination + request-&gt;dataLength;
+    bssEnd = request-&gt;bssDestination + request-&gt;bssLength;
+    if (request-&gt;dataLength != 0U &amp;&amp; request-&gt;bssLength != 0U &amp;&amp;
+        request-&gt;dataDestination &lt; bssEnd &amp;&amp; request-&gt;bssDestination &lt; dataEnd) {
+        return RUNTIME_OVERLAP;
+    }
+    return RUNTIME_OK;
+}
+/**
+ * @brief Check declared32-bit labels and decode a complete initial context.
+ * @param[in] flash Checked live readable object of at least eight bytes.
+ * @param[in] request Bounded real-object metadata.
+ * @param[out] candidate Private report, never caller output.
+ * @return Validation status, without changing caller RAM/report.
+ */
+static RuntimeStatus validate_context(const uint8_t *flash, const RuntimeRequest *request,
+                                      RuntimeReport *candidate)
+{
+    uint32_t flashEnd;
+    uint32_t ramEnd;
+    /**
+     * Exclusive integer endpoints must fit; this is a model address policy.
+     **/
+    if (request-&gt;flashLength &gt; UINT32_MAX - request-&gt;flashBase ||
+        request-&gt;ramLength &gt; UINT32_MAX - request-&gt;ramBase) {
+        return RUNTIME_ADDRESS_OVERFLOW;
+    }
+    flashEnd = request-&gt;flashBase + (uint32_t)request-&gt;flashLength;
+    ramEnd = request-&gt;ramBase + (uint32_t)request-&gt;ramLength;
+    candidate-&gt;initialSp = read_le32(flash);
+    candidate-&gt;entryWord = read_le32(flash + 4U);
+    candidate-&gt;entryTarget = candidate-&gt;entryWord &amp; ~UINT32_C(1);
+    if (candidate-&gt;initialSp &lt; request-&gt;ramBase || candidate-&gt;initialSp &gt; ramEnd ||
+        candidate-&gt;initialSp % 8U != 0U) {
+        return RUNTIME_BAD_SP;
+    }
+    if ((candidate-&gt;entryWord &amp; 1U) == 0U || request-&gt;execStart &lt; request-&gt;flashBase ||
+        request-&gt;execEnd &gt; flashEnd || request-&gt;execStart &gt; request-&gt;execEnd ||
+        candidate-&gt;entryTarget &lt; request-&gt;execStart || candidate-&gt;entryTarget &gt; request-&gt;execEnd ||
+        request-&gt;execEnd - candidate-&gt;entryTarget &lt; 2U) {
+        return RUNTIME_BAD_ENTRY;
+    }
+    return RUNTIME_OK;
+}
+/**
+ * @brief Validate the whole request, prepare bounded scratch RAM and commit.
+ * @param[in] flash Real initialized byte object under the header preconditions.
+ * @param[in] request Real initialized metadata, distinct from other objects.
+ * @param[in,out] ram Initialized accepted output; unchanged on failure.
+ * @param[in,out] report Initialized accepted report; unchanged on failure.
+ * @return Explicit status, independent of assertions and NDEBUG.
+ */
+RuntimeStatus runtime_image_initialize(const uint8_t *flash, const RuntimeRequest *request,
+                                       uint8_t *ram, RuntimeReport *report)
+{
+    uint8_t scratch[RUNTIME_CAPACITY];
+    RuntimeReport candidate = {0U, 0U, 0U, 0U, 0U, false};
+    RuntimeStatus status;
+    size_t index;
+    /**
+     * NULL checks precede every caller access. Non-NULL is not a validity proof.
+     **/
+    if (flash == NULL || request == NULL || ram == NULL || report == NULL) {
+        return RUNTIME_INVALID_ARGUMENT;
+    }
+    if (request-&gt;flashLength &gt; RUNTIME_CAPACITY || request-&gt;ramLength == 0U ||
+        request-&gt;ramLength &gt; RUNTIME_CAPACITY) {
+        return RUNTIME_BAD_LENGTH;
+    }
+    if (request-&gt;flashLength &lt; 8U) {
+        return RUNTIME_BAD_VECTOR;
+    }
+    status = validate_context(flash, request, &amp;candidate);
+    if (status != RUNTIME_OK) {
+        return status;
+    }
+    status = validate_regions(request);
+    if (status != RUNTIME_OK) {
+        return status;
+    }
+    for (index = 0U; index &lt; request-&gt;ramLength; ++index) {
+        scratch[index] = ram[index];
+    }
+    for (index = 0U; index &lt; request-&gt;dataLength; ++index) {
+        scratch[request-&gt;dataDestination + index] = flash[request-&gt;dataSource + index];
+    }
+    for (index = 0U; index &lt; request-&gt;bssLength; ++index) {
+        scratch[request-&gt;bssDestination + index] = 0U;
+    }
+    candidate.copied = request-&gt;dataLength;
+    candidate.zeroed = request-&gt;bssLength;
+    candidate.mainReady = true;
+    /**
+     * No fallible operation remains. Commit only under single-context ownership.
+     **/
+    for (index = 0U; index &lt; request-&gt;ramLength; ++index) {
+        ram[index] = scratch[index];
+    }
+    *report = candidate;
+    return RUNTIME_OK;
+}
+#ifdef RUNTIME_IMAGE_TEST
+/**
+ * @brief Report a failed expectation with checked I/O.
+ * @param[in] condition Behavioral result.
+ * @param[in] name Diagnostic literal.
+ * @return Whether the expectation passed.
+ */
+static bool expect_true(bool condition, const char *name)
+{
+    /**
+     * Returning false remains effective with NDEBUG.
+     **/
+    if (!condition) {
+        if (fprintf(stderr, &quot;FAIL runtime: %s\n&quot;, name) &lt; 0) {
+            return false;
+        }
+        if (fflush(stderr) != 0) {
+            return false;
+        }
+    }
+    return condition;
+}
+/**
+ * @brief Compare named report fields, never indeterminate structure padding.
+ * @param[in] left First live initialized report.
+ * @param[in] right Second live initialized report.
+ * @return Whether every meaningful field agrees.
+ */
+static bool same_report(const RuntimeReport *left, const RuntimeReport *right)
+{
+    /**
+     * A structure assignment preserves values without defining padding bytes.
+     **/
+    return left-&gt;initialSp == right-&gt;initialSp &amp;&amp; left-&gt;entryWord == right-&gt;entryWord &amp;&amp;
+           left-&gt;entryTarget == right-&gt;entryTarget &amp;&amp; left-&gt;copied == right-&gt;copied &amp;&amp;
+           left-&gt;zeroed == right-&gt;zeroed &amp;&amp; left-&gt;mainReady == right-&gt;mainReady;
+}
+/**
+ * @brief Check failure status and all actual output bytes/meaningful fields.
+ * @param[in] flash Real initialized input, or NULL for the explicit NULL case.
+ * @param[in] request Real initialized metadata, or NULL.
+ * @param[in,out] ram Real64-byte accepted output, never NULL here.
+ * @param[in,out] report Real initialized accepted report.
+ * @param[in] expected Independently specified status.
+ * @param[in] nullOutput Zero normally, one for RAM NULL, two for report NULL.
+ * @return Whether rejection and complete preservation hold.
+ */
+static bool expect_rejected(const uint8_t *flash, const RuntimeRequest *request, uint8_t *ram,
+                            RuntimeReport *report, RuntimeStatus expected, unsigned int nullOutput)
+{
+    uint8_t before[RUNTIME_CAPACITY];
+    RuntimeReport prior = *report;
+    RuntimeStatus status;
+    /**
+     * Snapshot only real initialized storage, even when a call argument is NULL.
+     **/
+    memcpy(before, ram, sizeof before);
+    status = runtime_image_initialize(flash, request, nullOutput == 1U ? NULL : ram,
+                                      nullOutput == 2U ? NULL : report);
+    if (!expect_true(status == expected, &quot;rejection status&quot;)) {
+        return false;
+    }
+    return expect_true(memcmp(before, ram, sizeof before) == 0 &amp;&amp; same_report(&amp;prior, report),
+                       &quot;rejection preserves every output byte and report field&quot;);
+}
+/**
+ * @brief Exercise real initialized metadata faults and exact endpoints.
+ * @param[in,out] flash Real64-byte fixture input.
+ * @param[in,out] ram Real64-byte accepted image.
+ * @param[in,out] report Real accepted report.
+ * @return Whether all independently specified cases pass.
+ */
+static bool check_boundaries(uint8_t *flash, uint8_t *ram, RuntimeReport *report)
+{
+    const RuntimeRequest seed = {4096U, 8192U, 64U, 64U, 4112U, 4114U, 32U, 8U, 4U, 16U, 4U};
+    RuntimeRequest request;
+    RuntimeStatus status;
+    size_t index;
+    const uint8_t badSp[4][4] = {{255U, 31U, 0U, 0U}, {65U, 32U, 0U, 0U},
+                                {60U, 32U, 0U, 0U}, {255U, 255U, 255U, 255U}};
+    /**
+     * All four NULL positions are guarded before any pointee access.
+     **/
+    if (!expect_rejected(NULL, &amp;seed, ram, report, RUNTIME_INVALID_ARGUMENT, 0U) ||
+        !expect_rejected(flash, NULL, ram, report, RUNTIME_INVALID_ARGUMENT, 0U) ||
+        !expect_rejected(flash, &amp;seed, ram, report, RUNTIME_INVALID_ARGUMENT, 1U) ||
+        !expect_rejected(flash, &amp;seed, ram, report, RUNTIME_INVALID_ARGUMENT, 2U)) {
+        return false;
+    }
+    for (index = 0U; index &lt; 4U; ++index) {
+        memcpy(flash, badSp[index], 4U);
+        if (!expect_rejected(flash, &amp;seed, ram, report, RUNTIME_BAD_SP, 0U)) {
+            return false;
+        }
+    }
+    flash[0] = 64U;
+    flash[1] = 32U;
+    flash[2] = 0U;
+    flash[3] = 0U;
+    flash[4] = 16U;
+    if (!expect_rejected(flash, &amp;seed, ram, report, RUNTIME_BAD_ENTRY, 0U)) {
+        return false;
+    }
+    flash[4] = 19U;
+    if (!expect_rejected(flash, &amp;seed, ram, report, RUNTIME_BAD_ENTRY, 0U)) {
+        return false;
+    }
+    flash[4] = 15U;
+    if (!expect_rejected(flash, &amp;seed, ram, report, RUNTIME_BAD_ENTRY, 0U)) {
+        return false;
+    }
+    flash[4] = 17U;
+    for (index = 0U; index &lt; 21U; ++index) {
+        RuntimeStatus expected = RUNTIME_BAD_RANGE;
+        request = seed;
+        switch (index) {
+            case 0U:
+                request.execEnd = 4113U;
+                expected = RUNTIME_BAD_ENTRY;
+                break;
+            case 1U:
+                request.execEnd = 4161U;
+                expected = RUNTIME_BAD_ENTRY;
+                break;
+            case 2U:
+                request.flashLength = 7U;
+                expected = RUNTIME_BAD_VECTOR;
+                break;
+            case 3U:
+                request.ramLength = 0U;
+                expected = RUNTIME_BAD_LENGTH;
+                break;
+            case 4U:
+                request.flashBase = UINT32_MAX - 63U;
+                expected = RUNTIME_ADDRESS_OVERFLOW;
+                break;
+            case 5U:
+                request.ramBase = UINT32_MAX - 63U;
+                expected = RUNTIME_ADDRESS_OVERFLOW;
+                break;
+            case 6U:
+                request.dataSource = 61U;
+                break;
+            case 7U:
+                request.dataDestination = 61U;
+                break;
+            case 8U:
+                request.bssDestination = 61U;
+                break;
+            case 9U:
+                request.bssDestination = 10U;
+                expected = RUNTIME_OVERLAP;
+                break;
+            case 10U:
+                request.dataSource = SIZE_MAX;
+                expected = RUNTIME_ADDRESS_OVERFLOW;
+                break;
+            case 11U:
+                request.dataDestination = SIZE_MAX;
+                expected = RUNTIME_ADDRESS_OVERFLOW;
+                break;
+            case 12U:
+                request.bssDestination = SIZE_MAX;
+                expected = RUNTIME_ADDRESS_OVERFLOW;
+                break;
+            case 13U:
+                request.dataSource = 65U;
+                request.dataLength = 0U;
+                break;
+            case 14U:
+                request.dataDestination = 65U;
+                request.dataLength = 0U;
+                break;
+            case 15U:
+                request.bssDestination = 65U;
+                request.bssLength = 0U;
+                break;
+            case 16U:
+                request.dataLength = SIZE_MAX;
+                expected = RUNTIME_ADDRESS_OVERFLOW;
+                break;
+            case 17U:
+                request.bssLength = SIZE_MAX;
+                expected = RUNTIME_ADDRESS_OVERFLOW;
+                break;
+            case 18U:
+                request.flashLength = 0U;
+                expected = RUNTIME_BAD_VECTOR;
+                break;
+            case 19U:
+                request.flashLength = 35U;
+                break;
+            default:
+                request.execStart = 4113U;
+                expected = RUNTIME_BAD_ENTRY;
+                break;
+        }
+        if (!expect_rejected(flash, &amp;request, ram, report, expected, 0U)) {
+            return false;
+        }
+    }
+    request = seed;
+    request.dataSource = 64U;
+    request.dataDestination = 64U;
+    request.dataLength = 0U;
+    request.bssDestination = 64U;
+    request.bssLength = 0U;
+    status = runtime_image_initialize(flash, &amp;request, ram, report);
+    if (!expect_true(status == RUNTIME_OK &amp;&amp; report-&gt;copied == 0U &amp;&amp; report-&gt;zeroed == 0U &amp;&amp;
+                     report-&gt;mainReady, &quot;all-empty regions with exact endpoints&quot;)) {
+        return false;
+    }
+    request = seed;
+    request.bssDestination = 64U;
+    request.bssLength = 0U;
+    status = runtime_image_initialize(flash, &amp;request, ram, report);
+    if (!expect_true(status == RUNTIME_OK &amp;&amp; report-&gt;copied == 4U &amp;&amp; report-&gt;zeroed == 0U,
+                     &quot;empty BSS exact endpoint&quot;)) {
+        return false;
+    }
+    request = seed;
+    request.dataSource = 64U;
+    request.dataDestination = 64U;
+    request.dataLength = 0U;
+    status = runtime_image_initialize(flash, &amp;request, ram, report);
+    if (!expect_true(status == RUNTIME_OK &amp;&amp; report-&gt;copied == 0U &amp;&amp; report-&gt;zeroed == 4U,
+                     &quot;empty data exact endpoints&quot;)) {
+        return false;
+    }
+    request = seed;
+    request.dataSource = 60U;
+    request.dataDestination = 60U;
+    request.bssDestination = 56U;
+    status = runtime_image_initialize(flash, &amp;request, ram, report);
+    if (!expect_true(status == RUNTIME_OK &amp;&amp; ram[56] == 0U &amp;&amp; ram[59] == 0U &amp;&amp; ram[63] == 165U,
+                     &quot;nonempty exact endpoints and adjacent regions&quot;)) {
+        return false;
+    }
+    flash[0] = 0U;
+    status = runtime_image_initialize(flash, &amp;seed, ram, report);
+    if (!expect_true(status == RUNTIME_OK &amp;&amp; report-&gt;initialSp == 8192U,
+                     &quot;inclusive bottom stack boundary under model policy&quot;)) {
+        return false;
+    }
+    flash[0] = 64U;
+    return true;
+}
+/**
+ * @brief Reject over-capacity metadata using truthful actual65-byte objects.
+ * @return Whether both capacity rejections preserve all real output storage.
+ */
+static bool check_capacity(void)
+{
+    uint8_t flash[65];
+    uint8_t ram[65];
+    uint8_t before[65];
+    RuntimeRequest request = {4096U, 8192U, 65U, 65U, 4112U, 4114U, 32U, 8U, 4U, 16U, 4U};
+    RuntimeReport report = {8256U, 4113U, 4112U, 4U, 4U, true};
+    RuntimeReport prior = report;
+    RuntimeStatus status;
+    /**
+     * The larger real objects make capacity rejection a defined experiment.
+     **/
+    memset(flash, 165, sizeof flash);
+    memset(ram, 165, sizeof ram);
+    memcpy(before, ram, sizeof before);
+    status = runtime_image_initialize(flash, &amp;request, ram, &amp;report);
+    if (!expect_true(status == RUNTIME_BAD_LENGTH, &quot;real65-byte Flash capacity rejection&quot;)) {
+        return false;
+    }
+    if (!expect_true(memcmp(before, ram, sizeof before) == 0 &amp;&amp; same_report(&amp;prior, &amp;report),
+                     &quot;all65 actual bytes preserved&quot;)) {
+        return false;
+    }
+    request.flashLength = 64U;
+    status = runtime_image_initialize(flash, &amp;request, ram, &amp;report);
+    if (!expect_true(status == RUNTIME_BAD_LENGTH, &quot;real65-byte RAM capacity rejection&quot;)) {
+        return false;
+    }
+    return expect_true(memcmp(before, ram, sizeof before) == 0 &amp;&amp; same_report(&amp;prior, &amp;report),
+                       &quot;RAM capacity rejection preserves bytes and report&quot;);
+}
+/**
+ * @brief Execute the independently specified64-byte fixture.
+ * @return Zero only when every check and final output succeeds.
+ */
+int main(void)
+{
+    uint8_t flash[RUNTIME_CAPACITY];
+    uint8_t ram[RUNTIME_CAPACITY];
+    RuntimeRequest request = {4096U, 8192U, 64U, 64U, 4112U, 4114U, 32U, 8U, 4U, 16U, 4U};
+    RuntimeReport report = {0U, 0U, 0U, 0U, 0U, false};
+    RuntimeStatus status;
+    size_t index;
+    const uint8_t vector[8] = {64U, 32U, 0U, 0U, 17U, 16U, 0U, 0U};
+    const uint8_t data[4] = {17U, 34U, 51U, 68U};
+    /**
+     * Every object is real and initialized before a rejection fixture can run.
+     **/
+    memset(flash, 165, sizeof flash);
+    memset(ram, 165, sizeof ram);
+    memcpy(flash, vector, sizeof vector);
+    memcpy(flash + 32U, data, sizeof data);
+    status = runtime_image_initialize(flash, &amp;request, ram, &amp;report);
+    if (!expect_true(status == RUNTIME_OK, &quot;baseline status&quot;)) {
+        return 1;
+    }
+    for (index = 0U; index &lt; RUNTIME_CAPACITY; ++index) {
+        uint8_t expected = 165U;
+        if (index &gt;= 8U &amp;&amp; index &lt;= 11U) {
+            expected = data[index - 8U];
+        } else if (index &gt;= 16U &amp;&amp; index &lt;= 19U) {
+            expected = 0U;
+        }
+        if (!expect_true(ram[index] == expected, &quot;literal RAM bytes&quot;)) {
+            return 1;
+        }
+    }
+    if (!expect_true(report.initialSp == 8256U &amp;&amp; report.entryWord == 4113U &amp;&amp;
+                     report.entryTarget == 4112U &amp;&amp; report.copied == 4U &amp;&amp; report.zeroed == 4U &amp;&amp;
+                     report.mainReady, &quot;meaningful report fields&quot;)) {
+        return 1;
+    }
+    if (!check_boundaries(flash, ram, &amp;report)) {
+        return 1;
+    }
+    if (!check_capacity()) {
+        return 1;
+    }
+    if (puts(&quot;PASS runtime: fixed64-byte image, transactional boundaries and live checks&quot;) == EOF) {
+        return 1;
+    }
+    if (fflush(stdout) != 0) {
+        return 1;
+    }
+    return 0;
+}
+#endif
+</code></pre></div>
+
+<div class="code-wrap" role="region" aria-label="完整README.txt，可横向滚动" tabindex="0"><pre data-source="README.txt"><code>reset-runtime: original embedded-notes fictional image initializer (C11)
+
+Files: runtime_image.h, runtime_image.c, README.txt. Keep the header beside C.
+No device, target startup, function-pointer jump, MMIO or hardware is exercised.
+Original project teaching code; no third-party authorship or license is implied.
+
+Prerequisite: an already installed host C11 compiler with eight-bit bytes,
+uint8_t, uint32_t and size_t. No installation or board is needed by this lab.
+From this directory, using your compiler driver in place of cc:
+
+cc --version
+cc -std=c11 -Wall -Wextra -Werror -Wconversion -Wshadow -pedantic -DRUNTIME_IMAGE_TEST runtime_image.c -o runtime-test
+./runtime-test
+cc -std=c11 -Wall -Wextra -Werror -Wconversion -Wshadow -pedantic -DRUNTIME_IMAGE_TEST -DNDEBUG runtime_image.c -o runtime-ndebug
+./runtime-ndebug
+cc -std=c11 -Wall -Wextra -Werror -Wconversion -Wshadow -pedantic -c runtime_image.c -o runtime_image.o
+
+Windows: use the installed driver&#x27;s name, add .exe to executable output names,
+and run .\runtime-test.exe / .\runtime-ndebug.exe in PowerShell. Stop immediately
+if a compilation or execution fails; do not run an older executable. In a
+managed project requiring a build router, put these identical compiler argv
+into its existing custom profile and run validate, dry-run, then build for EACH
+actual compile/link. Never use a helper to bypass the project build route.
+
+Expected normal and NDEBUG execution: exit0 and
+PASS runtime: fixed64-byte image, transactional boundaries and live checks
+An expectation or I/O failure exits nonzero. Runtime checks do not use assert.
+Local author validation used existing host GCC13.1.0 via mcu-build custom
+validate -&gt; dry-run -&gt; build, including normal/NDEBUG runs and module compile.
+This is host evidence, not a target reset or physical startup validation.
+
+Independent fixed fixture: actual64-byte Flash and RAM arrays. Labels0x1000
+and0x2000 are integers only. Fill RAM with0xA5; little-endian Flash0..7 bytes
+are [64,32,0,0,17,16,0,0], decoding SP0x2040 and entry0x1011 -&gt; target0x1010.
+Executable extent [0x1010,0x1012) contains one complete minimum2-byte unit;
+no instruction decoding/execution is claimed. Flash32..35=[17,34,51,68].
+dataSource32, dataDestination8, dataLength4; bssDestination16,bssLength4.
+Success: RAM8..11=[17,34,51,68],16..19=[0,0,0,0], all other bytes0xA5.
+Report: initialSp8256,entryWord4113,entryTarget4112,copied4,zeroed4,mainReadytrue.
+
+Use independently of tests: include runtime_image.h in a caller, compile
+runtime_image.c without RUNTIME_IMAGE_TEST, and link runtime_image.o. Create
+four distinct live, initialized, nonoverlapping objects: readable Flash bytes,
+RuntimeRequest, writable RAM bytes and writable RuntimeReport. Supply truthful
+actual spans. The call reads/writes only request.flashLength/ramLength bytes;
+the caller must ensure the underlying storage really covers them. NULL is
+rejected, but an arbitrary non-NULL/dangling/forged pointer or a dishonest span
+cannot be validated by this function. Never test those by executing invalid C.
+Single execution context, no concurrent access or mutation through aliases.
+
+runtime_image_initialize(flash,&amp;request,ram,&amp;report) validates the WHOLE request
+before preparing a private64-byte scratch array. It copies data, zeros BSS,
+then commits RAM and named report fields only on RUNTIME_OK. On every rejected
+call, all actual accepted RAM bytes and all report fields remain unchanged.
+Check status immediately; an unchanged old mainReadytrue is an OLD accepted
+report after failure, not evidence that the rejected request succeeded.
+
+Lengths: Flash8..64, RAM1..64. Labels and exclusive endpoints fit uint32_t;
+offsets/lengths fit size_t. SP interval includes both RAM boundary endpoints
+and requires8-byte alignment, both explicit teaching policies. Empty stack
+space at the bottom endpoint is not proof of a usable real call stack.
+Entry bit0 must be1; cleared target must have two complete bytes inside the
+declared executable interval, itself inside Flash. Entry at end is rejected.
+Data source/destination and BSS destination must fit, with no nonempty target
+overlap. Check offset+length overflow before arithmetic. Empty data/BSS still
+require offset&lt;=object length; an exact endpoint is legal only for zero bytes.
+Loops do no pointer formation for those empty regions. Both-empty is allowed.
+
+Statuses: RUNTIME_INVALID_ARGUMENT(NULL), RUNTIME_BAD_LENGTH(capacity policy),
+RUNTIME_ADDRESS_OVERFLOW(endpoint or size addition), RUNTIME_BAD_VECTOR(&lt;8),
+RUNTIME_BAD_SP(range/alignment), RUNTIME_BAD_ENTRY(Thumb/extent),
+RUNTIME_BAD_RANGE(region), RUNTIME_OVERLAP(destinations), RUNTIME_OK(commit).
+Fault precedence follows the source, not a promise to list every defect.
+
+Tests use initialized real storage for NULL positions, missing Thumb, entry
+before/at end/incomplete extent, SP outside/misaligned, short vector/regions,
+label and SIZE_MAX arithmetic, overlap, empty endpoints and nonempty exact ends.
+They compare bytes and meaningful report fields, never structure padding.
+Main-ready is only this model&#x27;s completed transaction. Linker placement, actual
+core reset, chosen startup/runtime/library contract, boot remapping and a
+bootloader&#x27;s controlled transfer require separate target-specific evidence.
+</code></pre></div></div><div class="content-section" id="reference-recall" role="region" aria-labelledby="reference-recall-title"><h2 id="reference-recall-title">折叠自检：一过末端与旧报告</h2><p>独立前提：Flash/RAM各64字节，上下文有效。data源64目标64长0，BSS目标64长0；另一次把BSS目标改65。两次怎样？一次OVERLAP之后旧mainReady=true表示什么？</p>
+<details id="reference-answer"><summary>展开原因</summary><p>第一笔OK且复制/零填充0字节；第二笔BAD_RANGE，空段也必须端点≤64。OVERLAP不改旧报告；旧true只属于旧请求，不能当作新请求成功。没有访问虚构端点指针。</p></details></div><div class="content-section" id="reference-sources" role="region" aria-labelledby="reference-sources-title"><h2 id="reference-sources-title">版本、首选阅读与未验证范围</h2><p>资料核对2026-10-17；固定夹具、图、代码和问题为本项目原创。只在实际读到的条款范围引用，不把下载成功等同于硬件验证。</p>
+<ul>
+<li><a href="https://www.st.com/resource/en/programming_manual/pm0214-stm32-cortexm4-mcus-and-mpus-programming-manual-stmicroelectronics.pdf">PM0214 Rev10，2020年3月</a>：已读§2.1.3 pp19、23与§2.3.4 p40，限所述Cortex-M4核心的初始MSP/PC、向量和Thumb语义。<strong>首选阅读任务：</strong>先看p19的Stack pointer/Program counter，分别圈出“取值槽位”和“被装入的值”，再对照本章虚构标签。</li>
+<li><a href="https://github.com/ARM-software/CMSIS_5/blob/2b7495b8535bdcb306dac29b9ded4cfb679d7e5c/Device/ARM/ARMCM4/Source/startup_ARMCM4.c">CMSIS5.9.0固定commit的startup_ARMCM4.c</a>、<a href="https://github.com/ARM-software/CMSIS_5/blob/2b7495b8535bdcb306dac29b9ded4cfb679d7e5c/CMSIS/Core/Include/cmsis_gcc.h#L117">cmsis_gcc.h</a>、<a href="https://github.com/ARM-software/CMSIS_5/blob/2b7495b8535bdcb306dac29b9ded4cfb679d7e5c/Device/ARM/ARMCM4/Source/GCC/gcc_arm.ld">gcc_arm.ld</a>：已读Reset_Handler、__cmsis_start及copy/zero/data/BSS段；默认宏可被覆盖，普通BSS责任继续依赖所选_start/运行库。不是通用启动顺序承诺。</li>
+<li><a href="https://www.sourceware.org/binutils/docs-2.36/ld.html#Output-Section-LMA">GNU ld2.36 §3.1、§3.6.8.2</a>：已读VMA/LMA定义和ROM→RAM/data、BSS示例；支撑布局和初始化责任的区别，不证明本模型具有目标固件格式。</li>
+<li><a href="https://www.keil.com/dd/docs/datashts/st/stm32f4xx/dm00031020.pdf">ST RM0090历史Rev5，2013年9月，§2.4 pp69–70</a>：有界文本已读，仅用于明确芯片启动alias/remap与核心角色不同；历史版本不是最新手册。未在真实芯片核实BOOT、电源或重映射。</li>
+</ul>
+<p>本地C检查和JS模型/控制器检查分开记录。目标启动、硬件、物理纸张以及本批发布仍是独立证据状态；主机输出不能把它们推进为通过。无账号、浏览器存储或外部执行服务。</p></div><div class="content-section" id="reference-next" role="region" aria-labelledby="reference-next-title"><h2 id="reference-next-title">继续阅读</h2><div class="next-links"><a href="../learn/reset-runtime.html">返回完整章节</a><a href="../learn/memory-budget.html">下一章：静态内存、堆与调用栈预算</a><a href="../learn/engineering-map.html#stage-02">阶段02地图</a><a href="../mcu/cortex-m-cpu-registers.html#stack-link-pc-title">CPU寄存器桥梁</a></div></div></main><footer class="wrap">原创嵌入式教材 · 不保存个人作答、进度或掌握记录 · 硬件未验证</footer></div><script id="note-deep-links">
+(() => {
+  const reveal = () => {
+    let id;try{id=decodeURIComponent(window.location.hash.slice(1));}catch{return;}
+    if(!id) return;
+    const target=document.getElementById(id);if(!target) return;
+    let panel=target.closest('details');
+    while(panel) {panel.open=true;panel=panel.parentElement?.closest?.('details')||null;}
+    target.closest('section')?.querySelectorAll?.('details').forEach(detail=>{detail.open=true;});
+    requestAnimationFrame(()=>target.scrollIntoView({block:'start'}));
+  };
+  window.addEventListener('hashchange',reveal);window.addEventListener('pageshow',reveal);reveal();
+})();
+</script><script id="note-print">
+(() => {
+  let previous;
+  window.addEventListener('beforeprint',()=>{
+    if(previous) return;
+    previous=[...document.querySelectorAll('details')].map(panel=>[panel,panel.open]);
+    previous.forEach(([panel])=>{panel.open=true;});
+  });
+  window.addEventListener('afterprint',()=>{previous?.forEach(([panel,open])=>{panel.open=open;});previous=undefined;});
+})();
+</script></body></html>

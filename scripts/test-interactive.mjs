@@ -29,7 +29,15 @@ assert.deepEqual(interactiveNotes.slice(originalNotes.length), [
   { path: 'learn/c-objects-bounds.html', source: 'c-objects-bounds.html' },
   { path: 'learn/c-objects-bounds-reference.html', source: 'c-objects-bounds-reference.html' },
   { path: 'learn/bounded-fifo.html', source: 'bounded-fifo.html' },
-  { path: 'learn/bounded-fifo-reference.html', source: 'bounded-fifo-reference.html' }
+  { path: 'learn/bounded-fifo-reference.html', source: 'bounded-fifo-reference.html' },
+  { path: 'learn/build-link-identity.html', source: 'build-link-identity.html' },
+  { path: 'learn/build-link-identity-reference.html', source: 'build-link-identity-reference.html' },
+  { path: 'learn/reset-runtime.html', source: 'reset-runtime.html' },
+  { path: 'learn/reset-runtime-reference.html', source: 'reset-runtime-reference.html' },
+  { path: 'learn/memory-budget.html', source: 'memory-budget.html' },
+  { path: 'learn/memory-budget-reference.html', source: 'memory-budget-reference.html' },
+  { path: 'learn/clock-timebase.html', source: 'clock-timebase.html' },
+  { path: 'learn/clock-timebase-reference.html', source: 'clock-timebase-reference.html' }
 ], 'New interactive readers must append after the stable original routes')
 
 for (const base of ['/', '/embedded-notes/']) {
@@ -117,7 +125,8 @@ for (const note of interactiveNotes.slice(1)) {
   const ids = [...article.matchAll(/\bid="([^"]+)"/g)].map(match => match[1])
   assert.equal(ids.length, new Set(ids).size, 'Duplicate HTML id: ' + note.path)
   const markdown = await readFile(new URL('../docs/' + note.path.replace(/\.html$/, '.md'), import.meta.url), 'utf8')
-  const headings = markdown.replace(/```[\s\S]*?```/g, '').match(/^#{1,6} .+$/gm) || []
+  // HTML pre blocks are code too: a shell comment there is not a search heading.
+  const headings = markdown.replace(/<pre\b[^>]*>[\s\S]*?<\/pre>/gi, '').replace(/```[\s\S]*?```/g, '').match(/^#{1,6} .+$/gm) || []
   for (const heading of headings) {
     const match = heading.match(/\{#([^}]+)\}/)
     assert.ok(match, 'Explicit search anchor required: ' + heading)
@@ -224,6 +233,10 @@ await import('./test-gpio-led.mjs')
 await import('./test-c-bits-registers.mjs')
 await import('./test-c-objects-bounds.mjs')
 await import('./test-bounded-fifo.mjs')
+await import('./test-build-link-identity.mjs')
+await import('./test-reset-runtime.mjs')
+await import('./test-memory-budget.mjs')
+await import('./test-clock-timebase.mjs')
 for (const path of ['learn/gpio-button.html', 'learn/gpio-button-reference.html']) {
   const article = await readInteractiveNote(path)
   assert.ok(article.includes('href="gpio-led.html"'), 'Previous chapter must link to the real LED reader: ' + path)
@@ -232,10 +245,10 @@ for (const path of ['learn/gpio-button.html', 'learn/gpio-button-reference.html'
 }
 console.log('PASS: previous GPIO chapter and reference lead to the registered LED chapter and printable reference.')
 
-for (const [name, next] of [['gpio-led', 'c-bits-registers'], ['c-bits-registers', 'c-objects-bounds'], ['c-objects-bounds', 'bounded-fifo']]) {
+for (const [name, next] of [['gpio-led', 'c-bits-registers'], ['c-bits-registers', 'c-objects-bounds'], ['c-objects-bounds', 'bounded-fifo'], ['bounded-fifo', 'build-link-identity'], ['build-link-identity', 'reset-runtime'], ['reset-runtime', 'memory-budget'], ['memory-budget', 'clock-timebase']]) {
   for (const suffix of ['', '-reference']) {
     const article = await readInteractiveNote('learn/' + name + suffix + '.html')
     assert.ok(article.includes(next + '.html'), 'Course sequence must reach the real next chapter: ' + name + suffix + ' -> ' + next)
   }
 }
-console.log('PASS: course links connect unit02 to03,04 and05 without changing the stable fourteen-reader prefix.')
+console.log('PASS: course links connect unit02 through09 while the original twenty-reader registry prefix remains protected.')

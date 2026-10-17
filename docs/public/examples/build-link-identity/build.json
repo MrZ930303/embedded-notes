@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "product": "acquisition-terminal",
+  "version": "1.0.0",
+  "sourceManifest": [
+    "build.json",
+    "build_identity.h",
+    "entry.c",
+    "generate_identity.mjs",
+    "lesson.ld",
+    "main.c",
+    "measurement.c",
+    "measurement.h"
+  ]
+}

@@ -88,6 +88,6 @@ count=0返回EMPTY，output仍255且所有状态不变；255不是新数据。co
 
 ## 返回章节与课程范围 {#fifo-ref-next-title}
 
-上一章是C对象与边界；后续06—09构建与启动待建设，单元10才是定时器。此速查不宣称这些内容已交付。
+上一章是C对象与边界；下一章06构建与身份已可作为本地候选阅读，07—09继续复位、预算与时钟。后续10—14待建设，单元10才是定时器；本地内容不代表远端发布或硬件验证。
 
-[完整章节与十题](../learn/bounded-fifo.html)[C对象与边界](../learn/c-objects-bounds.html)[阶段地图](../learn/engineering-map.html#stage-01)
+[完整章节与十题](../learn/bounded-fifo.html)[C对象与边界](../learn/c-objects-bounds.html)[下一章：构建与身份](../learn/build-link-identity.html)[构建与身份速查](../learn/build-link-identity-reference.html)[阶段地图](../learn/engineering-map.html#stage-01)

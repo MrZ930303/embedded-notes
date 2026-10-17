@@ -662,6 +662,6 @@ FULL。四个槽和head=0、tail=0、count=4全部保持，输出也仍为165。
 
 ## 下一段：构建与启动 {#fifo-next-title}
 
-上章对象与边界给本章的存储前提，本章交付一份可解释的队列轨迹。接下来课程单元06—09是构建与启动，仍待建设；之后单元10才进入定时器。本页没有把未交付章节伪装成可打开的新课。
+上章对象与边界给本章的存储前提，本章交付一份可解释的队列轨迹。接下来进入06构建与身份，再沿07复位、08内存预算和09时钟继续。06—09为本地候选，后续10—14仍待建设；单元10才进入定时器。局部模型、主机测试、发布和硬件分别验收。
 
-[上一章：C对象与边界](../learn/c-objects-bounds.html)[本章打印速查](../learn/bounded-fifo-reference.html)[阶段01地图](../learn/engineering-map.html#stage-01)
+[上一章：C对象与边界](../learn/c-objects-bounds.html)[本章打印速查](../learn/bounded-fifo-reference.html)[下一章：构建与身份](../learn/build-link-identity.html)[构建与身份速查](../learn/build-link-identity-reference.html)[阶段01地图](../learn/engineering-map.html#stage-01)

@@ -22,7 +22,15 @@ export const interactiveNotes = [
   { path: notePaths[16], source: 'c-objects-bounds.html' },
   { path: notePaths[17], source: 'c-objects-bounds-reference.html' },
   { path: notePaths[18], source: 'bounded-fifo.html' },
-  { path: notePaths[19], source: 'bounded-fifo-reference.html' }
+  { path: notePaths[19], source: 'bounded-fifo-reference.html' },
+  { path: notePaths[20], source: 'build-link-identity.html' },
+  { path: notePaths[21], source: 'build-link-identity-reference.html' },
+  { path: notePaths[22], source: 'reset-runtime.html' },
+  { path: notePaths[23], source: 'reset-runtime-reference.html' },
+  { path: notePaths[24], source: 'memory-budget.html' },
+  { path: notePaths[25], source: 'memory-budget-reference.html' },
+  { path: notePaths[26], source: 'clock-timebase.html' },
+  { path: notePaths[27], source: 'clock-timebase-reference.html' }
 ]
 
 export function readInteractiveNote(path = notePath) {
