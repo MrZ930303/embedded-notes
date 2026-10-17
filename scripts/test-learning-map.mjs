@@ -60,6 +60,11 @@ assert.match(focus['.focus-notes'].innerHTML, /\.\.\/mcu\/mcu-ota\.html/)
 buttons[0].click()
 assert.match(focus['.focus-notes'].innerHTML, /href="gpio-led\.html"/, 'Stage01 must lead from input into the real LED output chapter')
 assert.match(focus['.focus-notes'].innerHTML, /href="gpio-led-reference\.html"/, 'Stage01 must include the real printable LED reference')
+for (const name of ['c-bits-registers', 'c-objects-bounds', 'bounded-fifo']) {
+  for (const suffix of ['', '-reference']) {
+    assert.ok(focus['.focus-notes'].innerHTML.includes('href="' + name + suffix + '.html"'), 'Stage01 must reach each actual C foundation reader: ' + name + suffix)
+  }
+}
 for (const source of [html, markdown]) {
   for (const phrase of ['03—05', '06—09', '第 10 单元']) assert.ok(source.includes(phrase), 'Course order must retain the next C prerequisites before timers: ' + phrase)
 }
@@ -93,3 +98,13 @@ assert.ok(!/\b(?:fetch|XMLHttpRequest|WebSocket|localStorage|sessionStorage)\b/.
 assert.ok(!/<(?:script|iframe)[^>]+src=/i.test(html))
 assert.ok(!/\bhidden\b/.test(html.replace(/aria-hidden/g, '')), 'Full prose remains readable without script execution')
 console.log('PASS learning map: all nine real note links, evidence scope and board differences, static full prose, exact search anchors, shared reader/print handlers and self-contained execution.')
+
+const coverage = await readFile(new URL('../curriculum/coverage.md', import.meta.url), 'utf8')
+const unitRows = coverage.match(/^\| \d{2} \|.+$/gm) || []
+assert.deepEqual(unitRows.map(row => row.split('|')[1].trim()), Array.from({ length: 32 }, (_, index) => String(index + 1).padStart(2, '0')), 'The finite course ledger must retain all thirty-two ordered units')
+assert.equal((coverage.match(/^### 阶段 \d{2} /gm) || []).length, 8, 'All eight stage evidence scopes must remain')
+assert.match(unitRows[1], /\| 完整 \| 已通过 \| 本单元无新工作 \| 未验 \| 已发布 \|$/, 'Unit02 publication must retain its no-new-C and hardware limits')
+for (const row of unitRows.slice(2, 5)) assert.match(row, /\| 本地完整 \| 已通过 \| 已有 C 证据 \| 未验 \| 本地候选 \|$/, 'Units03–05 remain local candidates after actual host checks')
+for (const row of unitRows.slice(5)) assert.match(row, /\| 待写 \| 未做 \| 未做 \| 未验 \| 未发布 \|$/, 'Units06–32 remain pending; existing topic notes do not earn course credit')
+await access(new URL('../curriculum/stage01-evidence.md', import.meta.url))
+console.log('PASS course ledger:32 ordered units,8 stages,02 published with bounded evidence,03–05 local only,06–32 and all hardware pending.')

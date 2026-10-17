@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="位运算与寄存器读写速查：因果推导、限定条件与可复现C11实验。"><link rel="icon" href="../favicon.svg" type="image/svg+xml"><title>位运算与寄存器读写速查 · 嵌入式技术笔记</title>
+<style>
+:root{--paper:#fafbf8;--ink:#21382e;--muted:#526359;--line:#dce3d7;--green:#22664f;--pale:#eef2e9;--lime:#d5e7b3;--dark:#193e33;--mono:Consolas,ui-monospace,monospace;--amber:#92611e}*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:110px}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.9 system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif}a{color:var(--green);text-underline-offset:4px}button,input,select{font:inherit}button{cursor:pointer}.wrap{width:min(1120px,calc(100% - 64px));margin:auto}.skip{position:absolute;top:-90px;left:16px;z-index:20;background:white;padding:8px 12px}.skip:focus{top:8px}.topbar{position:sticky;top:0;z-index:10;border-bottom:1px solid var(--line);background:#fafbf8f5}.brand{text-decoration:none}.topbar nav a{white-space:nowrap}.hero{padding:48px 0 40px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:1.2fr 1fr;gap:48px;align-items:center}.tag{font-size:12px;color:var(--green);font-weight:700;letter-spacing:.08em}.hero h1{font-size:clamp(32px,3.6vw,44px);line-height:1.35;letter-spacing:-.035em;margin:16px 0}.hero-intro{font-size:17px;max-width:32rem}.hero-card{padding:26px;background:var(--pale);border:1px solid var(--line);border-radius:12px}.hero-card strong{font-size:25px;line-height:1.6}.hero-card p{margin:12px 0 0}.small,.date-note{font-size:13px;color:var(--muted)}.meta{display:flex;flex-wrap:wrap;gap:8px}.meta span{font-size:12px;border:1px solid var(--line);border-radius:4px;padding:3px 9px}.section-nav{display:flex;gap:10px;flex-wrap:wrap;padding:16px 0}.section-nav a{text-decoration:none}.content-section{padding:48px 0;border-bottom:1px solid var(--line);scroll-margin-top:115px}h2{font-size:28px;line-height:1.5;margin:0 0 18px}h3{font-size:20px;line-height:1.5;margin:0 0 12px}p{margin:0 0 16px}section>p{max-width:44rem}.section-head{display:flex;gap:18px;align-items:baseline}.num{font:700 13px var(--mono);color:var(--green);flex-shrink:0}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.card{border:1px solid var(--line);background:#fffefb;border-radius:12px;padding:22px;min-width:0}.card p:last-child{margin-bottom:0}.callout{padding:16px 20px;background:var(--pale);border-left:4px solid var(--green);border-radius:0 8px 8px 0;margin:20px 0;font-size:14px}.callout.warn{background:#fbf0dc;border-color:var(--amber)}.lab{padding:24px;border:1px solid var(--line);border-radius:12px;background:#fffefb}.lab-grid{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,1fr);gap:24px;align-items:start}.field{display:grid;gap:6px;min-width:0;font-size:14px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.field.full{grid-column:1/-1}select,input{width:100%;min-width:0;min-height:44px;border:1px solid #b9c8ba;border-radius:6px;padding:8px 10px;background:white;color:var(--ink);font-size:16px}.btn{min-height:44px;min-width:44px;padding:9px 15px;border:1px solid #b9c8ba;border-radius:6px;background:white;color:var(--ink);font-size:14px}.btn.primary{background:var(--dark);border-color:var(--dark);color:white}.btn:disabled{opacity:.58;cursor:default}.controls{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0}.feedback{padding:16px;background:var(--pale);border-radius:8px;margin-top:16px;font-size:14px;line-height:1.85}.feedback strong{display:block;font-size:18px}.circuit-figure{margin:0;padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--paper)}.circuit-figure svg{display:block;width:100%;height:auto}.circuit-figure figcaption{font-size:13px;color:var(--muted);line-height:1.8;margin-top:8px}.circuit-figure text{font-family:system-ui,"Microsoft YaHei",sans-serif;fill:var(--ink)}.applied{display:flex;gap:8px;flex-wrap:wrap;font-size:13px;margin-bottom:10px}.applied span{border:1px solid var(--line);padding:2px 8px;border-radius:4px}.circuit-readout{padding:16px 0 0;display:grid;grid-template-columns:70px 1fr;gap:6px 12px;font-size:14px}.circuit-readout dt{color:var(--muted)}.circuit-readout dd{margin:0}.wave{width:100%;display:block;height:auto;border:1px solid var(--line);border-radius:8px;background:var(--paper)}.wave text{font-family:var(--mono);font-size:13px;fill:var(--muted)}.wave path{vector-effect:non-scaling-stroke}.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:20px 0}.metric{background:var(--pale);padding:14px;border-radius:8px}.metric span{display:block;font-size:12px;color:var(--muted)}.metric strong{font:700 26px/1.5 var(--mono)}.timeline-fields{display:grid;grid-template-columns:minmax(130px,1fr) minmax(0,2fr);gap:16px;align-items:start}.checkbox{display:flex;gap:10px;align-items:flex-start;min-height:44px;padding-top:27px;font-size:14px}.checkbox input{width:20px;min-height:20px;flex:0 0 20px;margin-top:4px}.event-log{padding-left:22px;font-size:14px}.event-log li{margin-bottom:6px}details{margin:14px 0;padding:16px 20px;border:1px solid var(--line);border-radius:8px;background:#fffefb}summary{cursor:pointer;font-weight:700;min-height:44px}details p,details ul,details ol{margin:12px 0 0}li{margin-bottom:8px}.notes-toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:22px}pre{overflow-x:auto;background:var(--pale);padding:18px;border-radius:8px;font:14px/1.8 var(--mono)}code{font-family:var(--mono)}.table-wrap{max-width:100%;overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:14px;text-align:left}th,td{padding:12px;border-bottom:1px solid var(--line);vertical-align:top}th{background:var(--pale)}.source-list{padding-left:22px}.source-list a{overflow-wrap:anywhere}.next-links{display:flex;gap:20px;flex-wrap:wrap}.next-links a{display:inline-flex;align-items:center;min-height:44px}footer{padding:28px 0 36px;color:var(--muted);font-size:13px}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid #ad751d;outline-offset:4px}
+@media(max-width:760px){.hero,.lab-grid{grid-template-columns:1fr;gap:24px}.grid{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.timeline-fields{grid-template-columns:1fr}.checkbox{padding-top:0}.hero-card{padding:20px}.lab{padding:18px}}@media(max-width:520px){.wrap{width:calc(100% - 36px)}.hero{padding-top:32px}.fields{grid-template-columns:1fr}.field.full{grid-column:auto}.controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.controls .btn{padding-inline:6px}.section-head{gap:12px;align-items:flex-start}.content-section{padding:34px 0}.lab{padding:14px}.circuit-figure{padding:6px}.metrics{gap:8px}.metric{padding:10px}.metric strong{font-size:23px}h2{font-size:24px}details{padding:14px}.wave text{font-size:15px}}
+@media print{body{background:white;color:#15251b;font-size:11pt}.wrap{width:100%;max-width:none}.topbar,.skip,.section-nav,.controls,.fields,.timeline-fields,.notes-toolbar,.quiz-controls{display:none!important}.hero{display:block;padding:0 0 16px}.hero h1{font-size:26pt}.hero-card{display:none}.content-section{padding:18px 0}.lab-grid{grid-template-columns:1fr 1fr;gap:16px}.lab{padding:12px}.grid{grid-template-columns:1fr}.card,figure,table{break-inside:avoid}h2{font-size:17pt}h3{font-size:13pt}.feedback{padding:10px}.metrics{grid-template-columns:repeat(4,1fr)}.metric strong{font-size:18pt}details{break-inside:auto}a{color:inherit}.next-links{display:none}footer{font-size:9pt}pre{white-space:pre-wrap;overflow:visible}}
+</style>
+<style>
+/* Shared reading layer: keep this block identical in all standalone notes. */
+@media screen {
+:root{--paper:#fafbf8;--ink:#21382e;--muted:#526359;--line:#dce3d7;--green:#22664f;--pale:#eef2e9;--lime:#d5e7b3;--dark:#193e33}
+.notes-article{font-size:16px;line-height:1.9}
+.notes-article .wrap{width:min(1120px,calc(100% - 64px));max-width:none;padding-inline:0;margin-inline:auto}
+.notes-article .topbar{background:#fafbf8f5;z-index:10}
+.notes-article .topbar-inner{height:auto;min-height:68px;display:flex;align-items:center;justify-content:space-between;gap:24px;padding-block:0}
+.notes-article .brand{display:inline-flex;align-items:center;gap:10px;min-height:44px;margin:0;font-size:15px;font-weight:700;letter-spacing:0;color:var(--ink)}
+.notes-article .brandmark{display:grid;place-items:center;width:30px;height:30px;margin:0;border-radius:6px;background:var(--dark);color:#e0edcb;font:19px/1 var(--mono)}
+.notes-article .topbar nav{display:flex;align-items:center;gap:18px;margin:0;padding:0;width:auto;flex-wrap:nowrap}
+.notes-article .topbar nav a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:4px 3px;font-size:14px;font-weight:500;color:var(--muted);text-decoration:none;border-radius:4px}
+.notes-article .topbar nav a:hover,.notes-article .topbar nav a[aria-current="location"]{color:var(--green);background:var(--pale)}
+.notes-article .topbar nav a[aria-current="location"]{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:6px}
+.notes-article .hero{padding-block:48px 40px;gap:48px;grid-template-columns:1.12fr 1fr}
+.notes-article .hero h1{font-size:clamp(32px,3.6vw,44px);line-height:1.35;letter-spacing:-.035em;text-wrap:balance}
+.notes-article .hero h1 span{font-size:.78em;line-height:1.5;margin-top:8px}
+.notes-article .hero-intro{font-size:17px;line-height:1.9;max-width:32rem;margin-block:20px}
+.notes-article .hero>.hero-card,.notes-article .hero-flow,.notes-article .intro-map{box-shadow:none;border-radius:12px}
+.notes-article .hero .tag{font-size:12px;border-radius:4px;padding:4px 9px;margin:0 0 16px;line-height:1.7}
+.notes-article .hero>.hero-figure .map{transform:none;box-shadow:none}
+.notes-article .hero>div>.eyebrow{display:none}
+.notes-article .hero>.hero-card>.eyebrow,.notes-article .hero>.hero-flow>.eyebrow{display:block;font-size:12px;line-height:1.7}
+.notes-article .hero-links{gap:12px 22px;margin-top:24px}
+.notes-article .hero .text-link{display:inline-flex;align-items:center;min-height:44px;font-size:14px}
+.notes-article .hero figcaption,.notes-article .hero-figure figcaption,.notes-article .date-note{font-size:13px;line-height:1.8}
+.notes-article .hero-card p:last-child,.notes-article .hero-flow .small,.notes-article .intro-map>p:last-child{font-size:14px;line-height:1.85}
+.notes-article .hero-numbers span,.notes-article .hero-step small{font-size:13px}
+.notes-article h2{font-size:28px;line-height:1.5;text-wrap:balance}
+.notes-article .section-head p{font-size:15px;line-height:1.85}
+.notes-article .content-section,.notes-article .article-section{padding-block:52px}
+.notes-article .content-section+.content-section{padding-top:48px}
+.notes-article .note-section{scroll-margin-top:100px}
+.notes-article .note-section>summary{min-height:56px;font-size:18px;line-height:1.6}
+.notes-article .note-section>summary h2{font-size:20px;line-height:1.6}
+.notes-article .note-body{max-width:none;font-size:16px;line-height:1.95}
+.notes-article .note-body p,.notes-article .note-body li{font-size:16px;line-height:1.95}
+.notes-article .note-body>p,.notes-article .note-body>ul,.notes-article .note-body>ol,.notes-article .article-section>p,.notes-article .article-section>ul,.notes-article .article-section>ol{max-width:44rem;font-size:16px;line-height:1.95}
+.notes-article .note-body h3{font-size:21px;margin-block:28px 12px;scroll-margin-top:100px}
+.notes-article .note-body pre,.notes-article pre{font-size:14px;line-height:1.8}
+.notes-article .note-body table,.notes-article table{font-size:14px;line-height:1.8}
+.notes-article .note-body th,.notes-article .note-body td{font-size:14px;line-height:1.8}
+.notes-article .article-section>h2{font-size:28px}
+.notes-article .concept p,.notes-article .subnote p,.notes-article .risk p,.notes-article .monitor-step p,.notes-article .monitor-step ul,.notes-article .step-card p{font-size:15px;line-height:1.85}
+.notes-article .callout,.notes-article .model-scope,.notes-article .demo-disclaimer,.notes-article .version-card,.notes-article .version-card p{font-size:14px;line-height:1.85}
+.notes-article .source-list a,.notes-article .source-list span,.notes-article #plane-references~ul{font-size:14px;line-height:1.85}
+.notes-article #plane-overview~ul{max-width:none}
+.notes-article #plane-overview~ul li{font-size:15px;line-height:1.85}
+.notes-article .note-body .source-list{max-width:none}
+.notes-article .small,.notes-article .lab-note,.notes-article .lab-foot,.notes-article .lab-footer,.notes-article .clock-lab-foot,.notes-article .print-hint{font-size:13px;line-height:1.85}
+.notes-article .principle,.notes-article .principles span{font-size:13px;line-height:1.8}
+.notes-article .principles strong{font-size:15px}
+.notes-article .memory-motto,.notes-article .motto{background:var(--pale);color:var(--ink);border-radius:8px;text-align:left;padding:24px;margin-top:30px}
+.notes-article .memory-motto span,.notes-article .motto small{color:var(--muted);font-size:14px}
+.notes-article button,.notes-article .btn,.notes-article .notes-toolbar button{min-height:44px;min-width:44px;font-size:14px}
+.notes-article button,.notes-article .btn,.notes-article .topbar a,.notes-article summary,.notes-article .section-nav a,.notes-article .toc a{transition:background .18s,color .18s,border-color .18s,transform .18s}
+.notes-article button:enabled:hover{filter:brightness(1.06)}
+.notes-article button:enabled:active,.notes-article .btn:active{transform:translateY(1px)}
+.notes-article button:disabled{opacity:.58}
+.notes-article .graph-node:disabled,.notes-article .work-card:disabled{opacity:1}
+.notes-article :focus-visible{outline:3px solid #ad751d;outline-offset:4px}
+.notes-article .lab :focus-visible,.notes-article .clock-lab :focus-visible{outline-color:#f0cc80}
+.notes-article .toc a,.notes-article .section-nav a{display:inline-flex;align-items:center;min-height:44px;border-radius:5px;font-size:14px;padding:8px 12px}
+.notes-article .checklist label,.notes-article .clock-check{min-height:44px;font-size:14px;line-height:1.8}
+.notes-article .clock-field label,.notes-article .clock-controls small,.notes-article .clock-node small,.notes-article .clock-node span{font-size:13px;line-height:1.6}
+.notes-article .clock-current p,.notes-article .clock-candidate,.notes-article .clock-warnings{font-size:14px;line-height:1.8}
+.notes-article .clock-node strong,.notes-article .hero-numbers strong,.notes-article .metric strong{font-variant-numeric:tabular-nums}
+.notes-article .task-option strong,.notes-article .work-card strong{font-size:14px;line-height:1.65}
+.notes-article .task-option span,.notes-article .scope-buttons small,.notes-article .card-id,.notes-article .card-project,.notes-article .card-status,.notes-article .card-tags>span,.notes-article .lane-en{font-size:12px;line-height:1.6}
+.notes-article .scope-explanation,.notes-article .detail-copy>p,.notes-article .detail .acceptance,.notes-article .state-controls>p,.notes-article .board-heading p{font-size:14px;line-height:1.8}
+.notes-article .lane h4{font-size:14px;line-height:1.5;flex-wrap:wrap}
+.notes-article .lane-count{font-size:12px}
+.notes-article .lab .task-option{min-height:96px}
+.notes-article .skills-step-card dd,.notes-article .route-pane p,.notes-article .chooser-intro,.notes-article .permissions-pane>p{font-size:14px;line-height:1.85}
+.notes-article .skills-step-card dt,.notes-article .step-counter,.notes-article .permissions-pane small,.notes-article .permission-list span,.notes-article .graph-legend,.notes-article .graph-arrow-note{font-size:13px;line-height:1.8}
+.notes-article .ui-arrow{width:18px;height:18px;display:inline-block;vertical-align:middle;flex-shrink:0}
+.notes-article .selection-jump,.notes-article .choice-result{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;padding:10px 12px;border-radius:5px;font-size:13px;font-weight:600;line-height:1.6;text-decoration:none}
+.notes-article .selection-jump{background:#22664f;color:#fff}
+.notes-article .choice-result{color:#e2efca;border:1px solid #829873;background:#173e33;margin-top:7px}
+.notes-article .task-choice{min-width:0}
+.notes-article .task-choice .task-option{width:100%}
+.notes-article .task-option[aria-pressed="false"]+.choice-result{display:none}
+.notes-article #selected-skill,.notes-article #plane-selected-title{scroll-margin-top:128px}
+.notes-article footer,.notes-article .footer{font-size:13px;line-height:1.8}
+.notes-article footer a,.notes-article .footer a{display:inline-flex;align-items:center;min-height:44px}
+.notes-article .note-body p,.notes-article .hero-intro,.notes-article .article-section>p{text-wrap:pretty}
+@media(max-width:760px){
+.notes-article .wrap{width:calc(100% - 40px)}
+.notes-article .topbar-inner{flex-wrap:wrap;gap:0;padding-top:6px}
+.notes-article .brand{min-height:44px;font-size:15px}
+.notes-article .topbar nav{width:100%;gap:12px;overflow-x:auto;flex-wrap:nowrap;padding:0 0 4px;scrollbar-width:thin}
+.notes-article .topbar nav a{font-size:13px;flex-shrink:0;padding-inline:2px}
+.notes-article .hero{grid-template-columns:1fr;gap:28px;padding-block:32px}
+.notes-article .hero h1{font-size:32px;line-height:1.4}
+.notes-article .hero-intro{font-size:16px;max-width:none;margin-block:16px}
+.notes-article .hero-figure{max-width:500px}
+.notes-article .hero .tag{margin-bottom:12px}
+.notes-article .content-section,.notes-article .article-section{padding-block:36px}
+.notes-article .content-section+.content-section{padding-top:36px}
+.notes-article h2,.notes-article .article-section>h2{font-size:24px}
+.notes-article .section-head p{font-size:15px}
+.notes-article .note-section>summary{font-size:17px}
+.notes-article .note-section>summary h2{font-size:18px}
+.notes-article .note-body p,.notes-article .note-body li{font-size:16px}
+.notes-article .note-body pre,.notes-article pre{font-size:13px}
+.notes-article .note-body th,.notes-article .note-body td{font-size:14px}
+.notes-article .principles{grid-template-columns:1fr;gap:14px}
+.notes-article .principles strong{display:inline;margin-right:8px}
+.notes-article .principles span{display:inline}
+.notes-article .task-options{grid-template-columns:1fr 1fr;align-items:start}.notes-article .lab .task-option{min-height:76px;padding:12px}
+.notes-article .board{grid-template-columns:1fr 1fr}
+.notes-article .lane:last-child .lane-cards{display:flex}
+.notes-article .lane-cards{min-height:0}
+.notes-article .lane{padding:14px}
+.notes-article .lane-en{margin-bottom:10px}
+.notes-article .work-card{padding:14px}
+.notes-article .card-tags{gap:6px}
+.notes-article .lab-top{flex-wrap:wrap}
+.notes-article .lab-top .tag{white-space:normal}
+.notes-article .note-section,.notes-article .note-body h3,.notes-article .article-section,.notes-article .article-section>h3{scroll-margin-top:124px}
+}
+@media(max-width:370px){.notes-article .task-options,.notes-article .board{grid-template-columns:1fr}.notes-article .hero h1{font-size:30px}.notes-article .topbar nav{gap:8px}}
+}
+@media(prefers-reduced-motion:reduce){.notes-article *,.notes-article *::before,.notes-article *::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+</style>
+<style>.chapter-intro{padding:40px 0 24px}.chapter-intro h1{font-size:clamp(30px,5vw,44px);line-height:1.4}.chapter-intro p{max-width:48rem}.content-section p{max-width:48rem}.content-section{padding:32px 0}.content-section h3{margin-top:30px}.bit-figure{margin:24px 0;padding:16px;border:1px solid var(--line);border-radius:10px;background:#fffefb}.bit-figure figcaption{font-size:14px;margin-bottom:12px}.bit-grid{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:8px}.bit-grid>div{display:grid;text-align:center;background:var(--pale);border-radius:6px;padding:10px 3px;font-family:var(--mono)}.bit-grid span,.bit-grid small{font-size:12px}.bit-grid strong{font-size:28px}.exercise{margin:20px 0;border:1px solid var(--line);border-radius:8px;padding:18px}.exercise h3{margin-top:0}.exercise-answer{background:var(--pale)}.applied-result{margin-top:18px}output{font-family:var(--mono);font-weight:bold;overflow-wrap:anywhere}.table-wrap:focus-visible{outline:3px solid #ad751d;outline-offset:4px}.chapter-tools{display:flex;gap:10px;flex-wrap:wrap;padding-block:18px}.content-section a,.content-section code{overflow-wrap:anywhere}pre{max-width:100%}.topbar-inner{display:flex;align-items:center;justify-content:space-between;gap:18px;padding-block:12px}.topbar nav{display:flex;gap:18px;flex-wrap:wrap;font-size:14px}.topbar a{min-height:44px;display:inline-flex;align-items:center}main,main>div{min-width:0}@media(max-width:760px){.bit-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.topbar-inner{display:block}.topbar nav{gap:8px 16px}.bit-grid strong{font-size:24px}}@media(max-width:390px){.wrap{width:calc(100% - 28px)}.exercise{padding:12px}.lab{padding:12px}.topbar nav a{font-size:13px}}@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}@media print{.chapter-tools,.lab form,.replay .controls,.print-hint{display:none!important}.bit-grid{grid-template-columns:repeat(8,minmax(0,1fr))}.chapter-intro{padding:0 0 15px}.content-section{padding:16px 0}.applied-result{break-inside:avoid}body.exercise-print main>.chapter-intro,body.exercise-print main>.chapter-tools,body.exercise-print main>.content-section,body.exercise-print footer{display:none!important}body.exercise-print main>#questions-region{display:block!important;border:0;padding:0}body.exercise-print .exercise-answer{display:none!important}body.exercise-print #questions-region .notes-toolbar,body.exercise-print #questions-region .print-hint{display:none!important}body.exercise-print .exercise{break-inside:avoid;min-height:100px}body.exercise-print .exercise h3{font-size:12pt}body.exercise-print .exercise-answer *{display:none!important}}</style></head><body class="notes-article"><a class="skip" href="#main">跳到正文</a><header class="topbar"><div class="wrap topbar-inner"><a class="brand" href="../"><span class="brandmark" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span>嵌入式技术笔记</a><nav aria-label="笔记导航"><a href="../learn/">返回分类</a><a href="#reference-recall-heading">交互实验</a><a href="#reference-masks">完整笔记</a><a href="../?search=1">搜索笔记</a></nav></div></header><main class="wrap" id="main"><div class="chapter-intro"><h1 id="reference-overview" tabindex="-1">位运算与寄存器读写速查 <a class="header-anchor" href="#reference-overview" aria-label="Permalink to &quot;位运算与寄存器读写速查 {#reference-overview}&quot;">&ZeroWidthSpace;</a></h1>
+<p>第03单元压缩参考。先读<a href="./c-bits-registers.html">完整章</a>。适用原创无符号1..8位模型与明确限定的历史STM32F1手册对照；未做硬件验证。模型、宿主C、文档核读和发布分别记录，不建立个人掌握记录。</p>
+</div><div class="chapter-tools"><button class="btn" type="button" id="expand-notes">展开全部解析</button><button class="btn" type="button" id="collapse-notes">折叠全部解析</button><button class="btn" type="button" id="print-all">普通打印</button></div><div class="content-section" role="region" aria-labelledby="reference-masks"><h2 id="reference-masks" tabindex="-1">位与掩码 <a class="header-anchor" href="#reference-masks" aria-label="Permalink to &quot;位与掩码 {#reference-masks}&quot;">&ZeroWidthSpace;</a></h2>
+<p>bit0最低有效位权重1，八位bit7权重128；10100101=0xA5=165，每四位一位十六进制。mask的1选中操作位置，0保留；0x0C选bit3/2。</p>
+<div class="table-wrap" role="region" aria-label="可横向滚动的数据表" tabindex="0"><table tabindex="0">
+<thead>
+<tr>
+<th>八位value0xA5，mask0x0C</th>
+<th>结果</th>
+<th>因果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>OR设置</td>
+<td>0xAD/173</td>
+<td>选中位强制1，其他保持</td>
+</tr>
+<tr>
+<td>AND补掩码清除</td>
+<td>0xA1/161</td>
+<td>选中位清0，其他保持</td>
+</tr>
+<tr>
+<td>XOR翻转</td>
+<td>0xA9/169</td>
+<td>选中位取反，其他保持</td>
+</tr>
+<tr>
+<td>八位内取反</td>
+<td>0x5A/90</td>
+<td>全部翻转并裁剪宽度</td>
+</tr>
+<tr>
+<td>提取bit6..4</td>
+<td>2</td>
+<td>右移4后留下低3位</td>
+</tr>
+</tbody>
+</table></div>
+<p>&amp;、|、^、~逐位工作；&amp;&amp;、||、!判断真假，不能互换。数值变换还不是外设访问规则。按位取反（~，bitwise complement）翻转每一位，不等同于有符号数的二进制补码（two's complement）表示。</p>
+</div><div class="content-section" role="region" aria-labelledby="reference-width"><h2 id="reference-width" tabindex="-1">宽度、提升与移位 <a class="header-anchor" href="#reference-width" aria-label="Permalink to &quot;宽度、提升与移位 {#reference-width}&quot;">&ZeroWidthSpace;</a></h2>
+<p>uint8_t存在时恰好八位，但通常提升为可表示其范围的int；~结果具有提升后类型，八格图不代表全部中间值。赋回窄类型不改变之前的运算类型。标准C11无本课采用的0b整数字面量。</p>
+<p>C移位两侧先提升，计数非负且小于提升后左操作数类型位宽。无符号左移按该类型范围取模；有符号左移要求非负且结果可表示，否则无定义结果；负有符号右移为实现定义。不执行非法例子来制造输出。</p>
+<p>模型更严格：width1..8，count0..width-1；offset&lt;width，length1..width-offset。先查offset再减法，先查计数再移位。八位value1/count7得128，count8拒绝，不等于任意C左移8非法。value165/count1裁剪得74，count0保持165。C用至少32位unsigned long与1UL，验证后才移动，最后转换uint32_t。</p>
+</div><div class="content-section" role="region" aria-labelledby="reference-access"><h2 id="reference-access" tabindex="-1">RW、RO、W1C三列记录 <a class="header-anchor" href="#reference-access" aria-label="Permalink to &quot;RW、RO、W1C三列记录 {#reference-access}&quot;">&ZeroWidthSpace;</a></h2>
+<p>虚构全八位同属性、无保留位/混合字段/异步变化：</p>
+<div class="table-wrap" role="region" aria-label="可横向滚动的数据表" tabindex="0"><table tabindex="0">
+<thead>
+<tr>
+<th>初始读值</th>
+<th>模式</th>
+<th>实际写出数据</th>
+<th>新状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0xA5</td>
+<td>RW替换</td>
+<td>0x0C</td>
+<td>0x0C</td>
+</tr>
+<tr>
+<td>0xA5</td>
+<td>虚构RO忽略写</td>
+<td>0x0C</td>
+<td>0xA5</td>
+</tr>
+<tr>
+<td>0xA5</td>
+<td>W1C写1清除、写0保持</td>
+<td>0x0C</td>
+<td>0xA1</td>
+</tr>
+</tbody>
+</table></div>
+<p>pending是待处理事件。写出的0x0C不是得到的A1。真实RO写、WO读与保留位非法访问须查具体手册，不能承诺普遍忽略、读0或固定结果；混合字段不套全字|=、&amp;=。</p>
+</div><div class="content-section" role="region" aria-labelledby="reference-rmw"><h2 id="reference-rmw" tabindex="-1">两条错误RMW时间线 <a class="header-anchor" href="#reference-rmw" aria-label="Permalink to &quot;两条错误RMW时间线 {#reference-rmw}&quot;">&ZeroWidthSpace;</a></h2>
+<p>RW：初始0 → A读0停下 → B设bit1写2 → A用旧0设bit0写1 → 终值1，丢bit1，合并意图本应3。原因是过时快照覆盖更新。</p>
+<p>W1C：初始3（bit1/0都pending），只想确认bit0 → 读3 → OR1仍3 → 写3 → 终值0；直接写mask1本会留下2。无需并发，读出的1被误作清除命令。</p>
+<p>C里只是顺序局部值，无线程/ISR/DMA或数据竞态。volatile不更新旧快照、不使RMW不可分割，不是线程同步或通用内存屏障，不能保证非volatile访问排序。专用置位/复位可避免某些输出操作先读ODR，不能推出协议、多对象或任意共享内存线程安全。</p>
+</div><div class="content-section" role="region" aria-labelledby="reference-rm0008"><h2 id="reference-rm0008" tabindex="-1">历史RM0008核对卡 <a class="header-anchor" href="#reference-rm0008" aria-label="Permalink to &quot;历史RM0008核对卡 {#reference-rm0008}&quot;">&ZeroWidthSpace;</a></h2>
+<p>仅ST RM0008，June2009，DocID13902 Rev9，不是最新版本/勘误或板级签核。料号、引脚、时钟、模式与复位条件另核，无地址解引用或目标驱动。</p>
+<ul>
+<li>IDR p149 §8.2.3：低16位只读输入观察、Word mode only（32位）；高16位保留读0，不推导非法写行为。</li>
+<li>ODR p150 §8.2.4：低16位输出锁存读写、Word mode only；高16位保留读0。锁存不证明电压/电流，模式、复用、负载、连线仍适用；读0不授权乱写保留位。</li>
+<li>BSRR p150 §8.2.5：写方向、Word mode；低BS半写1设置ODR，高BR半写1复位，两半0均不动作；同位同时选择时设置优先。原子性限文档的ODR位设置/清除，不覆盖任意C表达式或协议。</li>
+<li>EXTI_PR p180 §9.3.6：实现位rc_w1，选定边沿设pending，写1或改边沿敏感度清除。31:20保留须保持0；19仅connectivity line，其他器件保留，具体料号实现位另核。该版复位值undefined，不能假定启动0；不可全1通用确认。访问宽度按该外设总线/寄存器规定复核，不能由八格图选字节访问。</li>
+</ul>
+<p>检查顺序：目标/版本 → 宽度/方向 → 实现位/保留位/脚注 → 表达式。新事件与清除同时发生的行为须查器件，模型未模拟。</p>
+</div><div class="content-section" role="region" aria-labelledby="reference-c-contract"><h2 id="reference-c-contract" tabindex="-1">C11接口与拒绝合同 <a class="header-anchor" href="#reference-c-contract" aria-label="Permalink to &quot;C11接口与拒绝合同 {#reference-c-contract}&quot;">&ZeroWidthSpace;</a></h2>
+<p><a href="../examples/c-bits-registers/bits.c" download>bits.c</a>、<a href="../examples/c-bits-registers/README.txt" download>运行说明</a>、<a href="./c-bits-registers.html#c-source">完整源代码</a>。要求C11与可选uint32_t，缺失编译报错。width1..8，value/mask/data在宽度内；只用已定义BitsOp/BitsAccess。</p>
+<div class="table-wrap" role="region" aria-label="可横向滚动的数据表" tabindex="0"><table tabindex="0">
+<thead>
+<tr>
+<th>接口</th>
+<th>合同</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>bits_apply</td>
+<td>set/clear/toggle/invert</td>
+</tr>
+<tr>
+<td>bits_field</td>
+<td>offset&lt;width，length1..width-offset</td>
+</tr>
+<tr>
+<td>bits_shift</td>
+<td>count&lt;width，结果裁剪</td>
+</tr>
+<tr>
+<td>bits_write</td>
+<td>虚构RW/RO/W1C</td>
+</tr>
+<tr>
+<td>bits_bad_rmw</td>
+<td>BitsTrace记录0/2/1/1和3/3/0/2</td>
+</tr>
+</tbody>
+</table></div>
+<p>BITS_OK/BITS_INVALID；所有拒绝保持输出，NULL先拒绝。非NULL仍须真实、存活、可写、类型正确；不能验证伪造/悬空指针。无符号参数收到转换后的负值也须域检查拒绝。无动态分配、硬件访问或共享状态。</p>
+<p>BITS_TEST启用main，普通条件验收在NDEBUG下仍有效；不定义则无main。严格C11 -Wall -Wextra -Werror -pedantic；普通与-DNDEBUG运行，另-c模块编译。工程经mcu-build custom profile validate → dry-run → build。固定值与哨兵222验证正常、端点、NULL、未知模式。宿主成功不代表目标固件/硬件成功。测试成功行显式刷新stdout，写或刷新失败返回非零。</p>
+<p>本份源实际已用既有GCC13.1.0通过严格编译、普通/NDEBUG运行和模块编译，退出码均0；<a href="./c-bits-registers.html#c-host-lab">完整章记录源SHA-256</a>。这不代表目标固件、硬件、浏览器或远端发布验证。</p>
+</div><div class="content-section" role="region" aria-labelledby="reference-recall-heading"><h2 id="reference-recall-heading" tabindex="-1">合上速查再回忆 <a class="header-anchor" href="#reference-recall-heading" aria-label="Permalink to &quot;合上速查再回忆 {#reference-recall-heading}&quot;">&ZeroWidthSpace;</a></h2>
+<details id="reference-recall"><summary>八位value3、W1C只确认bit0，应写什么？为什么不用OR赋值？</summary><p>直接写1留下2；读3再OR1写3会把两个pending都清掉。真实器件仍查实现位、保留位、宽度与同时事件规则。</p></details>
+<p>隔天换0x81和mask0x03重写三列记录，解释两类错误。可向助手追问“提升后位宽”或“写数据与状态差别”；不保存答案或推断掌握。</p>
+</div><div class="content-section" role="region" aria-labelledby="reference-sources"><h2 id="reference-sources" tabindex="-1">推荐来源与继续阅读 <a class="header-anchor" href="#reference-sources" aria-label="Permalink to &quot;推荐来源与继续阅读 {#reference-sources}&quot;">&ZeroWidthSpace;</a></h2>
+<p><a href="https://www.open-std.org/jtc1/sc22/wg14/www/docs/n1570.pdf" target="_blank" rel="noreferrer">WG14 N1570，2011-04-12委员会草案</a>：推荐先读§6.5.7移位；§6.3.1.1/3提升/转换、§6.5.3.3按位取反、§6.5.10–12位运算、§6.7.3限定符、§7.20.1.1精确宽类型。不是最终ISO文本，不定义外设。</p>
+<p><a href="https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/Volatiles.html" target="_blank" rel="noreferrer">GCC13.1 §6.46 volatile</a>：版本特定访问/排序，不证明RMW原子性。<a href="https://www.keil.com/dd/docs/datashts/st/stm32f10xxx.pdf" target="_blank" rel="noreferrer">ST RM0008 Rev9历史原厂PDF</a>：June2009 p149/p150/p180上述条款；实际工程查当前料号文档/勘误。未做硬件验证。</p>
+<p><a href="./c-bits-registers.html">完整章</a> · <a href="./c-objects-bounds.html">下一章：C对象与边界</a> · <a href="../learn/engineering-map.html#stage-01">学习地图</a></p>
+</div></main><footer class="wrap">原创教学模型 · 仅本页内存状态 · 无账号、无作答存储 · 未做硬件验证</footer>
+<script id="note-deep-links">
+(() => {
+  const reveal = () => {
+    let id;try{id=decodeURIComponent(window.location.hash.slice(1));}catch{return;}
+    if(!id) return;
+    const target=document.getElementById(id);if(!target) return;
+    let panel=target.closest('details');
+    while(panel) {panel.open=true;panel=panel.parentElement?.closest?.('details')||null;}
+    target.closest('section')?.querySelectorAll?.('details').forEach(detail=>{detail.open=true;});
+    requestAnimationFrame(()=>target.scrollIntoView({block:'start'}));
+  };
+  window.addEventListener('hashchange',reveal);window.addEventListener('pageshow',reveal);reveal();
+})();
+</script>
+<script id="note-print">
+(() => {
+  let previous;
+  window.addEventListener('beforeprint',()=>{
+    if(previous) return;
+    previous=[...document.querySelectorAll('details')].map(panel=>[panel,panel.open]);
+    previous.forEach(([panel])=>{panel.open=true;});
+  });
+  window.addEventListener('afterprint',()=>{previous?.forEach(([panel,open])=>{panel.open=open;});previous=undefined;});
+})();
+</script>
+<script id="bits-reader">(()=>{const byId=id=>document.getElementById(id);byId("expand-notes").addEventListener("click",()=>document.querySelectorAll("details").forEach(panel=>{panel.open=true;}));byId("collapse-notes").addEventListener("click",()=>document.querySelectorAll("details").forEach(panel=>{panel.open=false;}));byId("print-all").addEventListener("click",()=>{try{window.print();}catch{window.dispatchEvent(new Event("afterprint"));}});})();</script>
+
+</body></html>

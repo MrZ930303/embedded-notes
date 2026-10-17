@@ -51,7 +51,12 @@ const html=await readFile(path.join(root,'index.html'),'utf8')
 assert.ok(html.includes('嵌入式技术笔记'))
 assert.ok(html.includes(base+'c-memory/heap-stack.html'))
 assert.ok(html.includes('data-no-router'))
-assert.ok(html.includes('14 篇') && html.includes('5 个主题'), 'Home must describe fourteen entries across five active categories')
+assert.ok(html.includes('20 篇') && html.includes('5 个主题'), 'Home must describe twenty entries across five active categories')
+assert.equal(interactiveNotes.length, 20, 'Exactly twenty complete standalone readers must be registered')
+const learningCategory = await readFile(path.join(root, 'learn/index.html'), 'utf8')
+const learningReaders = interactiveNotes.filter(note => note.path.startsWith('learn/'))
+assert.equal(learningReaders.length, 11, 'The learning center contains eleven complete readers')
+for (const note of learningReaders) assert.ok(learningCategory.includes(base + note.path), 'Learning center must reach each actual reader: ' + note.path)
 const debugCategory = await readFile(path.join(root, 'debug/index.html'), 'utf8')
 assert.ok(debugCategory.includes(base + 'debug/easylogger.html'), 'Debug category must link to the full EasyLogger reader')
 assert.ok(!debugCategory.includes('这个分类尚未发布独立文章'), 'Debug must be an active category')
@@ -101,6 +106,12 @@ const queries = {
   'learn/gpio-button-reference.html': ['GPIO', '速查', '稳定', '11', '高阻', 'VIH', 'VIL', '启动', 'maxGapMs'],
   'learn/gpio-led.html': ['LED', '推挽', '开漏', 'Rmin', 'PRESSED', 'VFmin', 'PC13', 'VGS'],
   'learn/gpio-led-reference.html': ['LED', '速查', '开漏', 'Rmin', 'PRESSED', 'VFmin', 'PC13', 'VGS'],
+  'learn/c-bits-registers.html': ['掩码', '整数提升', 'W1C', 'bits_apply', 'bits_field', 'BITS_INVALID'],
+  'learn/c-bits-registers-reference.html': ['掩码', '移位', 'W1C', 'bits_apply', 'bits_field', 'BITS_INVALID'],
+  'learn/c-objects-bounds.html': ['对象', '生命周期', 'one-past', 'read_le16', 'SIZE_MAX', '零长度'],
+  'learn/c-objects-bounds-reference.html': ['对象', '生命周期', 'one-past', 'read_le16', 'SIZE_MAX', '零长度'],
+  'learn/bounded-fifo.html': ['FIFO', '回绕', '单执行上下文', 'fifo_push', 'FIFO_FULL', 'FIFO_BAD_STATE'],
+  'learn/bounded-fifo-reference.html': ['FIFO', '回绕', '单执行上下文', 'fifo_pop', 'FIFO_EMPTY', 'FIFO_BAD_STATE'],
   'mcu/mcu-ota.html': ['OTA', 'Bootloader', '暂存', 'Swap', 'A/B', '回滚', 'KiB', 'CRC'],
   'debug/easylogger.html': ['EasyLogger', 'Mutex', 'SEGGER_RTT_SetFlagsUpBuffer', 'NOINIT', 'MicroLIB', 'pendingWrite', 'LeakSanitizer']
 }
@@ -176,6 +187,40 @@ for (const filename of ['button.c', 'README.txt']) {
   const published = await readFile(path.join(root, 'examples/gpio-button', filename))
   assert.deepEqual(published, original, 'Published GPIO lab must copy source bytes exactly: ' + filename)
 }
+const foundationSearchTargets = [
+  ['learn/c-bits-registers.html', [
+    ['掩码', 'mask-rules'], ['移位', 'width-promotions'], ['W1C', 'w1c-or-assignment'], ['bits_apply', 'c-source']
+  ]],
+  ['learn/c-bits-registers-reference.html', [
+    ['0xA5', 'reference-masks'], ['count', 'reference-width'], ['W1C', 'reference-rmw'], ['BITS_INVALID', 'reference-c-contract']
+  ]],
+  ['learn/c-objects-bounds.html', [
+    ['read_le16', 'decode-contract-title'], ['零长度', 'zero-and-size'], ['one-past', 'invalid-operation-table']
+  ]],
+  ['learn/c-objects-bounds-reference.html', [
+    ['read_le16', 'reference-decoder-title'], ['one-past', 'reference-endpoint'], ['SIZE_MAX', 'reference-fixtures']
+  ]],
+  ['learn/bounded-fifo.html', [
+    ['fifo_push', 'fifo-c-lab-title'], ['满', 'fifo-rejection'], ['SPSC', 'fifo-single-context-title']
+  ]],
+  ['learn/bounded-fifo-reference.html', [
+    ['fifo_pop', 'fifo-ref-api-title'], ['count', 'fifo-ref-state-title'], ['SPSC', 'fifo-ref-contract-title']
+  ]]
+]
+for (const [article, targets] of foundationSearchTargets) {
+  for (const [query, anchor] of targets) {
+    assert.ok(search.search(query).some(result => result.id === base + article + '#' + anchor), 'C foundations search must open the actual normal/boundary/failure section: ' + article + ': ' + query + ' -> ' + anchor)
+  }
+}
+for (const [folder, source] of [['c-bits-registers', 'bits.c'], ['c-objects-bounds', 'objects.c'], ['bounded-fifo', 'fifo.c']]) {
+  for (const filename of [source, 'README.txt']) {
+    const original = await readFile(path.resolve(import.meta.dirname, '../docs/public/examples', folder, filename))
+    const published = await readFile(path.join(root, 'examples', folder, filename))
+    assert.deepEqual(published, original, 'Published C foundation lab must copy exact source bytes: ' + folder + '/' + filename)
+  }
+  assert.ok(!files.some(file => path.relative(root, file).replaceAll('\\', '/').startsWith('examples/' + folder + '/') && file.endsWith('.html')), 'Download-only lab must not become an extra documentation reader: ' + folder)
+}
+console.log('PASS: six C foundation readers have exact generated normal/boundary/failure search targets and byte-identical downloadable sources/instructions.')
 for (const [query, anchor] of Object.entries({
   'KiB': 'capacity',
   'CRC': 'image-trust',

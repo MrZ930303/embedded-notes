@@ -303,6 +303,8 @@ Kingbright WP710A10ID，V.12A，p2：TA=25°C、IF=10 mA，VF Typ=1.9 V、Max=2.
 
 ## 把意图与电平映射带回主线 {#next-lesson}
 
-保存能解释的路径图和事件表。后续先学位与寄存器掩码、对象与边界、有界缓冲；定时器和周期控制在前置知识后另成单元。回放不算硬件通过，不创建个人掌握记录。
+保存能解释的路径图和事件表，进入第三章位运算与寄存器读写，再依次学习第四章 C 对象与边界、第五章单上下文有界 FIFO。之后的 06—09 构建与启动仍待编写，定时器与周期控制是第 10 单元。回放不算硬件通过，不创建个人掌握记录。
+
+[下一章：位运算与寄存器读写](c-bits-registers.html) · [位与寄存器速查](c-bits-registers-reference.html)
 
 [打印速查](gpio-led-reference.html) · [回看按下事件](gpio-button.html#raw-vs-event) · [学习地图第 01 阶段](engineering-map.html#stage-01) · [三套资源范围](engineering-map.html#resource-comparison)

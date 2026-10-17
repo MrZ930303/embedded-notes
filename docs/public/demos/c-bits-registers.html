@@ -1,0 +1,861 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="位运算与寄存器读写：因果推导、限定条件与可复现C11实验。"><link rel="icon" href="../favicon.svg" type="image/svg+xml"><title>位运算与寄存器读写 · 嵌入式技术笔记</title>
+<style>
+:root{--paper:#fafbf8;--ink:#21382e;--muted:#526359;--line:#dce3d7;--green:#22664f;--pale:#eef2e9;--lime:#d5e7b3;--dark:#193e33;--mono:Consolas,ui-monospace,monospace;--amber:#92611e}*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:110px}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.9 system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif}a{color:var(--green);text-underline-offset:4px}button,input,select{font:inherit}button{cursor:pointer}.wrap{width:min(1120px,calc(100% - 64px));margin:auto}.skip{position:absolute;top:-90px;left:16px;z-index:20;background:white;padding:8px 12px}.skip:focus{top:8px}.topbar{position:sticky;top:0;z-index:10;border-bottom:1px solid var(--line);background:#fafbf8f5}.brand{text-decoration:none}.topbar nav a{white-space:nowrap}.hero{padding:48px 0 40px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:1.2fr 1fr;gap:48px;align-items:center}.tag{font-size:12px;color:var(--green);font-weight:700;letter-spacing:.08em}.hero h1{font-size:clamp(32px,3.6vw,44px);line-height:1.35;letter-spacing:-.035em;margin:16px 0}.hero-intro{font-size:17px;max-width:32rem}.hero-card{padding:26px;background:var(--pale);border:1px solid var(--line);border-radius:12px}.hero-card strong{font-size:25px;line-height:1.6}.hero-card p{margin:12px 0 0}.small,.date-note{font-size:13px;color:var(--muted)}.meta{display:flex;flex-wrap:wrap;gap:8px}.meta span{font-size:12px;border:1px solid var(--line);border-radius:4px;padding:3px 9px}.section-nav{display:flex;gap:10px;flex-wrap:wrap;padding:16px 0}.section-nav a{text-decoration:none}.content-section{padding:48px 0;border-bottom:1px solid var(--line);scroll-margin-top:115px}h2{font-size:28px;line-height:1.5;margin:0 0 18px}h3{font-size:20px;line-height:1.5;margin:0 0 12px}p{margin:0 0 16px}section>p{max-width:44rem}.section-head{display:flex;gap:18px;align-items:baseline}.num{font:700 13px var(--mono);color:var(--green);flex-shrink:0}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.card{border:1px solid var(--line);background:#fffefb;border-radius:12px;padding:22px;min-width:0}.card p:last-child{margin-bottom:0}.callout{padding:16px 20px;background:var(--pale);border-left:4px solid var(--green);border-radius:0 8px 8px 0;margin:20px 0;font-size:14px}.callout.warn{background:#fbf0dc;border-color:var(--amber)}.lab{padding:24px;border:1px solid var(--line);border-radius:12px;background:#fffefb}.lab-grid{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,1fr);gap:24px;align-items:start}.field{display:grid;gap:6px;min-width:0;font-size:14px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.field.full{grid-column:1/-1}select,input{width:100%;min-width:0;min-height:44px;border:1px solid #b9c8ba;border-radius:6px;padding:8px 10px;background:white;color:var(--ink);font-size:16px}.btn{min-height:44px;min-width:44px;padding:9px 15px;border:1px solid #b9c8ba;border-radius:6px;background:white;color:var(--ink);font-size:14px}.btn.primary{background:var(--dark);border-color:var(--dark);color:white}.btn:disabled{opacity:.58;cursor:default}.controls{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0}.feedback{padding:16px;background:var(--pale);border-radius:8px;margin-top:16px;font-size:14px;line-height:1.85}.feedback strong{display:block;font-size:18px}.circuit-figure{margin:0;padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--paper)}.circuit-figure svg{display:block;width:100%;height:auto}.circuit-figure figcaption{font-size:13px;color:var(--muted);line-height:1.8;margin-top:8px}.circuit-figure text{font-family:system-ui,"Microsoft YaHei",sans-serif;fill:var(--ink)}.applied{display:flex;gap:8px;flex-wrap:wrap;font-size:13px;margin-bottom:10px}.applied span{border:1px solid var(--line);padding:2px 8px;border-radius:4px}.circuit-readout{padding:16px 0 0;display:grid;grid-template-columns:70px 1fr;gap:6px 12px;font-size:14px}.circuit-readout dt{color:var(--muted)}.circuit-readout dd{margin:0}.wave{width:100%;display:block;height:auto;border:1px solid var(--line);border-radius:8px;background:var(--paper)}.wave text{font-family:var(--mono);font-size:13px;fill:var(--muted)}.wave path{vector-effect:non-scaling-stroke}.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:20px 0}.metric{background:var(--pale);padding:14px;border-radius:8px}.metric span{display:block;font-size:12px;color:var(--muted)}.metric strong{font:700 26px/1.5 var(--mono)}.timeline-fields{display:grid;grid-template-columns:minmax(130px,1fr) minmax(0,2fr);gap:16px;align-items:start}.checkbox{display:flex;gap:10px;align-items:flex-start;min-height:44px;padding-top:27px;font-size:14px}.checkbox input{width:20px;min-height:20px;flex:0 0 20px;margin-top:4px}.event-log{padding-left:22px;font-size:14px}.event-log li{margin-bottom:6px}details{margin:14px 0;padding:16px 20px;border:1px solid var(--line);border-radius:8px;background:#fffefb}summary{cursor:pointer;font-weight:700;min-height:44px}details p,details ul,details ol{margin:12px 0 0}li{margin-bottom:8px}.notes-toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:22px}pre{overflow-x:auto;background:var(--pale);padding:18px;border-radius:8px;font:14px/1.8 var(--mono)}code{font-family:var(--mono)}.table-wrap{max-width:100%;overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:14px;text-align:left}th,td{padding:12px;border-bottom:1px solid var(--line);vertical-align:top}th{background:var(--pale)}.source-list{padding-left:22px}.source-list a{overflow-wrap:anywhere}.next-links{display:flex;gap:20px;flex-wrap:wrap}.next-links a{display:inline-flex;align-items:center;min-height:44px}footer{padding:28px 0 36px;color:var(--muted);font-size:13px}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid #ad751d;outline-offset:4px}
+@media(max-width:760px){.hero,.lab-grid{grid-template-columns:1fr;gap:24px}.grid{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.timeline-fields{grid-template-columns:1fr}.checkbox{padding-top:0}.hero-card{padding:20px}.lab{padding:18px}}@media(max-width:520px){.wrap{width:calc(100% - 36px)}.hero{padding-top:32px}.fields{grid-template-columns:1fr}.field.full{grid-column:auto}.controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.controls .btn{padding-inline:6px}.section-head{gap:12px;align-items:flex-start}.content-section{padding:34px 0}.lab{padding:14px}.circuit-figure{padding:6px}.metrics{gap:8px}.metric{padding:10px}.metric strong{font-size:23px}h2{font-size:24px}details{padding:14px}.wave text{font-size:15px}}
+@media print{body{background:white;color:#15251b;font-size:11pt}.wrap{width:100%;max-width:none}.topbar,.skip,.section-nav,.controls,.fields,.timeline-fields,.notes-toolbar,.quiz-controls{display:none!important}.hero{display:block;padding:0 0 16px}.hero h1{font-size:26pt}.hero-card{display:none}.content-section{padding:18px 0}.lab-grid{grid-template-columns:1fr 1fr;gap:16px}.lab{padding:12px}.grid{grid-template-columns:1fr}.card,figure,table{break-inside:avoid}h2{font-size:17pt}h3{font-size:13pt}.feedback{padding:10px}.metrics{grid-template-columns:repeat(4,1fr)}.metric strong{font-size:18pt}details{break-inside:auto}a{color:inherit}.next-links{display:none}footer{font-size:9pt}pre{white-space:pre-wrap;overflow:visible}}
+</style>
+<style>
+/* Shared reading layer: keep this block identical in all standalone notes. */
+@media screen {
+:root{--paper:#fafbf8;--ink:#21382e;--muted:#526359;--line:#dce3d7;--green:#22664f;--pale:#eef2e9;--lime:#d5e7b3;--dark:#193e33}
+.notes-article{font-size:16px;line-height:1.9}
+.notes-article .wrap{width:min(1120px,calc(100% - 64px));max-width:none;padding-inline:0;margin-inline:auto}
+.notes-article .topbar{background:#fafbf8f5;z-index:10}
+.notes-article .topbar-inner{height:auto;min-height:68px;display:flex;align-items:center;justify-content:space-between;gap:24px;padding-block:0}
+.notes-article .brand{display:inline-flex;align-items:center;gap:10px;min-height:44px;margin:0;font-size:15px;font-weight:700;letter-spacing:0;color:var(--ink)}
+.notes-article .brandmark{display:grid;place-items:center;width:30px;height:30px;margin:0;border-radius:6px;background:var(--dark);color:#e0edcb;font:19px/1 var(--mono)}
+.notes-article .topbar nav{display:flex;align-items:center;gap:18px;margin:0;padding:0;width:auto;flex-wrap:nowrap}
+.notes-article .topbar nav a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:4px 3px;font-size:14px;font-weight:500;color:var(--muted);text-decoration:none;border-radius:4px}
+.notes-article .topbar nav a:hover,.notes-article .topbar nav a[aria-current="location"]{color:var(--green);background:var(--pale)}
+.notes-article .topbar nav a[aria-current="location"]{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:6px}
+.notes-article .hero{padding-block:48px 40px;gap:48px;grid-template-columns:1.12fr 1fr}
+.notes-article .hero h1{font-size:clamp(32px,3.6vw,44px);line-height:1.35;letter-spacing:-.035em;text-wrap:balance}
+.notes-article .hero h1 span{font-size:.78em;line-height:1.5;margin-top:8px}
+.notes-article .hero-intro{font-size:17px;line-height:1.9;max-width:32rem;margin-block:20px}
+.notes-article .hero>.hero-card,.notes-article .hero-flow,.notes-article .intro-map{box-shadow:none;border-radius:12px}
+.notes-article .hero .tag{font-size:12px;border-radius:4px;padding:4px 9px;margin:0 0 16px;line-height:1.7}
+.notes-article .hero>.hero-figure .map{transform:none;box-shadow:none}
+.notes-article .hero>div>.eyebrow{display:none}
+.notes-article .hero>.hero-card>.eyebrow,.notes-article .hero>.hero-flow>.eyebrow{display:block;font-size:12px;line-height:1.7}
+.notes-article .hero-links{gap:12px 22px;margin-top:24px}
+.notes-article .hero .text-link{display:inline-flex;align-items:center;min-height:44px;font-size:14px}
+.notes-article .hero figcaption,.notes-article .hero-figure figcaption,.notes-article .date-note{font-size:13px;line-height:1.8}
+.notes-article .hero-card p:last-child,.notes-article .hero-flow .small,.notes-article .intro-map>p:last-child{font-size:14px;line-height:1.85}
+.notes-article .hero-numbers span,.notes-article .hero-step small{font-size:13px}
+.notes-article h2{font-size:28px;line-height:1.5;text-wrap:balance}
+.notes-article .section-head p{font-size:15px;line-height:1.85}
+.notes-article .content-section,.notes-article .article-section{padding-block:52px}
+.notes-article .content-section+.content-section{padding-top:48px}
+.notes-article .note-section{scroll-margin-top:100px}
+.notes-article .note-section>summary{min-height:56px;font-size:18px;line-height:1.6}
+.notes-article .note-section>summary h2{font-size:20px;line-height:1.6}
+.notes-article .note-body{max-width:none;font-size:16px;line-height:1.95}
+.notes-article .note-body p,.notes-article .note-body li{font-size:16px;line-height:1.95}
+.notes-article .note-body>p,.notes-article .note-body>ul,.notes-article .note-body>ol,.notes-article .article-section>p,.notes-article .article-section>ul,.notes-article .article-section>ol{max-width:44rem;font-size:16px;line-height:1.95}
+.notes-article .note-body h3{font-size:21px;margin-block:28px 12px;scroll-margin-top:100px}
+.notes-article .note-body pre,.notes-article pre{font-size:14px;line-height:1.8}
+.notes-article .note-body table,.notes-article table{font-size:14px;line-height:1.8}
+.notes-article .note-body th,.notes-article .note-body td{font-size:14px;line-height:1.8}
+.notes-article .article-section>h2{font-size:28px}
+.notes-article .concept p,.notes-article .subnote p,.notes-article .risk p,.notes-article .monitor-step p,.notes-article .monitor-step ul,.notes-article .step-card p{font-size:15px;line-height:1.85}
+.notes-article .callout,.notes-article .model-scope,.notes-article .demo-disclaimer,.notes-article .version-card,.notes-article .version-card p{font-size:14px;line-height:1.85}
+.notes-article .source-list a,.notes-article .source-list span,.notes-article #plane-references~ul{font-size:14px;line-height:1.85}
+.notes-article #plane-overview~ul{max-width:none}
+.notes-article #plane-overview~ul li{font-size:15px;line-height:1.85}
+.notes-article .note-body .source-list{max-width:none}
+.notes-article .small,.notes-article .lab-note,.notes-article .lab-foot,.notes-article .lab-footer,.notes-article .clock-lab-foot,.notes-article .print-hint{font-size:13px;line-height:1.85}
+.notes-article .principle,.notes-article .principles span{font-size:13px;line-height:1.8}
+.notes-article .principles strong{font-size:15px}
+.notes-article .memory-motto,.notes-article .motto{background:var(--pale);color:var(--ink);border-radius:8px;text-align:left;padding:24px;margin-top:30px}
+.notes-article .memory-motto span,.notes-article .motto small{color:var(--muted);font-size:14px}
+.notes-article button,.notes-article .btn,.notes-article .notes-toolbar button{min-height:44px;min-width:44px;font-size:14px}
+.notes-article button,.notes-article .btn,.notes-article .topbar a,.notes-article summary,.notes-article .section-nav a,.notes-article .toc a{transition:background .18s,color .18s,border-color .18s,transform .18s}
+.notes-article button:enabled:hover{filter:brightness(1.06)}
+.notes-article button:enabled:active,.notes-article .btn:active{transform:translateY(1px)}
+.notes-article button:disabled{opacity:.58}
+.notes-article .graph-node:disabled,.notes-article .work-card:disabled{opacity:1}
+.notes-article :focus-visible{outline:3px solid #ad751d;outline-offset:4px}
+.notes-article .lab :focus-visible,.notes-article .clock-lab :focus-visible{outline-color:#f0cc80}
+.notes-article .toc a,.notes-article .section-nav a{display:inline-flex;align-items:center;min-height:44px;border-radius:5px;font-size:14px;padding:8px 12px}
+.notes-article .checklist label,.notes-article .clock-check{min-height:44px;font-size:14px;line-height:1.8}
+.notes-article .clock-field label,.notes-article .clock-controls small,.notes-article .clock-node small,.notes-article .clock-node span{font-size:13px;line-height:1.6}
+.notes-article .clock-current p,.notes-article .clock-candidate,.notes-article .clock-warnings{font-size:14px;line-height:1.8}
+.notes-article .clock-node strong,.notes-article .hero-numbers strong,.notes-article .metric strong{font-variant-numeric:tabular-nums}
+.notes-article .task-option strong,.notes-article .work-card strong{font-size:14px;line-height:1.65}
+.notes-article .task-option span,.notes-article .scope-buttons small,.notes-article .card-id,.notes-article .card-project,.notes-article .card-status,.notes-article .card-tags>span,.notes-article .lane-en{font-size:12px;line-height:1.6}
+.notes-article .scope-explanation,.notes-article .detail-copy>p,.notes-article .detail .acceptance,.notes-article .state-controls>p,.notes-article .board-heading p{font-size:14px;line-height:1.8}
+.notes-article .lane h4{font-size:14px;line-height:1.5;flex-wrap:wrap}
+.notes-article .lane-count{font-size:12px}
+.notes-article .lab .task-option{min-height:96px}
+.notes-article .skills-step-card dd,.notes-article .route-pane p,.notes-article .chooser-intro,.notes-article .permissions-pane>p{font-size:14px;line-height:1.85}
+.notes-article .skills-step-card dt,.notes-article .step-counter,.notes-article .permissions-pane small,.notes-article .permission-list span,.notes-article .graph-legend,.notes-article .graph-arrow-note{font-size:13px;line-height:1.8}
+.notes-article .ui-arrow{width:18px;height:18px;display:inline-block;vertical-align:middle;flex-shrink:0}
+.notes-article .selection-jump,.notes-article .choice-result{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;padding:10px 12px;border-radius:5px;font-size:13px;font-weight:600;line-height:1.6;text-decoration:none}
+.notes-article .selection-jump{background:#22664f;color:#fff}
+.notes-article .choice-result{color:#e2efca;border:1px solid #829873;background:#173e33;margin-top:7px}
+.notes-article .task-choice{min-width:0}
+.notes-article .task-choice .task-option{width:100%}
+.notes-article .task-option[aria-pressed="false"]+.choice-result{display:none}
+.notes-article #selected-skill,.notes-article #plane-selected-title{scroll-margin-top:128px}
+.notes-article footer,.notes-article .footer{font-size:13px;line-height:1.8}
+.notes-article footer a,.notes-article .footer a{display:inline-flex;align-items:center;min-height:44px}
+.notes-article .note-body p,.notes-article .hero-intro,.notes-article .article-section>p{text-wrap:pretty}
+@media(max-width:760px){
+.notes-article .wrap{width:calc(100% - 40px)}
+.notes-article .topbar-inner{flex-wrap:wrap;gap:0;padding-top:6px}
+.notes-article .brand{min-height:44px;font-size:15px}
+.notes-article .topbar nav{width:100%;gap:12px;overflow-x:auto;flex-wrap:nowrap;padding:0 0 4px;scrollbar-width:thin}
+.notes-article .topbar nav a{font-size:13px;flex-shrink:0;padding-inline:2px}
+.notes-article .hero{grid-template-columns:1fr;gap:28px;padding-block:32px}
+.notes-article .hero h1{font-size:32px;line-height:1.4}
+.notes-article .hero-intro{font-size:16px;max-width:none;margin-block:16px}
+.notes-article .hero-figure{max-width:500px}
+.notes-article .hero .tag{margin-bottom:12px}
+.notes-article .content-section,.notes-article .article-section{padding-block:36px}
+.notes-article .content-section+.content-section{padding-top:36px}
+.notes-article h2,.notes-article .article-section>h2{font-size:24px}
+.notes-article .section-head p{font-size:15px}
+.notes-article .note-section>summary{font-size:17px}
+.notes-article .note-section>summary h2{font-size:18px}
+.notes-article .note-body p,.notes-article .note-body li{font-size:16px}
+.notes-article .note-body pre,.notes-article pre{font-size:13px}
+.notes-article .note-body th,.notes-article .note-body td{font-size:14px}
+.notes-article .principles{grid-template-columns:1fr;gap:14px}
+.notes-article .principles strong{display:inline;margin-right:8px}
+.notes-article .principles span{display:inline}
+.notes-article .task-options{grid-template-columns:1fr 1fr;align-items:start}.notes-article .lab .task-option{min-height:76px;padding:12px}
+.notes-article .board{grid-template-columns:1fr 1fr}
+.notes-article .lane:last-child .lane-cards{display:flex}
+.notes-article .lane-cards{min-height:0}
+.notes-article .lane{padding:14px}
+.notes-article .lane-en{margin-bottom:10px}
+.notes-article .work-card{padding:14px}
+.notes-article .card-tags{gap:6px}
+.notes-article .lab-top{flex-wrap:wrap}
+.notes-article .lab-top .tag{white-space:normal}
+.notes-article .note-section,.notes-article .note-body h3,.notes-article .article-section,.notes-article .article-section>h3{scroll-margin-top:124px}
+}
+@media(max-width:370px){.notes-article .task-options,.notes-article .board{grid-template-columns:1fr}.notes-article .hero h1{font-size:30px}.notes-article .topbar nav{gap:8px}}
+}
+@media(prefers-reduced-motion:reduce){.notes-article *,.notes-article *::before,.notes-article *::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+</style>
+<style>.chapter-intro{padding:40px 0 24px}.chapter-intro h1{font-size:clamp(30px,5vw,44px);line-height:1.4}.chapter-intro p{max-width:48rem}.content-section p{max-width:48rem}.content-section{padding:32px 0}.content-section h3{margin-top:30px}.bit-figure{margin:24px 0;padding:16px;border:1px solid var(--line);border-radius:10px;background:#fffefb}.bit-figure figcaption{font-size:14px;margin-bottom:12px}.bit-grid{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:8px}.bit-grid>div{display:grid;text-align:center;background:var(--pale);border-radius:6px;padding:10px 3px;font-family:var(--mono)}.bit-grid span,.bit-grid small{font-size:12px}.bit-grid strong{font-size:28px}.exercise{margin:20px 0;border:1px solid var(--line);border-radius:8px;padding:18px}.exercise h3{margin-top:0}.exercise-answer{background:var(--pale)}.applied-result{margin-top:18px}output{font-family:var(--mono);font-weight:bold;overflow-wrap:anywhere}.table-wrap:focus-visible{outline:3px solid #ad751d;outline-offset:4px}.chapter-tools{display:flex;gap:10px;flex-wrap:wrap;padding-block:18px}.content-section a,.content-section code{overflow-wrap:anywhere}pre{max-width:100%}.topbar-inner{display:flex;align-items:center;justify-content:space-between;gap:18px;padding-block:12px}.topbar nav{display:flex;gap:18px;flex-wrap:wrap;font-size:14px}.topbar a{min-height:44px;display:inline-flex;align-items:center}main,main>div{min-width:0}@media(max-width:760px){.bit-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.topbar-inner{display:block}.topbar nav{gap:8px 16px}.bit-grid strong{font-size:24px}}@media(max-width:390px){.wrap{width:calc(100% - 28px)}.exercise{padding:12px}.lab{padding:12px}.topbar nav a{font-size:13px}}@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}@media print{.chapter-tools,.lab form,.replay .controls,.print-hint{display:none!important}.bit-grid{grid-template-columns:repeat(8,minmax(0,1fr))}.chapter-intro{padding:0 0 15px}.content-section{padding:16px 0}.applied-result{break-inside:avoid}body.exercise-print main>.chapter-intro,body.exercise-print main>.chapter-tools,body.exercise-print main>.content-section,body.exercise-print footer{display:none!important}body.exercise-print main>#questions-region{display:block!important;border:0;padding:0}body.exercise-print .exercise-answer{display:none!important}body.exercise-print #questions-region .notes-toolbar,body.exercise-print #questions-region .print-hint{display:none!important}body.exercise-print .exercise{break-inside:avoid;min-height:100px}body.exercise-print .exercise h3{font-size:12pt}body.exercise-print .exercise-answer *{display:none!important}}</style><style id="bits-interface-wrap">.notes-article .bits-api-signatures{overflow-wrap:anywhere}</style></head><body class="notes-article"><a class="skip" href="#main">跳到正文</a><header class="topbar"><div class="wrap topbar-inner"><a class="brand" href="../"><span class="brandmark" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span>嵌入式技术笔记</a><nav aria-label="笔记导航"><a href="../learn/">返回分类</a><a href="#mask-lab">交互实验</a><a href="#prerequisites">完整笔记</a><a href="../?search=1">搜索笔记</a></nav></div></header><main class="wrap" id="main"><div class="chapter-intro"><h1 id="overview" tabindex="-1">位运算与寄存器读写 <a class="header-anchor" href="#overview" aria-label="Permalink to &quot;位运算与寄存器读写 {#overview}&quot;">&ZeroWidthSpace;</a></h1>
+<p>第 03 单元 · 从“想改变一个输出”到“解释每一次写入”。服务于可升级的数据采集终端：改变一个控制位时，必须知道哪些状态保留、哪些状态被覆盖、哪些事件被确认。上章的 LED 命令还不能保证这个软件过程正确。</p>
+</div><div class="chapter-tools"><button class="btn" type="button" id="expand-notes">展开全部解析</button><button class="btn" type="button" id="collapse-notes">折叠全部解析</button><button class="btn" type="button" id="print-all">普通打印</button></div><div class="content-section" role="region" aria-labelledby="prerequisites"><h2 id="prerequisites" tabindex="-1">起点、短路径与交付物 <a class="header-anchor" href="#prerequisites" aria-label="Permalink to &quot;起点、短路径与交付物 {#prerequisites}&quot;">&ZeroWidthSpace;</a></h2>
+<p>先能分清 LED 输出命令、实际电流通路与输入观察；需要时回看<a href="./gpio-led.html#driver-modes">GPIO 输出</a>。本章从零解释位和掩码，不要求指定开发板。所有八位寄存器、时间线和图均为原创虚构模型；未做硬件验证。</p>
+<p>按四小段完成：① 给0xA5的位编号并解释一次掩码变化；② 把读值、写入数据、新状态写成三列；③ 分别复述RW丢更新与W1C误确认；④ 在宿主C11实验中复现固定结果。每段先读例子，再预测，最后写原因。最终产物是一张注明读、改、写顺序和访问属性的寄存器写入记录，不是个人掌握证书。</p>
+</div><div class="content-section" role="region" aria-labelledby="bit-pattern"><h2 id="bit-pattern" tabindex="-1">一排位怎样表示一个非负数 <a class="header-anchor" href="#bit-pattern" aria-label="Permalink to &quot;一排位怎样表示一个非负数 {#bit-pattern}&quot;">&ZeroWidthSpace;</a></h2>
+<p>位（bit）只有0和1。这里声明无符号八位模型，范围0..255；bit0是最低有效位，权重1，bit7权重128。一排位左边是高位，位置不随取值改变。二进制10100101的1落在bit7、bit5、bit2、bit0，权重相加128+32+4+1=165。</p>
+<p>十六进制把每四个二进制位写成一位：1010是A（十进制10），0101是5，因此这一排是0xA5。前缀0x说明记数法，不声明变量的C类型、寄存器访问宽度或电压。八位是模型范围，不意味着STM32有可按字节访问的同名寄存器。标准C11没有本章采用的0b二进制整数字面量；代码用十六进制或十进制，图用二进制帮助观察。</p>
+<figure class="bit-figure" aria-labelledby="bit-diagram-title"><figcaption id="bit-diagram-title">原创位图：0xA5与掩码0x0C。每格依次是位号、权重、原值、选择位。</figcaption><div class="bit-grid"><div><b>bit7</b><span>权重128</span><strong>1</strong><small>mask 0</small></div><div><b>bit6</b><span>权重64</span><strong>0</strong><small>mask 0</small></div><div><b>bit5</b><span>权重32</span><strong>1</strong><small>mask 0</small></div><div><b>bit4</b><span>权重16</span><strong>0</strong><small>mask 0</small></div><div><b>bit3</b><span>权重8</span><strong>0</strong><small>mask 1</small></div><div><b>bit2</b><span>权重4</span><strong>1</strong><small>mask 1</small></div><div><b>bit1</b><span>权重2</span><strong>0</strong><small>mask 0</small></div><div><b>bit0</b><span>权重1</span><strong>1</strong><small>mask 0</small></div></div></figure>
+<p>本段小产物：遮住165，写出每个1的权重，再按四位一组还原A5。</p>
+</div><div class="content-section" role="region" aria-labelledby="mask-rules"><h2 id="mask-rules" tabindex="-1">掩码与 AND、OR、XOR、按位取反 <a class="header-anchor" href="#mask-rules" aria-label="Permalink to &quot;掩码与 AND、OR、XOR、按位取反 {#mask-rules}&quot;">&ZeroWidthSpace;</a></h2>
+<p>掩码（mask）是一组选择位；本章掩码的1表示选中此位置。0x0C=00001100选中bit3和bit2。AND（&amp;）两边都为1才得1；OR（|）至少一边为1就得1；XOR（^）两边不同才得1；按位取反（~，bitwise complement）翻转参与运算的每一位。它是一个运算，不等同于有符号整数的二进制补码（two's complement）表示。它们逐位工作；逻辑运算&amp;&amp;、||、!判断真假，不能替换这里的运算符。</p>
+<p>设置选中位用 value | mask：mask为1强制结果为1，为0保留原位。清除用 value &amp; width_complement(mask)：选中位遇0清零，其他位遇1保留。翻转用 value ^ mask：选中位取反，未选中位不变。关键是保留未选位，不是把整体替换成mask。</p>
+<p>完整手算：原值10100101，mask为00001100。OR让bit3从0变1、bit2保持1，其他六位原样留下，得到10101101=0xAD=173。清位使bit3和bit2都成0，得到10100001=0xA1=161。XOR让bit3从0变1、bit2从1变0，得到10101001=0xA9=169。八位内全取反为01011010=0x5A=90。</p>
+<div class="table-wrap" role="region" aria-label="可横向滚动的数据表" tabindex="0"><table tabindex="0">
+<thead>
+<tr>
+<th>八位value=0xA5，mask=0x0C</th>
+<th>结果</th>
+<th>不变部分</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>设置 set / OR</td>
+<td>0xAD</td>
+<td>mask为0的六位</td>
+</tr>
+<tr>
+<td>清除 clear / AND补掩码</td>
+<td>0xA1</td>
+<td>mask为0的六位</td>
+</tr>
+<tr>
+<td>翻转 toggle / XOR</td>
+<td>0xA9</td>
+<td>mask为0的六位</td>
+</tr>
+<tr>
+<td>八位内取反 complement</td>
+<td>0x5A</td>
+<td>八位内没有不变位</td>
+</tr>
+</tbody>
+</table></div>
+<p>这只是数值变换，尚未说明如何写外设。<a href="#source-n1570">N1570 §6.5.10–12</a>给出逐位规则，寄存器访问语义仍需独立查证。</p>
+</div><div class="content-section" role="region" aria-labelledby="width-promotions"><h2 id="width-promotions" tabindex="-1">字段、移位与整数提升 <a class="header-anchor" href="#width-promotions" aria-label="Permalink to &quot;字段、移位与整数提升 {#width-promotions}&quot;">&ZeroWidthSpace;</a></h2>
+<p>字段（field）是连续一段位。取0xA5的bit6..4，起点offset=4、长度length=3：右移4让bit4到最低位，再用低三位掩码7筛选，得到010=2。offset7、length2超过八位末端，必须拒绝。先确认offset小于width，再做width-offset，避免无符号减法先绕回大数。</p>
+<p>整型提升（integer promotions）发生在运算前。若存在uint8_t，它恰好八位；通常会先提升为能表示0..255的int。~x具有提升后的类型，不能把八格图当成所有中间值的宽度。赋回窄无符号类型会按目标范围转换，但不会把之前的运算变成八位。本C模块先验证width=1..8，用至少32位的unsigned long与1UL运算，显式裁剪到宽度掩码，最后转换为uint32_t。</p>
+<p>C11移位要求两侧为整数并各自提升；计数必须非负且小于提升后左操作数类型的位宽。无符号左移按该类型范围取模；有符号左移还要求左值非负，乘以相应2的幂后能由结果类型表示，否则无定义结果。有符号负数右移是实现定义。本课不执行非法移位来“看结果”。1 &lt;&lt; -1违反计数条件；在提升后int恰好32位的条件下，1 &lt;&lt; 32无定义，不能教成必得0。</p>
+<p>本模型另有更严格的显示合同：count=0..width-1，移出格子的位丢弃。八位value1左移7得128，count8被模型拒绝；不等于任意C左移8都非法。八位165左移1裁剪后得74，count0保持165。<a href="#source-n1570">N1570 §6.3.1.1、§6.5.3.3、§6.5.7</a>是语言规则依据。</p>
+</div><div class="content-section" role="region" aria-labelledby="mask-lab"><h2 id="mask-lab" tabindex="-1">实验一：先预测数值变换 <a class="header-anchor" href="#mask-lab" aria-label="Permalink to &quot;实验一：先预测数值变换 {#mask-lab}&quot;">&ZeroWidthSpace;</a></h2>
+<p>输入为十进制整数：width=1..8，value与mask=0..(2^width-1)。字段要求offset=0..width-1、length=1..width-offset；左移count=0..width-1；其他操作不使用字段或计数。预测填写十进制结果。编辑只标待应用，不改变最后一次已应用结果。应用消耗预测；重置恢复八位、165、12、设置、起点4、长度3、计数1，清空预测并隐藏结果。</p>
+<div class="lab"><form novalidate id="mask-form"><div class="fields"><label class="field" for="mask-width">声明宽度（1..8）<input id="mask-width" type="number" step="1" min="1" max="8" value="8"></label><label class="field" for="mask-value">原值（0..宽度最大值）<input id="mask-value" type="number" step="1" min="0" max="255" value="165"></label><label class="field" for="mask-mask">掩码（0..宽度最大值）<input id="mask-mask" type="number" step="1" min="0" max="255" value="12"></label><label class="field" for="mask-op">数值操作<select id="mask-op"><option value="set">设置 OR</option><option value="clear">清除 AND</option><option value="toggle">翻转 XOR</option><option value="invert">宽度内取反</option><option value="extract">字段提取</option><option value="shift">有界左移</option></select></label><label class="field" for="mask-offset">字段起点（0..width-1）<input id="mask-offset" type="number" step="1" min="0" max="7" value="4"></label><label class="field" for="mask-length">字段长度（1..width-offset）<input id="mask-length" type="number" step="1" min="1" max="8" value="3"></label><label class="field" for="mask-count">移位计数（0..width-1）<input id="mask-count" type="number" step="1" min="0" max="7" value="1"></label><label class="field" for="mask-prediction">先预测结果（十进制0..255，且在所选宽度内）<input id="mask-prediction" type="number" step="1" min="0" max="255" value=""></label></div><div class="controls"><button class="btn primary" id="mask-apply" type="submit" disabled>应用本次预测</button><button class="btn" id="mask-reset" type="button">恢复初始设置</button></div><p id="mask-pending" role="status">待预测，尚未应用。</p></form><div class="applied-result"><p>最后一次已应用结果（十六进制 / 二进制 / 十进制）：<output id="mask-result">尚未应用</output></p><p class="feedback" id="mask-feedback" aria-live="polite">先独立预测。</p></div></div>
+<p>无脚本固定练习：八位165、mask12，设置结果173；改成清除后应重新预测161。若错，逐位核对bit3/bit2，尤其原本为1的bit2。第二次改成value1、mask128，先说明其余七位为什么不变，再得129。</p>
+</div><div class="content-section" role="region" aria-labelledby="register-semantics"><h2 id="register-semantics" tabindex="-1">读值、写出数据与新状态 <a class="header-anchor" href="#register-semantics" aria-label="Permalink to &quot;读值、写出数据与新状态 {#register-semantics}&quot;">&ZeroWidthSpace;</a></h2>
+<p>寄存器暴露一组状态或控制位；访问语义说明一次读写做什么。这里仅模拟所有八位同属性的虚构寄存器：没有保留位、混合字段、异步事件或读副作用。RW（read/write）用写入数据替换状态；RO（read-only）在本模型中忽略写入；W1C（write one to clear）写1清除对应待处理位，写0保留。待处理（pending）表示事件尚待处理，不表示LED电压。</p>
+<p>相同初始0xA5和写数据0x0C：RW得0x0C；虚构RO保持0xA5；W1C清bit3/bit2，bit3本来0、bit2本来1，最后0xA1。总线上写出的仍为0x0C，不能因为结果A1就说“写了A1”。</p>
+<div class="table-wrap" role="region" aria-label="可横向滚动的数据表" tabindex="0"><table tabindex="0">
+<thead>
+<tr>
+<th>观察读值</th>
+<th>模式</th>
+<th>实际写出数据</th>
+<th>得到状态</th>
+<th>原因</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0xA5</td>
+<td>RW</td>
+<td>0x0C</td>
+<td>0x0C</td>
+<td>整体替换</td>
+</tr>
+<tr>
+<td>0xA5</td>
+<td>虚构RO</td>
+<td>0x0C</td>
+<td>0xA5</td>
+<td>模型规定忽略</td>
+</tr>
+<tr>
+<td>0xA5</td>
+<td>W1C</td>
+<td>0x0C</td>
+<td>0xA1</td>
+<td>写1选择清除</td>
+</tr>
+</tbody>
+</table></div>
+<p>真实RO写、WO读的非法方向访问不受本模型保证。不能普遍声称“RO写必无影响”或“WO读必为0”；值、错误响应与限制只能由具体器件手册和总线合同给出。混合字段与保留位也不能直接套全字|=、&amp;=。先查属性和合法访问宽度，再选表达式。</p>
+</div><div class="content-section" role="region" aria-labelledby="register-lab"><h2 id="register-lab" tabindex="-1">实验二：同样写12为何结果不同 <a class="header-anchor" href="#register-lab" aria-label="Permalink to &quot;实验二：同样写12为何结果不同 {#register-lab}&quot;">&ZeroWidthSpace;</a></h2>
+<p>初始读值和写数据均为十进制0..255，模式为RW/虚构RO/W1C。每次试验从所填初始值重新开始，没有隐藏累计或异步变化。先预测最终状态再应用；模式或数据一变预测失效。下方分列读值、实际写出数据与得到状态。</p>
+<div class="lab"><form novalidate id="reg-form"><div class="fields"><label class="field" for="reg-initial">每次试验的初始读值（0..255）<input id="reg-initial" type="number" step="1" min="0" max="255" value="165"></label><label class="field" for="reg-data">实际写出数据（0..255）<input id="reg-data" type="number" step="1" min="0" max="255" value="12"></label><label class="field" for="reg-mode">虚构访问语义<select id="reg-mode"><option value="RW">RW 整体替换</option><option value="RO">RO 模型忽略</option><option value="W1C">W1C 写1清除</option></select></label><label class="field" for="reg-prediction">先预测结果（十进制0..255，且在所选宽度内）<input id="reg-prediction" type="number" step="1" min="0" max="255" value=""></label></div><div class="controls"><button class="btn primary" id="reg-apply" type="submit" disabled>应用本次预测</button><button class="btn" id="reg-reset" type="button">恢复初始设置</button></div><p id="reg-pending" role="status">待预测，尚未应用。</p></form><div class="applied-result"><p>最后一次已应用：操作 <output id="reg-operation">—</output>；读值 <output id="reg-read">—</output>；写出数据 <output id="reg-written">—</output>；得到状态 <output id="reg-result">尚未应用</output></p><p class="feedback" id="reg-feedback" aria-live="polite">先独立预测。</p></div></div>
+<p>无脚本固定案例见上表：165、12在RW/RO/W1C分别得12/165/161。小产物：抄成三列记录，每行补一句“写出的1代表什么”。</p>
+</div><div class="content-section" role="region" aria-labelledby="rmw-timelines"><h2 id="rmw-timelines" tabindex="-1">两类 RMW 错误有不同因果链 <a class="header-anchor" href="#rmw-timelines" aria-label="Permalink to &quot;两类 RMW 错误有不同因果链 {#rmw-timelines}&quot;">&ZeroWidthSpace;</a></h2>
+<p>读改写（read-modify-write，RMW）先读一个值，在软件里改，再写回。reg |= mask一个表达式也可能包含两个独立外设访问。第一类错误是旧快照覆盖另一个更新；第二类错误是写回数据的1在W1C中成了确认命令。第二类即使没有并发也会发生，不能都说成“线程太快”。下面按顺序安排概念角色，不执行C竞态。</p>
+<h3 id="rw-lost-update" tabindex="-1">RW：旧快照丢更新 <a class="header-anchor" href="#rw-lost-update" aria-label="Permalink to &quot;RW：旧快照丢更新 {#rw-lost-update}&quot;">&ZeroWidthSpace;</a></h3>
+<p>RW初始0。A想设bit0，读取0后停住；B想设bit1，读当前0并写2，状态变2；A仍用旧0，计算0 OR1=1并写回。最后1，B的bit1丢失；两个意图合并本应3。不是OR真值表错，而是过时读值替换了新状态。</p>
+<div class="lab replay"><p>当前阶段状态（十进制）：<output id="rw-state">0</output></p><p id="rw-action" aria-live="polite">开始阶段；静态完整时间线见正文。</p><div class="controls"><button class="btn primary" type="button" id="rw-step">下一步骤</button><button class="btn" type="button" id="rw-reset">重置这条时间线</button></div></div>
+<p>静态时间线：开始0 → A读0（状态0）→ B写2（状态2）→ A写旧值OR1（状态1）。逐步写“谁持有快照”和“当前寄存器是什么”；A手里的0不会因B更新自动变2。</p>
+<h3 id="w1c-or-assignment" tabindex="-1">W1C：OR赋值误确认标志 <a class="header-anchor" href="#w1c-or-assignment" aria-label="Permalink to &quot;W1C：OR赋值误确认标志 {#w1c-or-assignment}&quot;">&ZeroWidthSpace;</a></h3>
+<p>另起一例：pending bit0/1均为1，即3。只想确认bit0却先读3，计算3 OR1=3，再写3。两个写入位均为1，W1C把两位清成0。直接写请求mask1会只清bit0并留下2。这里没有角色插入更新；错误是读回状态被重新当成清除命令。</p>
+<div class="lab replay"><p>当前阶段状态（十进制）：<output id="w1c-state">3</output></p><p id="w1c-action" aria-live="polite">开始阶段；静态完整时间线见正文。</p><div class="controls"><button class="btn primary" type="button" id="w1c-step">下一步骤</button><button class="btn" type="button" id="w1c-reset">重置这条时间线</button></div></div>
+<p>静态时间线：开始3 → 读3（状态3）→ 形成数据3（尚未写，状态3）→ 写3（状态0）。正确对照为初始3直接写1得到2。真实W1C的新事件与确认同时发生时，还要查器件规定；本模型没有这种时序。</p>
+</div><div class="content-section" role="region" aria-labelledby="volatile-limits"><h2 id="volatile-limits" tabindex="-1">volatile 与专用置位/复位各管什么 <a class="header-anchor" href="#volatile-limits" aria-label="Permalink to &quot;volatile 与专用置位/复位各管什么 {#volatile-limits}&quot;">&ZeroWidthSpace;</a></h2>
+<p>volatile使访问遵循实现的可观察访问规则，什么构成访问仍有实现规定。它不把读、计算、写变成不可分割一步，也不是C线程同步、所有权管理或通用内存屏障。即使按要求发出了A的读写，旧快照仍会覆盖更新；即使每次访问发生，错误W1C数据仍会误确认。<a href="#source-gcc">GCC13.1 §6.46</a>还明确区分volatile与非volatile访问的排序，不能由前者推出后者已完成。</p>
+<p>专用置位/复位寄存器把“选哪些位、做什么动作”作为一次文档化写入，可免去特定输出位更新先读ODR的需要。它只解决手册限定的外设操作，不能推出协议、多对象事务或任意共享内存全部线程安全。ISR/任务/DMA所有权、同步策略和硬件时序留给后续课程；本课没有任意RMW的通用药方。</p>
+</div><div class="content-section" role="region" aria-labelledby="stm32f1-manual"><h2 id="stm32f1-manual" tabindex="-1">对照历史 RM0008：IDR、ODR、BSRR、EXTI_PR <a class="header-anchor" href="#stm32f1-manual" aria-label="Permalink to &quot;对照历史 RM0008：IDR、ODR、BSRR、EXTI_PR {#stm32f1-manual}&quot;">&ZeroWidthSpace;</a></h2>
+<p>以下仅对照实际核读的ST RM0008，June2009，Doc ID13902 Rev9，Keil保存的原厂文档。这是历史版，不代表最新手册/勘误或板级验证。这里是32位寄存器，与八位全有效位模型不同；具体STM32F1料号、引脚实现、时钟、模式与复位条件仍须复核。本页不解引用数值地址或执行目标驱动。</p>
+<ul>
+<li>GPIOx_IDR，p149 §8.2.3：低16位输入观察，只读；该版Word mode only，即32位字访问。高16位保留、读0。不能从虚构RO“忽略写”推导真实IDR非法写行为。</li>
+<li>GPIOx_ODR，p150 §8.2.4：低16位读写输出数据锁存，同样Word mode only；高16位保留、读0。锁存不是引脚电压/电流：模式、复用、负载和连线仍影响实际观察。读0规则也不授权任意写保留位。</li>
+<li>GPIOx_BSRR，p150 §8.2.5：Word mode、写方向；低半BSy写1设置对应ODR位，高半BRy写1复位；两半写0都是不动作。同一y的BS与BR同时为1，该版设置优先。文档用于单独ODR位的原子设置/清除，不能外推为任意C表达式或协议的原子性。例如仅设ODR bit0，写BS0命令即可，不必把ODR旧快照整字写回。</li>
+<li>EXTI_PR，p180 §9.3.6：实现位标为rc_w1，所选边沿事件使对应pending为1，写1或改变边沿检测敏感度可清该位。31:20保留须保持复位值0；bit19仅connectivity line使用，其他器件保留。不能拿0xFFFFFFFF当通用确认值，不能把0..19都视为每个型号可用。该版PR复位值标为undefined，不能假定启动总为0。访问宽度仍按该外设总线/寄存器访问规定复核，不能由八格图选择字节访问；本课不生成PR目标访问代码。</li>
+</ul>
+<p>共同顺序：确认目标与版本 → 查宽度和方向 → 读位定义、保留位、脚注 → 选择表达式。WO读、RO写及保留位非法访问都不获得本模型数值承诺。<a href="#source-rm0008">历史手册</a>训练查证方法，实际工程仍须当前目标文档和勘误。</p>
+</div><div class="content-section" role="region" aria-labelledby="c-contract"><h2 id="c-contract" tabindex="-1">C11模块与失败合同 <a class="header-anchor" href="#c-contract" aria-label="Permalink to &quot;C11模块与失败合同 {#c-contract}&quot;">&ZeroWidthSpace;</a></h2>
+<p>下载<a href="../examples/c-bits-registers/bits.c" download>bits.c</a>与<a href="../examples/c-bits-registers/README.txt" download>README.txt</a>。原创厂商无关纯数值模块要求C11和可选精确宽uint32_t，缺失则编译报错。width=1..8，值及mask/data必须在宽度内。unsigned long至少32位；实际移位最多8位的掩码构造或7位数据移动，先校验再执行，不依赖int恰好32位。</p>
+<p class="bits-api-signatures">公开interface：bits_apply(width,value,mask,op,output)实现set/clear/toggle/invert；bits_field(width,value,offset,length,output)提取字段；bits_shift(width,value,count,output)有界左移；bits_write(width,initial,data,access,output)解释RW/虚构RO/W1C；bits_bad_rmw(output)返回BitsTrace。BitsOp与BitsAccess只接受已定义枚举。数值参数为无符号类型，负数经C转换成大值也须被域检查拒绝，不能当成合法索引。</p>
+<p>返回BITS_OK/BITS_INVALID。失败保持输出原值，NULL在解引用前拒绝；非NULL仍须为真实、存活、可写且类型正确的对象，函数不能验证伪造或悬空指针。无硬件句柄和共享状态。BitsTrace的RW读值/他人更新/写数据/终值为0/2/1/1；W1C读值/写数据/终值/直接写1对照为3/3/0/2；角色均是单执行流局部值。</p>
+<p>仅BITS_TEST启用main和测试输出，不定义时可编译独立模块。普通条件检查不会被NDEBUG关闭。测试以初始化输出哨兵222验证宽度0/9、值/掩码256、字段零长/越端、计数8和转换后的负计数、未知操作/模式及NULL拒绝。没有真实并发、非法有符号移位或硬件访问。成功输出先检查puts再检查fflush(stdout)，以发现缓冲写出的延迟错误；写或刷新失败返回非零。测试失败即使stderr诊断写不出也保持非零。</p>
+<h3 id="c-source" tabindex="-1">完整发布源代码 <a class="header-anchor" href="#c-source" aria-label="Permalink to &quot;完整发布源代码 {#c-source}&quot;">&ZeroWidthSpace;</a></h3>
+<p>下方包含可复用模块全部函数体及BITS_TEST测试，和下载文件逐字相同；JavaScript结果不替代C执行。代码可折叠，普通打印会展开。</p>
+<details id="published-c"><summary>展开完整 bits.c（模块与测试）</summary><pre><code>/******************************************************************************
+ * @file bits.c
+ * @brief Original, vendor-independent teaching lab for embedded-notes.
+ * @version V1.0 2026-10-17
+ *
+ * Interface: width1..8, values/masks/data within that width, known enums only.
+ * Field offset&lt;width and length1..width-offset; shift count&lt;width.
+ * BITS_OK writes output; BITS_INVALID preserves it. NULL is rejected first.
+ * Other output pointers must designate real, live, writable, correctly typed
+ * objects. The interface cannot validate forged or dangling pointers.
+ * Requires C11 with optional uint32_t. All intermediate shifts use unsigned long
+ * (at least32 bits), after range checks. No assumption that int is32 bits.
+ * Define BITS_TEST for host tests; otherwise no main or test I/O is included.
+ * One execution context; no shared state, threads, interrupts or hardware.
+ * Host build parameters and router workflow are documented in README.txt.
+ *
+ * No hardware addresses, concurrency, dynamic allocation or undefined examples.
+ *****************************************************************************/
+#include &lt;stddef.h&gt;
+#include &lt;stdint.h&gt;
+#ifndef UINT32_MAX
+#error This teaching lab requires the optional exact-width uint32_t type.
+#endif
+#ifdef BITS_TEST
+#include &lt;stdio.h&gt;
+#endif
+
+typedef enum { BITS_OK, BITS_INVALID } BitsStatus;
+typedef enum { BITS_SET, BITS_CLEAR, BITS_TOGGLE, BITS_INVERT } BitsOp;
+typedef enum { BITS_RW, BITS_RO, BITS_W1C } BitsAccess;
+typedef struct {
+    uint32_t rwRead;
+    uint32_t rwOther;
+    uint32_t rwData;
+    uint32_t rwFinal;
+    uint32_t w1cRead;
+    uint32_t w1cData;
+    uint32_t w1cFinal;
+    uint32_t w1cDirect;
+} BitsTrace;
+
+/**
+ * @brief Apply an unsigned fictional-width operation.
+ * @param[in] width,value,mask,op Declared model inputs.
+ * @param[out] output Live writable uint32_t; unchanged on rejection.
+ * @return BITS_OK or BITS_INVALID.
+ */
+BitsStatus bits_apply(unsigned width, uint32_t value, uint32_t mask, BitsOp op, uint32_t *output)
+{
+    unsigned long all;
+    uint32_t result;
+    /**
+     * Validate before mask construction; unsigned long has at least 32 bits.
+     **/
+    if (output == NULL || width == 0U || width &gt; 8U) {
+        return BITS_INVALID;
+    }
+    all = (1UL &lt;&lt; width) - 1UL;
+    if (value &gt; all || mask &gt; all) {
+        return BITS_INVALID;
+    }
+    switch (op) {
+        case BITS_SET:
+            result = (uint32_t)((unsigned long)value | mask);
+            break;
+        case BITS_CLEAR:
+            result = (uint32_t)((unsigned long)value &amp; (all ^ mask));
+            break;
+        case BITS_TOGGLE:
+            result = (uint32_t)((unsigned long)value ^ mask);
+            break;
+        case BITS_INVERT:
+            result = (uint32_t)(all ^ value);
+            break;
+        default:
+            return BITS_INVALID;
+    }
+    *output = result;
+    return BITS_OK;
+}
+
+/**
+ * @brief Extract a field after validating its entire range.
+ * @param[in] width,value,offset,length Model width 1..8, field length at least one.
+ * @param[out] output Live writable uint32_t; unchanged on rejection.
+ * @return BITS_OK or BITS_INVALID.
+ */
+BitsStatus bits_field(unsigned width, uint32_t value, unsigned offset, unsigned length, uint32_t *output)
+{
+    unsigned long all;
+    /**
+     * Check offset before width-offset, and length before constructing its mask.
+     **/
+    if (output == NULL || width == 0U || width &gt; 8U || offset &gt;= width) {
+        return BITS_INVALID;
+    }
+    if (length == 0U || length &gt; width - offset) {
+        return BITS_INVALID;
+    }
+    all = (1UL &lt;&lt; width) - 1UL;
+    if (value &gt; all) {
+        return BITS_INVALID;
+    }
+    *output = (uint32_t)(((unsigned long)value &gt;&gt; offset) &amp; ((1UL &lt;&lt; length) - 1UL));
+    return BITS_OK;
+}
+
+/**
+ * @brief Shift within the declared display width and clip to that width.
+ * @param[in] width,value,count Width 1..8; count below width.
+ * @param[out] output Live writable uint32_t; unchanged on rejection.
+ * @return BITS_OK or BITS_INVALID.
+ */
+BitsStatus bits_shift(unsigned width, uint32_t value, unsigned count, uint32_t *output)
+{
+    unsigned long all;
+    /**
+     * This stricter display contract is not the complete C shift-count rule.
+     **/
+    if (output == NULL || width == 0U || width &gt; 8U || count &gt;= width) {
+        return BITS_INVALID;
+    }
+    all = (1UL &lt;&lt; width) - 1UL;
+    if (value &gt; all) {
+        return BITS_INVALID;
+    }
+    *output = (uint32_t)(((unsigned long)value &lt;&lt; count) &amp; all);
+    return BITS_OK;
+}
+
+/**
+ * @brief Interpret written data using fictional all-bit register semantics.
+ * @param[in] width,initial,data,access Width 1..8, values within width, known access mode.
+ * @param[out] output Live writable uint32_t; unchanged on rejection.
+ * @return BITS_OK or BITS_INVALID.
+ */
+BitsStatus bits_write(unsigned width, uint32_t initial, uint32_t data, BitsAccess access, uint32_t *output)
+{
+    uint32_t result;
+    /**
+     * Validate even RO write data; this model alone defines ignored RO writes.
+     **/
+    if (output == NULL || width == 0U || width &gt; 8U) {
+        return BITS_INVALID;
+    }
+    if (initial &gt; (1UL &lt;&lt; width) - 1UL || data &gt; (1UL &lt;&lt; width) - 1UL) {
+        return BITS_INVALID;
+    }
+    switch (access) {
+        case BITS_RW:
+            result = data;
+            break;
+        case BITS_RO:
+            result = initial;
+            break;
+        case BITS_W1C:
+            result = (uint32_t)((unsigned long)initial &amp; ~((unsigned long)data));
+            break;
+        default:
+            return BITS_INVALID;
+    }
+    *output = result;
+    return BITS_OK;
+}
+
+/**
+ * @brief Stage two separate RMW mistakes using only sequential local values.
+ * @param[in] None.
+ * @param[out] output Live writable BitsTrace; NULL is rejected before access.
+ * @return BITS_OK or BITS_INVALID; output unchanged on failure.
+ */
+BitsStatus bits_bad_rmw(BitsTrace *output)
+{
+    BitsTrace trace = {0U};
+    /**
+     * No thread, interrupt or actual register exists in this replay.
+     **/
+    if (output == NULL) {
+        return BITS_INVALID;
+    }
+    trace.rwRead = 0U;
+    if (bits_write(8U, 0U, 2U, BITS_RW, &amp;trace.rwOther) != BITS_OK) {
+        return BITS_INVALID;
+    }
+    trace.rwData = trace.rwRead | 1U;
+    if (bits_write(8U, trace.rwOther, trace.rwData, BITS_RW, &amp;trace.rwFinal) != BITS_OK) {
+        return BITS_INVALID;
+    }
+    trace.w1cRead = 3U;
+    trace.w1cData = trace.w1cRead | 1U;
+    if (bits_write(8U, trace.w1cRead, trace.w1cData, BITS_W1C, &amp;trace.w1cFinal) != BITS_OK) {
+        return BITS_INVALID;
+    }
+    if (bits_write(8U, trace.w1cRead, 1U, BITS_W1C, &amp;trace.w1cDirect) != BITS_OK) {
+        return BITS_INVALID;
+    }
+    *output = trace;
+    return BITS_OK;
+}
+
+#ifdef BITS_TEST
+/**
+ * @brief Keep failure checks active even when NDEBUG is defined.
+ * @param[in] condition,name Literal expectation and diagnostic.
+ * @param[out] None.
+ * @return Zero on success, one on failure.
+ */
+static int check(int condition, const char *name)
+{
+    /**
+     * Do not use assert for executable test acceptance.
+     **/
+    if (!condition) {
+        if (fprintf(stderr, &quot;FAIL: %s\n&quot;, name) &lt; 0) {
+            return 1;
+        }
+        return 1;
+    }
+    return 0;
+}
+
+/**
+ * @brief Execute literal mask fixtures.
+ * @param[in] None.
+ * @param[out] None.
+ * @return Nonzero if any expectation fails.
+ */
+static int test_masks(void)
+{
+    uint32_t output = 222U;
+    int failures = 0;
+    /**
+     * The expected value comes from the published worked bit row.
+     **/
+    failures += check(bits_apply(8U, 165U, 12U, BITS_SET, &amp;output) == BITS_OK &amp;&amp; output == 173U,
+                      &quot;A5 set 0C = AD&quot;);
+    failures += check(bits_apply(8U, 165U, 12U, BITS_CLEAR, &amp;output) == BITS_OK &amp;&amp; output == 161U,
+                      &quot;A5 clear 0C = A1&quot;);
+    failures += check(bits_apply(8U, 165U, 12U, BITS_TOGGLE, &amp;output) == BITS_OK &amp;&amp; output == 169U,
+                      &quot;A5 toggle 0C = A9&quot;);
+    failures += check(bits_apply(8U, 165U, 0U, BITS_INVERT, &amp;output) == BITS_OK &amp;&amp; output == 90U,
+                      &quot;A5 eight-bit complement = 5A&quot;);
+    failures += check(bits_apply(1U, 1U, 0U, BITS_INVERT, &amp;output) == BITS_OK &amp;&amp; output == 0U,
+                      &quot;one-bit complement&quot;);
+    failures += check(bits_apply(8U, 0U, 0U, BITS_SET, &amp;output) == BITS_OK &amp;&amp; output == 0U, &quot;zero bits&quot;);
+    failures += check(bits_apply(8U, 255U, 255U, BITS_CLEAR, &amp;output) == BITS_OK &amp;&amp; output == 0U,
+                      &quot;highest valid full mask&quot;);
+    failures += check(bits_apply(8U, 1U, 128U, BITS_SET, &amp;output) == BITS_OK &amp;&amp; output == 129U,
+                      &quot;highest valid bit set&quot;);
+    output = 222U;
+    failures += check(bits_apply(0U, 0U, 0U, BITS_SET, &amp;output) == BITS_INVALID &amp;&amp; output == 222U,
+                      &quot;zero width preserves output&quot;);
+    failures += check(bits_apply(9U, 0U, 0U, BITS_SET, &amp;output) == BITS_INVALID &amp;&amp; output == 222U,
+                      &quot;width above eight preserves output&quot;);
+    failures += check(bits_apply(8U, 256U, 0U, BITS_SET, &amp;output) == BITS_INVALID &amp;&amp; output == 222U,
+                      &quot;value out of width&quot;);
+    failures += check(bits_apply(8U, 0U, 256U, BITS_SET, &amp;output) == BITS_INVALID &amp;&amp; output == 222U,
+                      &quot;mask out of width&quot;);
+    failures += check(bits_apply(8U, 0U, 0U, (BitsOp)99, &amp;output) == BITS_INVALID &amp;&amp; output == 222U,
+                      &quot;unknown operation&quot;);
+    failures += check(bits_apply(8U, 0U, 0U, BITS_SET, NULL) == BITS_INVALID, &quot;null output&quot;);
+    return failures;
+}
+
+/**
+ * @brief Execute field and shift boundary fixtures.
+ * @param[in] None.
+ * @param[out] None.
+ * @return Count of failed expectations.
+ */
+static int test_fields_shifts(void)
+{
+    uint32_t output = 222U;
+    int failures = 0;
+    /**
+     * Use initialized output sentinels and only defined argument conversions.
+     **/
+    failures += check(bits_field(8U, 165U, 4U, 3U, &amp;output) == BITS_OK &amp;&amp; output == 2U, &quot;bits6..4 = 2&quot;);
+    failures += check(bits_field(8U, 255U, 0U, 8U, &amp;output) == BITS_OK &amp;&amp; output == 255U, &quot;full field&quot;);
+    failures += check(bits_field(8U, 128U, 7U, 1U, &amp;output) == BITS_OK &amp;&amp; output == 1U, &quot;highest bit&quot;);
+    failures += check(bits_shift(8U, 1U, 7U, &amp;output) == BITS_OK &amp;&amp; output == 128U, &quot;highest count&quot;);
+    failures += check(bits_shift(8U, 165U, 0U, &amp;output) == BITS_OK &amp;&amp; output == 165U, &quot;zero count&quot;);
+    failures += check(bits_shift(8U, 165U, 1U, &amp;output) == BITS_OK &amp;&amp; output == 74U, &quot;width-clipped shift&quot;);
+    output = 222U;
+    failures += check(bits_field(8U, 1U, 8U, 1U, &amp;output) == BITS_INVALID &amp;&amp; output == 222U, &quot;offset endpoint&quot;);
+    failures += check(bits_field(8U, 1U, 7U, 2U, &amp;output) == BITS_INVALID &amp;&amp; output == 222U, &quot;field exceeds width&quot;);
+    failures += check(bits_field(8U, 1U, 0U, 0U, &amp;output) == BITS_INVALID &amp;&amp; output == 222U, &quot;zero field&quot;);
+    failures += check(bits_field(8U, 1U, (unsigned)-1, 1U, &amp;output) == BITS_INVALID &amp;&amp; output == 222U,
+                      &quot;converted negative offset before subtraction&quot;);
+    failures += check(bits_field(8U, 1U, 0U, (unsigned)-1, &amp;output) == BITS_INVALID &amp;&amp; output == 222U,
+                      &quot;large length before mask shift&quot;);
+    failures += check(bits_field(0U, 0U, 0U, 1U, &amp;output) == BITS_INVALID &amp;&amp; output == 222U, &quot;field width zero&quot;);
+    failures += check(bits_field(8U, 256U, 0U, 1U, &amp;output) == BITS_INVALID &amp;&amp; output == 222U, &quot;field value invalid&quot;);
+    failures += check(bits_field(8U, 0U, 0U, 1U, NULL) == BITS_INVALID, &quot;field null output&quot;);
+    failures += check(bits_shift(8U, 1U, 8U, &amp;output) == BITS_INVALID &amp;&amp; output == 222U, &quot;count endpoint&quot;);
+    failures += check(bits_shift(8U, 1U, (unsigned)-1, &amp;output) == BITS_INVALID &amp;&amp; output == 222U,
+                      &quot;converted negative count rejected&quot;);
+    failures += check(bits_shift(9U, 1U, 0U, &amp;output) == BITS_INVALID &amp;&amp; output == 222U, &quot;shift width invalid&quot;);
+    failures += check(bits_shift(8U, 256U, 0U, &amp;output) == BITS_INVALID &amp;&amp; output == 222U, &quot;shift value invalid&quot;);
+    failures += check(bits_shift(8U, 0U, 0U, NULL) == BITS_INVALID, &quot;shift null output&quot;);
+    return failures;
+}
+
+/**
+ * @brief Execute access semantics and sequential timeline fixtures.
+ * @param[in] None.
+ * @param[out] None.
+ * @return Count of failed expectations.
+ */
+static int test_access_traces(void)
+{
+    uint32_t output = 222U;
+    int failures = 0;
+    /**
+     * The independent expected values are fixed in the chapter contract.
+     **/
+    failures += check(bits_write(8U, 165U, 12U, BITS_RW, &amp;output) == BITS_OK &amp;&amp; output == 12U, &quot;RW fixture&quot;);
+    failures += check(bits_write(8U, 165U, 12U, BITS_RO, &amp;output) == BITS_OK &amp;&amp; output == 165U, &quot;RO fixture&quot;);
+    failures += check(bits_write(8U, 165U, 12U, BITS_W1C, &amp;output) == BITS_OK &amp;&amp; output == 161U, &quot;W1C fixture&quot;);
+    output = 222U;
+    failures += check(bits_write(8U, 165U, 12U, (BitsAccess)99, &amp;output) == BITS_INVALID &amp;&amp; output == 222U,
+                      &quot;invalid access preserves output&quot;);
+    failures += check(bits_write(0U, 0U, 0U, BITS_RW, &amp;output) == BITS_INVALID &amp;&amp; output == 222U, &quot;write width&quot;);
+    failures += check(bits_write(8U, 256U, 0U, BITS_RW, &amp;output) == BITS_INVALID &amp;&amp; output == 222U, &quot;write state&quot;);
+    failures += check(bits_write(8U, 0U, 256U, BITS_RW, &amp;output) == BITS_INVALID &amp;&amp; output == 222U, &quot;write data&quot;);
+    failures += check(bits_write(8U, 0U, 0U, BITS_RW, NULL) == BITS_INVALID, &quot;write null output&quot;);
+    {
+        BitsTrace trace = {0U};
+        failures += check(bits_bad_rmw(&amp;trace) == BITS_OK, &quot;trace status&quot;);
+        failures += check(trace.rwRead == 0U &amp;&amp; trace.rwOther == 2U &amp;&amp; trace.rwData == 1U &amp;&amp; trace.rwFinal == 1U,
+                          &quot;sequential RW loses bit1; intended 3&quot;);
+        failures += check(trace.w1cRead == 3U &amp;&amp; trace.w1cData == 3U &amp;&amp; trace.w1cFinal == 0U &amp;&amp; trace.w1cDirect == 2U,
+                          &quot;sequential W1C OR clears both; direct leaves 2&quot;);
+        failures += check(bits_bad_rmw(NULL) == BITS_INVALID, &quot;trace null output&quot;);
+    }
+    return failures;
+}
+
+/**
+ * @brief Execute all host test groups without relying on assert.
+ * @param[in] None.
+ * @param[out] None.
+ * @return Zero on complete acceptance, nonzero on test or output failure.
+ */
+int main(void)
+{
+    int failures = test_masks() + test_fields_shifts() + test_access_traces();
+    /**
+     * Printing success is separate from proving each condition above.
+     **/
+    if (failures == 0) {
+        if (puts(&quot;PASS bits: masks, fields, shifts, rejection preservation, &quot;
+                 &quot;RW/RO/W1C, two sequential RMW traces&quot;) &lt; 0) {
+            return 1;
+        }
+        /**
+         * Detect write failure deferred by stdio buffering before reporting success.
+         **/
+        if (fflush(stdout) != 0) {
+            return 1;
+        }
+    }
+    return failures == 0 ? 0 : 1;
+}
+#endif
+</code></pre></details>
+<h3 id="c-host-lab" tabindex="-1">复现宿主检查 <a class="header-anchor" href="#c-host-lab" aria-label="Permalink to &quot;复现宿主检查 {#c-host-lab}&quot;">&ZeroWidthSpace;</a></h3>
+<p>三种等价编译参数如下，Windows程序通常加.exe：</p>
+<div class="language-sh vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">sh</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0" v-pre=""><code><span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0">cc</span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF"> -std=c11</span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF"> -Wall</span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF"> -Wextra</span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF"> -Werror</span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF"> -pedantic</span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF"> -DBITS_TEST</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF"> bits.c</span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF"> -o</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF"> bits-test</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0">./bits-test</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0">cc</span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF"> -std=c11</span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF"> -Wall</span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF"> -Wextra</span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF"> -Werror</span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF"> -pedantic</span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF"> -DBITS_TEST</span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF"> -DNDEBUG</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF"> bits.c</span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF"> -o</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF"> bits-test-ndebug</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0">./bits-test-ndebug</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#B392F0">cc</span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF"> -std=c11</span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF"> -Wall</span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF"> -Wextra</span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF"> -Werror</span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF"> -pedantic</span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF"> -c</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF"> bits.c</span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF"> -o</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF"> bits.o</span></span></code></pre>
+</div><p>本项目实际验证经mcu-build custom profile的validate → dry-run → build，再运行生成程序；参数解释不替代工程入口。记录编译器版本、源SHA-256、普通/NDEBUG运行退出码与模块产物SHA-256。网页脚本测试、宿主运行、构建、浏览器、审查、发布分别记录，均不等同硬件验证。</p>
+<p>本章这份源已实际用既有GCC13.1.0宿主编译器经过该路由验证：严格C11编译、普通运行、NDEBUG运行和无main模块编译均返回0，测试检查保持启用。程序实际输出为“PASS bits: masks, fields, shifts, rejection preservation, RW/RO/W1C, two sequential RMW traces”。被验证的源SHA-256为 <code>8964ef336bd48bdb5ae0bc520be6433412dc473f5bd2a675be32be3f01167f2b</code>。这只记录宿主数值行为，不是目标固件、硬件、浏览器或远端发布的通过声明。</p>
+</div><div class="content-section" role="region" aria-labelledby="ten-exercises" id="questions-region"><h2 id="ten-exercises" tabindex="-1">十题：独立回忆、故障与迁移 <a class="header-anchor" href="#ten-exercises" aria-label="Permalink to &quot;十题：独立回忆、故障与迁移 {#ten-exercises}&quot;">&ZeroWidthSpace;</a></h2>
+<p>先遮住正文及已应用结果，在纸上写结论与原因，再展开每题原生解析。每题自带输入。“只打印题目”保留条件并隐藏答案及其他解答；普通打印展开details并在结束后恢复折叠。无脚本仍能读静态例子、逐题展开答案；题目打印模式需要脚本。不保存作答、分数或推断掌握。</p>
+<div class="notes-toolbar"><button class="btn primary" id="print-questions" type="button">只打印题目</button></div>
+<div class="exercise">
+<h3 id="exercise-01" tabindex="-1">01 · 一排位的三个记法 <a class="header-anchor" href="#exercise-01" aria-label="Permalink to &quot;01 · 一排位的三个记法 {#exercise-01}&quot;">&ZeroWidthSpace;</a></h3>
+<p>虚构无符号八位值10100101，bit0最右、权重1。写出十六进制、非负十进制和为1的位号，解释最高位权重。</p>
+<details class="exercise-answer" id="answer-01"><summary>展开第01题原因</summary><p>0xA5、165，bit7/5/2/0为1。bit7权重128，128+32+4+1=165；1010与0101分别是A与5。</p></details>
+</div>
+<div class="exercise">
+<h3 id="exercise-02" tabindex="-1">02 · 只清两位 <a class="header-anchor" href="#exercise-02" aria-label="Permalink to &quot;02 · 只清两位 {#exercise-02}&quot;">&ZeroWidthSpace;</a></h3>
+<p>八位value=0xA5、mask=0x0C，只清选中位并保留其他位。选择结果并解释bit2：A 0xAD，B 0xA9，C 0xA1。</p>
+<details class="exercise-answer" id="answer-02"><summary>展开第02题原因</summary><p>C。mask选bit3/2，两位清0，其他六位保留。原bit2为1，清后得A1；AD是设置、A9是翻转。</p></details>
+</div>
+<div class="exercise">
+<h3 id="exercise-03" tabindex="-1">03 · XOR不是保证开 <a class="header-anchor" href="#exercise-03" aria-label="Permalink to &quot;03 · XOR不是保证开 {#exercise-03}&quot;">&ZeroWidthSpace;</a></h3>
+<p>八位value=0xA5、mask=0x0C，执行XOR翻转。写出十六进制和二进制，解释为何不同于设置得到的0xAD。</p>
+<details class="exercise-answer" id="answer-03"><summary>展开第03题原因</summary><p>0xA9=10101001。bit3从0到1，bit2从1到0；OR会使bit2继续为1。重复XOR两次会回到原值。</p></details>
+</div>
+<div class="exercise">
+<h3 id="exercise-04" tabindex="-1">04 · 八格与C类型 <a class="header-anchor" href="#exercise-04" aria-label="Permalink to &quot;04 · 八格与C类型 {#exercise-04}&quot;">&ZeroWidthSpace;</a></h3>
+<p>存在uint8_t、x=0xA5，实现的int能表示0..255。“~x中间结果一定是八位0x5A”如何判断？A“先看提升”，B“必是八位”，C“必为零值”。另给出模型八位内取反。</p>
+<details class="exercise-answer" id="answer-04"><summary>展开第04题原因</summary><p>A。x先提升为int，~结果是提升后类型。明确裁剪的八位模型内取反是0x5A=90；赋回窄类型不能改变之前的类型。</p></details>
+</div>
+<div class="exercise">
+<h3 id="exercise-05" tabindex="-1">05 · 字段与计数端点 <a class="header-anchor" href="#exercise-05" aria-label="Permalink to &quot;05 · 字段与计数端点 {#exercise-05}&quot;">&ZeroWidthSpace;</a></h3>
+<p>width8、value0xA5，分别判断offset4/length3、offset7/length2；value改1后判断左移count7/count8。拒绝时C输出哨兵222应怎样？不要外推任意C左移8非法。</p>
+<details class="exercise-answer" id="answer-05"><summary>展开第05题原因</summary><p>4/3字段得2，7/2越界拒绝。1左移7得128，count8违反模型count&lt;width合同，输出仍222。普遍C计数上界取决于提升后左类型，还须检查有符号值条件。</p></details>
+</div>
+<div class="exercise">
+<h3 id="exercise-06" tabindex="-1">06 · 三种访问属性 <a class="header-anchor" href="#exercise-06" aria-label="Permalink to &quot;06 · 三种访问属性 {#exercise-06}&quot;">&ZeroWidthSpace;</a></h3>
+<p>三个独立虚构八位寄存器初始0xA5，都写数据0x0C，没有保留位或异步变化。给出RW、RO（模型忽略写）、W1C新状态，并指出实际写出的数据。</p>
+<details class="exercise-answer" id="answer-06"><summary>展开第06题原因</summary><p>RW得0x0C，虚构RO保持0xA5，W1C得0xA1。三次写数据都是0x0C，A1是清除后状态；真实RO非法写须查手册。</p></details>
+</div>
+<div class="exercise">
+<h3 id="exercise-07" tabindex="-1">07 · RW丢更新 <a class="header-anchor" href="#exercise-07" aria-label="Permalink to &quot;07 · RW丢更新 {#exercise-07}&quot;">&ZeroWidthSpace;</a></h3>
+<p>RW初始0。A读0后停，B设bit1写2，A用旧快照设bit0再写。终值选A 0x03、B 0x01、C 0x02；指出丢失位并判断volatile能否合并两项意图。</p>
+<details class="exercise-answer" id="answer-07"><summary>展开第07题原因</summary><p>B。A旧0 OR1整字写1，丢B的bit1；合并意图本应3。volatile既不更新旧快照，也不使多访问不可分割。</p></details>
+</div>
+<div class="exercise">
+<h3 id="exercise-08" tabindex="-1">08 · 无并发的W1C错误 <a class="header-anchor" href="#exercise-08" aria-label="Permalink to &quot;08 · 无并发的W1C错误 {#exercise-08}&quot;">&ZeroWidthSpace;</a></h3>
+<p>虚构W1C初始3，bit1/0均pending，仅想确认bit0，无其他角色。比较读3后OR1写回与直接写1的写数据和最终状态。</p>
+<details class="exercise-answer" id="answer-08"><summary>展开第08题原因</summary><p>OR赋值写3，两位都被确认，终值0；直接写1留下2。原因是待处理状态的1被重新当成清除命令，不依赖并发。</p></details>
+</div>
+<div class="exercise">
+<h3 id="exercise-09" tabindex="-1">09 · BSRR查证迁移 <a class="header-anchor" href="#exercise-09" aria-label="Permalink to &quot;09 · BSRR查证迁移 {#exercise-09}&quot;">&ZeroWidthSpace;</a></h3>
+<p>仅限RM0008 June2009 Rev9：设ODR bit0且不写回ODR旧快照。BSRR哪半哪位写1，其余动作位写0表示什么？访问宽度、同位BS/BR同时1优先级是什么？ODR=1能否证明引脚电压？</p>
+<details class="exercise-answer" id="answer-09"><summary>展开第09题原因</summary><p>低半BS0写1，其余0是不动作；32位Word访问，同位设置优先。ODR是锁存，实际电压还受模式、负载、复用与连线影响。专用命令不能证明应用线程安全。</p></details>
+</div>
+<div class="exercise">
+<h3 id="exercise-10" tabindex="-1">10 · 拒绝合同与保留位 <a class="header-anchor" href="#exercise-10" aria-label="Permalink to &quot;10 · 拒绝合同与保留位 {#exercise-10}&quot;">&ZeroWidthSpace;</a></h3>
+<p>bits_field输入width8/value165/offset8/length1，真实可写uint32_t输出初值222。返回及输出为何？另有人据全有效位模型向任意STM32F1 EXTI_PR写0xFFFFFFFF；按RM0008 Rev9指出两条位限制。</p>
+<details class="exercise-answer" id="answer-10"><summary>展开第10题原因</summary><p>BITS_INVALID，输出保持222；先拒绝offset端点再减法/移位。PR31:20保留须保持0；19仅connectivity line使用，其他器件保留。还须查具体料号实现位和访问规则。</p></details>
+</div>
+</div><div class="content-section" role="region" aria-labelledby="sources-next"><h2 id="sources-next" tabindex="-1">复习、来源与下一步 <a class="header-anchor" href="#sources-next" aria-label="Permalink to &quot;复习、来源与下一步 {#sources-next}&quot;">&ZeroWidthSpace;</a></h2>
+<p>隔一天换value0x81、mask0x03，不开正文解释设置/清除/翻转与W1C，再把两个反例倒序复述。应能指出不变位、实际写数据和失效原因；完成本页不证明长期保持。可向助手追问“提升后的左操作数”“W1C为何不能OR赋值”或“ODR与IDR差别”，并提供自己的三列记录。</p>
+<h3 id="source-n1570" tabindex="-1">语言规则：N1570 <a class="header-anchor" href="#source-n1570" aria-label="Permalink to &quot;语言规则：N1570 {#source-n1570}&quot;">&ZeroWidthSpace;</a></h3>
+<p><a href="https://www.open-std.org/jtc1/sc22/wg14/www/docs/n1570.pdf" target="_blank" rel="noreferrer">WG14 N1570，2011-04-12 Committee Draft</a>：核读§6.3.1.1/3提升/转换、§6.5.3.3按位取反、§6.5.7移位、§6.5.10–12位运算、§6.7.3限定符、§7.20.1.1精确宽类型。是公开委员会草案，不冒称最终ISO文本。推荐先读§6.5.7两段移位前提，配count7/8例子；它不规定STM32寄存器。</p>
+<h3 id="source-gcc" tabindex="-1">编译器：GCC13.1 <a class="header-anchor" href="#source-gcc" aria-label="Permalink to &quot;编译器：GCC13.1 {#source-gcc}&quot;">&ZeroWidthSpace;</a></h3>
+<p><a href="https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/Volatiles.html" target="_blank" rel="noreferrer">GCC13.1 §6.46 When is a Volatile Object Accessed?</a>：区分可观察访问、非volatile排序与赋值后是否重读。版本细节不能外推到任意编译器/总线，更不证明RMW原子性。</p>
+<h3 id="source-rm0008" tabindex="-1">外设：RM0008历史版 <a class="header-anchor" href="#source-rm0008" aria-label="Permalink to &quot;外设：RM0008历史版 {#source-rm0008}&quot;">&ZeroWidthSpace;</a></h3>
+<p><a href="https://www.keil.com/dd/docs/datashts/st/stm32f10xxx.pdf" target="_blank" rel="noreferrer">ST RM0008，June2009，DocID13902 Rev9，Keil保存的原厂PDF</a>：p149 §8.2.3、p150 §8.2.4/5、p180 §9.3.6支持有限对照。真实使用须核对目标料号、当前手册/勘误、时钟/模式、访问宽度、保留位和板级条件。模型、宿主编译和文档核读都不代替硬件验证。</p>
+<p><a href="./c-bits-registers-reference.html">打印速查</a> · <a href="./gpio-led.html">上一章：GPIO输出</a> · <a href="./c-objects-bounds.html">下一章：C对象与边界</a> · <a href="../learn/engineering-map.html#stage-01">学习地图</a>。下一章把数值表示连接到对象、指针、长度与寿命，避免正确位运算落在无权访问的存储上。</p>
+</div></main><footer class="wrap">原创教学模型 · 仅本页内存状态 · 无账号、无作答存储 · 未做硬件验证</footer>
+<script id="bits-model">
+const BitsModel = (() => {
+  const integer = (value, min, max) => Number.isInteger(value) && value >= min && value <= max;
+  function limit(width) {
+    if (!integer(width, 1, 8)) throw new Error('Invalid width: 1..8');
+    return 2 ** width - 1;
+  }
+  function apply({ width, value, mask = 0, op, offset = 0, length = 1, count = 0 }) {
+    const all = limit(width);
+    if (!integer(value, 0, all) || !integer(mask, 0, all)) throw new Error('Invalid value/mask for width');
+    switch (op) {
+      case 'set': return value | mask;
+      case 'clear': return value & (all ^ mask);
+      case 'toggle': return value ^ mask;
+      case 'invert': return all ^ value;
+      case 'extract':
+        if (!integer(offset, 0, width - 1) || !integer(length, 1, width - offset)) throw new Error('Invalid field');
+        return (value >>> offset) & (2 ** length - 1);
+      case 'shift':
+        if (!integer(count, 0, width - 1)) throw new Error('Invalid count');
+        return (value << count) & all;
+      default: throw new Error('Invalid operation');
+    }
+  }
+  function write(width, initial, data, mode) {
+    const all = limit(width);
+    if (!integer(initial, 0, all) || !integer(data, 0, all)) throw new Error('Invalid register value');
+    if (mode === 'RW') return data;
+    if (mode === 'RO') return initial;
+    if (mode === 'W1C') return initial & (all ^ data);
+    throw new Error('Invalid access mode');
+  }
+  function timeline(kind) {
+    if (kind === 'rw') {
+      let state = 0;
+      const rows = [{ state, action: '初始：RW 状态为 0，A/B 各想设置一位。' }];
+      const stale = state;
+      rows.push({ state, action: 'A 读取 0，保留旧快照，尚未写。' });
+      state = write(8, state, state | 2, 'RW');
+      rows.push({ state, action: 'B 设置 bit1：写 2，当前状态 2。' });
+      state = write(8, state, stale | 1, 'RW');
+      rows.push({ state, action: 'A 用旧快照设置 bit0：写 1，状态 1。两项意图原应合成 3；bit1 丢失。' });
+      return rows;
+    }
+    if (kind === 'w1c') {
+      const initial = 3, stale = initial, data = stale | 1;
+      return [
+        { state: initial, action: '初始：W1C 的 bit0、bit1 都待处理，状态 3。' },
+        { state: initial, action: '只想确认 bit0，却先读取 3。' },
+        { state: initial, action: '旧快照 OR 1 得写入数据 3：包含两个 1；尚未写。' },
+        { state: write(8, initial, data, 'W1C'), action: '写 3 后两位都清除到 0。直接写请求掩码 1 本会留下 2；bit1 被误确认。' }
+      ];
+    }
+    throw new Error('Invalid replay');
+  }
+  return { apply, write, timeline };
+})();
+</script>
+<script id="bits-controller">
+(() => {
+  const byId = id => document.getElementById(id);
+  const hex = value => '0x' + value.toString(16).toUpperCase().padStart(2, '0');
+  const number = id => {
+    const text = byId(id).value;
+    if (!/^-?\d+$/.test(text)) throw new Error('十进制整数必填');
+    return Number(text);
+  };
+  const reasons = {
+    set: 'OR 只把掩码为 1 的位置设为 1；掩码为 0 的位保持。',
+    clear: '清位把掩码选中的位清零，其他位保持；检查被掩码选中的 bit3、bit2。',
+    toggle: 'XOR 只翻转掩码为 1 的位，其他位保持。',
+    invert: '按位取反只翻转声明宽度内的每一位，宽度之外不属于这张图。',
+    extract: '先右移字段起点，再用字段长度的低位掩码留下字段。',
+    shift: '左移后补零，再裁剪到声明宽度；移出的位丢弃。'
+  };
+  const defaults = { 'mask-width': '8', 'mask-value': '165', 'mask-mask': '12', 'mask-op': 'set', 'mask-offset': '4', 'mask-length': '3', 'mask-count': '1', 'reg-initial': '165', 'reg-data': '12', 'reg-mode': 'RW' };
+  function clear(prefix) { byId(prefix + '-prediction').value = ''; byId(prefix + '-apply').disabled = true; }
+  function pending(prefix) { clear(prefix); byId(prefix + '-pending').textContent = '待应用：设置已编辑；下方仅为最后一次已应用结果。'; }
+  for (const id of ['mask-width', 'mask-value', 'mask-mask', 'mask-op', 'mask-offset', 'mask-length', 'mask-count', 'reg-initial', 'reg-data', 'reg-mode']) {
+    const prefix = id.startsWith('mask') ? 'mask' : 'reg';
+    byId(id).addEventListener('input', () => pending(prefix));
+    byId(id).addEventListener('change', () => pending(prefix));
+  }
+  for (const prefix of ['mask', 'reg']) {
+    byId(prefix + '-prediction').addEventListener('input', () => {
+      const value = byId(prefix + '-prediction').value;
+      byId(prefix + '-apply').disabled = !/^\d+$/.test(value) || Number(value) > 255;
+    });
+    byId(prefix + '-reset').addEventListener('click', () => reset(prefix));
+  }
+  byId('mask-form').addEventListener('submit', event => {
+    event.preventDefault();
+    if (byId('mask-apply').disabled) return;
+    try {
+      const settings = { width: number('mask-width'), value: number('mask-value'), mask: number('mask-mask'), op: byId('mask-op').value, offset: number('mask-offset'), length: number('mask-length'), count: number('mask-count') };
+      const prediction = number('mask-prediction'), result = BitsModel.apply(settings);
+      if (prediction < 0 || prediction >= 2 ** settings.width) throw new Error('预测必须在声明宽度内');
+      byId('mask-result').textContent = hex(result) + ' / ' + result.toString(2).padStart(settings.width, '0') + ' / ' + result;
+      byId('mask-feedback').textContent = (prediction === result ? '预测正确。' : '预测需修正。') + reasons[settings.op] + ' 下一步检查：逐位比较原值、掩码与结果。';
+      byId('mask-pending').textContent = '已应用：下方结果属于刚才提交的设置。';
+    } catch (error) { byId('mask-pending').textContent = '输入无效，保留最后结果：' + error.message; }
+    clear('mask');
+  });
+  byId('reg-form').addEventListener('submit', event => {
+    event.preventDefault();
+    if (byId('reg-apply').disabled) return;
+    try {
+      const initial = number('reg-initial'), data = number('reg-data'), mode = byId('reg-mode').value;
+      const prediction = number('reg-prediction'), result = BitsModel.write(8, initial, data, mode);
+      if (prediction < 0 || prediction > 255) throw new Error('预测必须为 0..255');
+      byId('reg-read').textContent = hex(initial); byId('reg-written').textContent = hex(data); byId('reg-result').textContent = hex(result); byId('reg-operation').textContent = mode;
+      const reason = { RW: 'RW 用写入数据替换全部八位。', RO: '本虚构 RO 模型忽略写入，状态保持；真实非法访问需查手册。', W1C: 'W1C 写 1 清除对应待处理位，写 0 保持；写出的数据不是新状态。' }[mode];
+      byId('reg-feedback').textContent = (prediction === result ? '预测正确。' : '预测需修正。') + reason + ' 下一步检查：把读值、写出数据、最终状态分别写在三列。';
+      byId('reg-pending').textContent = '已应用 ' + mode + ' 写入；下方是最后一次已应用记录。';
+    } catch (error) { byId('reg-pending').textContent = '输入无效，保留最后结果：' + error.message; }
+    clear('reg');
+  });
+  function reset(prefix) {
+    for (const [id, value] of Object.entries(defaults)) { if (id.startsWith(prefix + '-')) byId(id).value = value; }
+    clear(prefix); byId(prefix + '-pending').textContent = '待预测：恢复初始设置，尚未应用。';
+    byId(prefix + '-result').textContent = '尚未应用'; byId(prefix + '-feedback').textContent = '先独立预测，再应用并核对原因。';
+    if (prefix === 'reg') { byId('reg-read').textContent = '—'; byId('reg-written').textContent = '—'; byId('reg-operation').textContent = '—'; }
+  }
+  for (const kind of ['rw', 'w1c']) {
+    let index = 0;
+    function show() {
+      const rows = BitsModel.timeline(kind), row = rows[index];
+      byId(kind + '-state').textContent = String(row.state); byId(kind + '-action').textContent = row.action;
+      byId(kind + '-step').disabled = index === rows.length - 1;
+    }
+    byId(kind + '-step').addEventListener('click', () => { if (index < 3) index += 1; show(); });
+    byId(kind + '-reset').addEventListener('click', () => { index = 0; show(); });
+    show();
+  }
+  reset('mask'); reset('reg');
+})();
+</script>
+<script id="note-deep-links">
+(() => {
+  const reveal = () => {
+    let id;try{id=decodeURIComponent(window.location.hash.slice(1));}catch{return;}
+    if(!id) return;
+    const target=document.getElementById(id);if(!target) return;
+    let panel=target.closest('details');
+    while(panel) {panel.open=true;panel=panel.parentElement?.closest?.('details')||null;}
+    target.closest('section')?.querySelectorAll?.('details').forEach(detail=>{detail.open=true;});
+    requestAnimationFrame(()=>target.scrollIntoView({block:'start'}));
+  };
+  window.addEventListener('hashchange',reveal);window.addEventListener('pageshow',reveal);reveal();
+})();
+</script>
+<script id="note-print">
+(() => {
+  let previous;
+  window.addEventListener('beforeprint',()=>{
+    if(previous) return;
+    previous=[...document.querySelectorAll('details')].map(panel=>[panel,panel.open]);
+    previous.forEach(([panel])=>{panel.open=true;});
+  });
+  window.addEventListener('afterprint',()=>{previous?.forEach(([panel,open])=>{panel.open=open;});previous=undefined;});
+})();
+</script>
+<script id="bits-reader">(()=>{const byId=id=>document.getElementById(id);byId("expand-notes").addEventListener("click",()=>document.querySelectorAll("details").forEach(panel=>{panel.open=true;}));byId("collapse-notes").addEventListener("click",()=>document.querySelectorAll("details").forEach(panel=>{panel.open=false;}));byId("print-all").addEventListener("click",()=>{try{window.print();}catch{window.dispatchEvent(new Event("afterprint"));}});})();</script>
+<script id="bits-worksheet">(()=>{const clear=()=>document.body.classList.remove("exercise-print");window.addEventListener("afterprint",clear);document.getElementById("print-questions").addEventListener("click",()=>{document.body.classList.add("exercise-print");try{window.print();}catch{window.dispatchEvent(new Event("afterprint"));clear();}});})();</script>
+</body></html>

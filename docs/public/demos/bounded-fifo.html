@@ -1,0 +1,615 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="四字节FIFO的head、tail、count、回绕、拒绝保持、值复制与完整C11测试。"><meta name="theme-color" content="#fafbf8"><link rel="icon" href="../favicon.svg" type="image/svg+xml"><title>单执行上下文有界FIFO · 嵌入式技术笔记</title><style>
+:root{--paper:#fafbf8;--ink:#21382e;--muted:#526359;--line:#dce3d7;--green:#22664f;--pale:#eef2e9;--lime:#d5e7b3;--dark:#193e33;--mono:Consolas,monospace}*{box-sizing:border-box}html{scroll-padding-top:120px}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.9 system-ui,"Microsoft YaHei",sans-serif}a{color:var(--green);text-underline-offset:4px}p{margin:0 0 16px}.wrap{width:min(1120px,calc(100% - 64px));margin:auto}.skip{position:absolute;top:-100px;z-index:20;background:white;padding:10px}.skip:focus{top:5px}.topbar{position:sticky;top:0;border-bottom:1px solid var(--line)}.brand{text-decoration:none}.hero{display:grid;grid-template-columns:1.12fr 1fr;gap:48px;padding:48px 0 40px;border-bottom:1px solid var(--line)}h1{font-size:40px;line-height:1.35}h2{font-size:28px;line-height:1.5;margin:0 0 18px}h3{font-size:21px;line-height:1.5;margin:28px 0 12px}.tag,.small{color:var(--muted);font-size:13px}.hero-card,.lab,.callout{border:1px solid var(--line);border-radius:12px;padding:24px;background:var(--pale)}.hero-card strong{font-size:26px}.content-section{padding:48px 0;border-bottom:1px solid var(--line)}.section-nav,.controls,.notes-toolbar,.next-links{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.field{display:grid;gap:6px;min-width:0}.field.full{grid-column:1/-1}button,input,select{font:inherit;color:inherit}input,select{width:100%;min-width:0;min-height:44px;padding:8px;border:1px solid #aabaad;border-radius:6px;background:white}.btn{min-height:44px;min-width:44px;padding:9px 14px;background:white;border:1px solid #aabaad;border-radius:6px;cursor:pointer}.btn.primary{background:var(--dark);color:white}.btn:disabled{opacity:.55;cursor:default}.feedback,.applied-result{padding:16px;border:1px solid var(--line);border-radius:8px;background:#fffefb;margin:16px 0;overflow-wrap:anywhere}.pending{color:#7c581d}.lab{background:#fffefb}.lab>p{max-width:44rem}details{margin:16px 0;padding:16px;border:1px solid var(--line);border-radius:8px;background:#fffefb}summary{min-height:44px;cursor:pointer;font-weight:650}details p{margin-top:12px}.table-wrap{max-width:100%;overflow:auto}table{border-collapse:collapse;width:100%;font-size:14px;text-align:left}th,td{padding:10px;border-bottom:1px solid var(--line);vertical-align:top;white-space:nowrap}th{background:var(--pale)}figure{margin:20px 0;border:1px solid var(--line);border-radius:10px;padding:14px;background:white}svg{display:block;width:100%;height:auto}svg text{font:18px system-ui,"Microsoft YaHei",sans-serif;fill:#21382e}figcaption{font-size:13px;color:var(--muted);margin-top:12px}pre{max-width:100%;overflow:auto;padding:18px;background:var(--pale);font:14px/1.7 var(--mono);border-radius:8px}code{font-family:var(--mono)}li{margin-bottom:8px}.source-list a{overflow-wrap:anywhere}footer{padding:28px 0;font-size:13px;color:var(--muted)}:focus-visible{outline:3px solid #ad751d;outline-offset:4px}.exercise{padding:14px 0;border-bottom:1px solid var(--line)}.exercise h3{margin-top:14px}.exercise-answer{margin-bottom:20px}
+@media(max-width:760px){.hero,.fields{grid-template-columns:1fr}.hero{gap:24px}.field.full{grid-column:auto}.wrap{width:calc(100% - 40px)}.lab{padding:16px}}@media(max-width:370px){.lab{padding:12px}.btn{padding-inline:10px}svg text{font-size:20px}}
+@media print{body{background:white;color:#15251b;font-size:11pt}.wrap{width:100%;max-width:none}.topbar,.skip,.section-nav,.controls,.fields,.notes-toolbar,.next-links{display:none!important}.hero{display:block;padding:0 0 14px}.hero-card{display:none}.content-section{padding:18px 0}h1{font-size:25pt}h2{font-size:17pt}h3{font-size:13pt}.lab{padding:12px}pre{white-space:pre-wrap;overflow:visible;font-size:9pt}table{font-size:10pt}.table-wrap{overflow:visible}th,td{white-space:normal;padding:6px}a{color:inherit}details{break-inside:auto}.exercise{break-inside:avoid}body.exercise-print main>.hero,body.exercise-print main>.section-nav,body.exercise-print main>.content-section:not(#fifo-practice),body.exercise-print .practice-intro,body.exercise-print footer{display:none!important}body.exercise-print .exercise-answer{display:none!important}body.exercise-print .applied-result,body.exercise-print .feedback{display:none!important}body.exercise-print #fifo-practice{border:0;padding:0}}
+</style><style>
+/* Shared reading layer: keep this block identical in all standalone notes. */
+@media screen {
+:root{--paper:#fafbf8;--ink:#21382e;--muted:#526359;--line:#dce3d7;--green:#22664f;--pale:#eef2e9;--lime:#d5e7b3;--dark:#193e33}
+.notes-article{font-size:16px;line-height:1.9}
+.notes-article .wrap{width:min(1120px,calc(100% - 64px));max-width:none;padding-inline:0;margin-inline:auto}
+.notes-article .topbar{background:#fafbf8f5;z-index:10}
+.notes-article .topbar-inner{height:auto;min-height:68px;display:flex;align-items:center;justify-content:space-between;gap:24px;padding-block:0}
+.notes-article .brand{display:inline-flex;align-items:center;gap:10px;min-height:44px;margin:0;font-size:15px;font-weight:700;letter-spacing:0;color:var(--ink)}
+.notes-article .brandmark{display:grid;place-items:center;width:30px;height:30px;margin:0;border-radius:6px;background:var(--dark);color:#e0edcb;font:19px/1 var(--mono)}
+.notes-article .topbar nav{display:flex;align-items:center;gap:18px;margin:0;padding:0;width:auto;flex-wrap:nowrap}
+.notes-article .topbar nav a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:4px 3px;font-size:14px;font-weight:500;color:var(--muted);text-decoration:none;border-radius:4px}
+.notes-article .topbar nav a:hover,.notes-article .topbar nav a[aria-current="location"]{color:var(--green);background:var(--pale)}
+.notes-article .topbar nav a[aria-current="location"]{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:6px}
+.notes-article .hero{padding-block:48px 40px;gap:48px;grid-template-columns:1.12fr 1fr}
+.notes-article .hero h1{font-size:clamp(32px,3.6vw,44px);line-height:1.35;letter-spacing:-.035em;text-wrap:balance}
+.notes-article .hero h1 span{font-size:.78em;line-height:1.5;margin-top:8px}
+.notes-article .hero-intro{font-size:17px;line-height:1.9;max-width:32rem;margin-block:20px}
+.notes-article .hero>.hero-card,.notes-article .hero-flow,.notes-article .intro-map{box-shadow:none;border-radius:12px}
+.notes-article .hero .tag{font-size:12px;border-radius:4px;padding:4px 9px;margin:0 0 16px;line-height:1.7}
+.notes-article .hero>.hero-figure .map{transform:none;box-shadow:none}
+.notes-article .hero>div>.eyebrow{display:none}
+.notes-article .hero>.hero-card>.eyebrow,.notes-article .hero>.hero-flow>.eyebrow{display:block;font-size:12px;line-height:1.7}
+.notes-article .hero-links{gap:12px 22px;margin-top:24px}
+.notes-article .hero .text-link{display:inline-flex;align-items:center;min-height:44px;font-size:14px}
+.notes-article .hero figcaption,.notes-article .hero-figure figcaption,.notes-article .date-note{font-size:13px;line-height:1.8}
+.notes-article .hero-card p:last-child,.notes-article .hero-flow .small,.notes-article .intro-map>p:last-child{font-size:14px;line-height:1.85}
+.notes-article .hero-numbers span,.notes-article .hero-step small{font-size:13px}
+.notes-article h2{font-size:28px;line-height:1.5;text-wrap:balance}
+.notes-article .section-head p{font-size:15px;line-height:1.85}
+.notes-article .content-section,.notes-article .article-section{padding-block:52px}
+.notes-article .content-section+.content-section{padding-top:48px}
+.notes-article .note-section{scroll-margin-top:100px}
+.notes-article .note-section>summary{min-height:56px;font-size:18px;line-height:1.6}
+.notes-article .note-section>summary h2{font-size:20px;line-height:1.6}
+.notes-article .note-body{max-width:none;font-size:16px;line-height:1.95}
+.notes-article .note-body p,.notes-article .note-body li{font-size:16px;line-height:1.95}
+.notes-article .note-body>p,.notes-article .note-body>ul,.notes-article .note-body>ol,.notes-article .article-section>p,.notes-article .article-section>ul,.notes-article .article-section>ol{max-width:44rem;font-size:16px;line-height:1.95}
+.notes-article .note-body h3{font-size:21px;margin-block:28px 12px;scroll-margin-top:100px}
+.notes-article .note-body pre,.notes-article pre{font-size:14px;line-height:1.8}
+.notes-article .note-body table,.notes-article table{font-size:14px;line-height:1.8}
+.notes-article .note-body th,.notes-article .note-body td{font-size:14px;line-height:1.8}
+.notes-article .article-section>h2{font-size:28px}
+.notes-article .concept p,.notes-article .subnote p,.notes-article .risk p,.notes-article .monitor-step p,.notes-article .monitor-step ul,.notes-article .step-card p{font-size:15px;line-height:1.85}
+.notes-article .callout,.notes-article .model-scope,.notes-article .demo-disclaimer,.notes-article .version-card,.notes-article .version-card p{font-size:14px;line-height:1.85}
+.notes-article .source-list a,.notes-article .source-list span,.notes-article #plane-references~ul{font-size:14px;line-height:1.85}
+.notes-article #plane-overview~ul{max-width:none}
+.notes-article #plane-overview~ul li{font-size:15px;line-height:1.85}
+.notes-article .note-body .source-list{max-width:none}
+.notes-article .small,.notes-article .lab-note,.notes-article .lab-foot,.notes-article .lab-footer,.notes-article .clock-lab-foot,.notes-article .print-hint{font-size:13px;line-height:1.85}
+.notes-article .principle,.notes-article .principles span{font-size:13px;line-height:1.8}
+.notes-article .principles strong{font-size:15px}
+.notes-article .memory-motto,.notes-article .motto{background:var(--pale);color:var(--ink);border-radius:8px;text-align:left;padding:24px;margin-top:30px}
+.notes-article .memory-motto span,.notes-article .motto small{color:var(--muted);font-size:14px}
+.notes-article button,.notes-article .btn,.notes-article .notes-toolbar button{min-height:44px;min-width:44px;font-size:14px}
+.notes-article button,.notes-article .btn,.notes-article .topbar a,.notes-article summary,.notes-article .section-nav a,.notes-article .toc a{transition:background .18s,color .18s,border-color .18s,transform .18s}
+.notes-article button:enabled:hover{filter:brightness(1.06)}
+.notes-article button:enabled:active,.notes-article .btn:active{transform:translateY(1px)}
+.notes-article button:disabled{opacity:.58}
+.notes-article .graph-node:disabled,.notes-article .work-card:disabled{opacity:1}
+.notes-article :focus-visible{outline:3px solid #ad751d;outline-offset:4px}
+.notes-article .lab :focus-visible,.notes-article .clock-lab :focus-visible{outline-color:#f0cc80}
+.notes-article .toc a,.notes-article .section-nav a{display:inline-flex;align-items:center;min-height:44px;border-radius:5px;font-size:14px;padding:8px 12px}
+.notes-article .checklist label,.notes-article .clock-check{min-height:44px;font-size:14px;line-height:1.8}
+.notes-article .clock-field label,.notes-article .clock-controls small,.notes-article .clock-node small,.notes-article .clock-node span{font-size:13px;line-height:1.6}
+.notes-article .clock-current p,.notes-article .clock-candidate,.notes-article .clock-warnings{font-size:14px;line-height:1.8}
+.notes-article .clock-node strong,.notes-article .hero-numbers strong,.notes-article .metric strong{font-variant-numeric:tabular-nums}
+.notes-article .task-option strong,.notes-article .work-card strong{font-size:14px;line-height:1.65}
+.notes-article .task-option span,.notes-article .scope-buttons small,.notes-article .card-id,.notes-article .card-project,.notes-article .card-status,.notes-article .card-tags>span,.notes-article .lane-en{font-size:12px;line-height:1.6}
+.notes-article .scope-explanation,.notes-article .detail-copy>p,.notes-article .detail .acceptance,.notes-article .state-controls>p,.notes-article .board-heading p{font-size:14px;line-height:1.8}
+.notes-article .lane h4{font-size:14px;line-height:1.5;flex-wrap:wrap}
+.notes-article .lane-count{font-size:12px}
+.notes-article .lab .task-option{min-height:96px}
+.notes-article .skills-step-card dd,.notes-article .route-pane p,.notes-article .chooser-intro,.notes-article .permissions-pane>p{font-size:14px;line-height:1.85}
+.notes-article .skills-step-card dt,.notes-article .step-counter,.notes-article .permissions-pane small,.notes-article .permission-list span,.notes-article .graph-legend,.notes-article .graph-arrow-note{font-size:13px;line-height:1.8}
+.notes-article .ui-arrow{width:18px;height:18px;display:inline-block;vertical-align:middle;flex-shrink:0}
+.notes-article .selection-jump,.notes-article .choice-result{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;padding:10px 12px;border-radius:5px;font-size:13px;font-weight:600;line-height:1.6;text-decoration:none}
+.notes-article .selection-jump{background:#22664f;color:#fff}
+.notes-article .choice-result{color:#e2efca;border:1px solid #829873;background:#173e33;margin-top:7px}
+.notes-article .task-choice{min-width:0}
+.notes-article .task-choice .task-option{width:100%}
+.notes-article .task-option[aria-pressed="false"]+.choice-result{display:none}
+.notes-article #selected-skill,.notes-article #plane-selected-title{scroll-margin-top:128px}
+.notes-article footer,.notes-article .footer{font-size:13px;line-height:1.8}
+.notes-article footer a,.notes-article .footer a{display:inline-flex;align-items:center;min-height:44px}
+.notes-article .note-body p,.notes-article .hero-intro,.notes-article .article-section>p{text-wrap:pretty}
+@media(max-width:760px){
+.notes-article .wrap{width:calc(100% - 40px)}
+.notes-article .topbar-inner{flex-wrap:wrap;gap:0;padding-top:6px}
+.notes-article .brand{min-height:44px;font-size:15px}
+.notes-article .topbar nav{width:100%;gap:12px;overflow-x:auto;flex-wrap:nowrap;padding:0 0 4px;scrollbar-width:thin}
+.notes-article .topbar nav a{font-size:13px;flex-shrink:0;padding-inline:2px}
+.notes-article .hero{grid-template-columns:1fr;gap:28px;padding-block:32px}
+.notes-article .hero h1{font-size:32px;line-height:1.4}
+.notes-article .hero-intro{font-size:16px;max-width:none;margin-block:16px}
+.notes-article .hero-figure{max-width:500px}
+.notes-article .hero .tag{margin-bottom:12px}
+.notes-article .content-section,.notes-article .article-section{padding-block:36px}
+.notes-article .content-section+.content-section{padding-top:36px}
+.notes-article h2,.notes-article .article-section>h2{font-size:24px}
+.notes-article .section-head p{font-size:15px}
+.notes-article .note-section>summary{font-size:17px}
+.notes-article .note-section>summary h2{font-size:18px}
+.notes-article .note-body p,.notes-article .note-body li{font-size:16px}
+.notes-article .note-body pre,.notes-article pre{font-size:13px}
+.notes-article .note-body th,.notes-article .note-body td{font-size:14px}
+.notes-article .principles{grid-template-columns:1fr;gap:14px}
+.notes-article .principles strong{display:inline;margin-right:8px}
+.notes-article .principles span{display:inline}
+.notes-article .task-options{grid-template-columns:1fr 1fr;align-items:start}.notes-article .lab .task-option{min-height:76px;padding:12px}
+.notes-article .board{grid-template-columns:1fr 1fr}
+.notes-article .lane:last-child .lane-cards{display:flex}
+.notes-article .lane-cards{min-height:0}
+.notes-article .lane{padding:14px}
+.notes-article .lane-en{margin-bottom:10px}
+.notes-article .work-card{padding:14px}
+.notes-article .card-tags{gap:6px}
+.notes-article .lab-top{flex-wrap:wrap}
+.notes-article .lab-top .tag{white-space:normal}
+.notes-article .note-section,.notes-article .note-body h3,.notes-article .article-section,.notes-article .article-section>h3{scroll-margin-top:124px}
+}
+@media(max-width:370px){.notes-article .task-options,.notes-article .board{grid-template-columns:1fr}.notes-article .hero h1{font-size:30px}.notes-article .topbar nav{gap:8px}}
+}
+@media(prefers-reduced-motion:reduce){.notes-article *,.notes-article *::before,.notes-article *::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+</style></head><body class="notes-article"><a class="skip" href="#main">跳到正文</a><div><header class="topbar"><div class="wrap topbar-inner"><a class="brand" href="../"><span class="brandmark" aria-hidden="true">E</span>嵌入式技术笔记</a><nav aria-label="文章导航"><a href="../learn/">返回分类</a><a href="#fifo-lab">交互实验</a><a href="#fifo-ownership">完整笔记</a><a href="../?search=1">搜索笔记</a></nav></div></header><main class="wrap" id="main"><header class="hero"><div><p class="tag">阶段01 · 单元05 · C基础</p><h1 id="bounded-fifo">单执行上下文的有界FIFO</h1><p class="hero-intro">四个槽位，两个方向，一个数量。先能解释哪个值真正排队，再让代码移动它。</p><p class="small">容量4 · 字节值0..255 · 非重入 · 无硬件依赖</p></div><aside class="hero-card"><strong>队列顺序 ≠ 数组顺序</strong><p>head找最旧值；count限定有效数量。空与满都可能head==tail。</p></aside></header><nav class="section-nav" aria-label="本章段落"><a href="#fifo-vocabulary">槽位与顺序</a><a href="#fifo-lab">预测实验</a><a href="#fifo-replay">固定回放</a><a href="#fifo-c-lab">C11源码</a><a href="#fifo-practice">独立十题</a></nav><div class="content-section" id="fifo-overview" role="region" aria-labelledby="fifo-overview-title"><h2 id="fifo-overview-title">从采集值到四个有归属的槽位</h2><p>前置：已能把 LED 的期望状态与输出命令分开，并读过上一章的 C 对象、长度与生命周期。本章让采集终端暂存四个已接收字节：先进入的有效字节先离开。它们可能是四次采样的数值；此处不接串口、不接 DMA。</p><p><strong>本章成果：</strong>一张能解释的 head/tail/count 轨迹，以及自己运行的 C 测试输出。按“认槽位 → 手算一次 → 预测回放 → 审查接口 → 独立十题”走，每段只交一个小成果。浏览器模型、主机 C 检查、硬件验证是三件事；本章硬件未验证，也没有个人进度或掌握记录。</p></div><div class="content-section" id="fifo-vocabulary" role="region" aria-labelledby="fifo-vocabulary-title"><h2 id="fifo-vocabulary-title">先定义顺序、方向与容量</h2><p><strong>FIFO（先进先出）</strong>规定取出的顺序：最早成功放入、且尚未取出的值先出。<strong>有界</strong>表示可容纳的数量固定，本例容量为 4；第五个值遇到满状态就返回失败，不覆盖最旧值、不等待空间。</p><p>队列对象内部拥有四个 <code>uint8_t</code> 值槽位；本章声明一个字节为 8 位，取值 0..255。<strong>push</strong> 把一个值复制进队列；<strong>pop</strong> 把最旧值复制到调用者提供的输出字节。保存的是值，不是源变量的地址或借来的缓冲指针。</p><p><strong>head 始终是下次读的下标，tail 始终是下次写的下标，count 是当前有效值的数量。</strong>head、tail 各在 0..3，count 在 0..4。下标从 3 再前进，回到 0，叫回绕。数组仍只有四个槽，没有向地址更远处扩张。</p><p><strong>物理槽位顺序</strong>是数组下标 0、1、2、3；<strong>逻辑队列顺序</strong>是从 head 开始数 count 个有效值，必要时跨过 3 回到 0。只有这些值排在队里。pop 后的槽可以保留旧字节；这些<strong>陈旧字节</strong>没有排队，不能因看见旧数值就把它再读一次。</p><figure id="fifo-slot-diagram"><svg viewBox="0 0 320 315" role="img" aria-labelledby="fifo-slot-title fifo-slot-desc"><title id="fifo-slot-title">原创四槽回绕图：物理顺序与逻辑顺序分开</title><desc id="fifo-slot-desc">物理槽0为85、1为102、2为51、3为68；head和tail均为2，count为4，逻辑读取顺序51、68、85、102。满状态中tail标记下一次允许写时的槽，当前不允许写。</desc><text x="12" y="25">物理槽位（固定数组）</text><g fill="#eef2e9" stroke="#22664f"><rect x="12" y="55" width="64" height="64" rx="6"/><rect x="88" y="55" width="64" height="64" rx="6"/><rect x="164" y="55" width="64" height="64" rx="6"/><rect x="240" y="55" width="64" height="64" rx="6"/></g><text x="23" y="49">槽 0</text><text x="99" y="49">槽 1</text><text x="175" y="49">槽 2</text><text x="251" y="49">槽 3</text><text x="32" y="94">85</text><text x="100" y="94">102</text><text x="185" y="94">51</text><text x="260" y="94">68</text><path d="M196 154V123" fill="none" stroke="#22664f" stroke-width="3"/><text x="12" y="180">head=2：下一读 51</text><text x="12" y="207">tail=2：下一写（满时禁止）</text><text x="12" y="234">count=4：四槽全部有效</text><text x="12" y="270">逻辑顺序：51 → 68 → 85 → 102</text><text x="12" y="299">读取下标：2 → 3 → 0 → 1</text></svg><figcaption>固定回放中 push102 之后的原创状态图。head==tail 仍可为满，必须结合 count。实际 C 对象的地址、填充和布局不由此图规定。</figcaption></figure><p>在空状态 <code>head=tail=0,count=0</code> 没有有效值；装满后 <code>head=tail=0,count=4</code> 四槽都有效。因此不能只用 head==tail 判空。count 保留了空和满的区别，容量四个都可用。</p><p>本段交付物：在图上圈出下次读位置，再单独写出逻辑顺序；不要按数组从 0 到 3 抄答案。</p></div><div class="content-section" id="fifo-transitions" role="region" aria-labelledby="fifo-transitions-title"><h2 id="fifo-transitions-title">成功与拒绝，分别改变什么</h2><p>一次成功 push：先检查元数据和容量，把值复制到 slots[tail]，再让 tail 回绕前进并让 count 加一。一次成功 pop：先检查元数据和非空，把 slots[head] 复制到输出，再让 head 回绕前进并让 count 减一。</p><p>下标和 count 必须作为同一次概念操作完成。只改 tail、不改 count，下一次检查就会把已写入值当作不存在；只增 count、不写槽，就会把陈旧值当新值。这里的“同一次”依赖一个执行上下文连续调用，<strong>不是原子操作承诺</strong>。</p><p>运行前的不变量为 <code>tail == (head + count) % 4</code>，并且三个元数据都在范围内。先检查范围，才计算关系和访问槽位；本例通过检查后 head+count 最大为 7，不会在 size_t 中溢出。每次调用固定工作量，没有动态分配、阻塞、等待或隐含重试。</p><h3 id="fifo-worked-example">手算一次：入17、入34、出17</h3><div class="table-wrap" role="region" aria-label="手算三步，输出初值165" tabindex="0"><table><caption>手算三步，输出初值165</caption><thead><tr><th scope="col">操作后</th><th scope="col">head</th><th scope="col">tail</th><th scope="col">count</th><th scope="col">逻辑顺序</th><th scope="col">输出</th></tr></thead><tbody><tr><td>reset</td><td>0</td><td>0</td><td>0</td><td>空</td><td>165（原值）</td></tr><tr><td>push17</td><td>0</td><td>1</td><td>1</td><td>17</td><td>165</td></tr><tr><td>push34</td><td>0</td><td>2</td><td>2</td><td>17,34</td><td>165</td></tr><tr><td>pop</td><td>1</td><td>2</td><td>1</td><td>34</td><td>17</td></tr></tbody></table></div><p>第一步在槽0写17，tail 到1；第二步在槽1写34，tail 到2。pop 从 head=0 读出17，head 到1，count 变1。槽0仍可能是17，但逻辑队列只有34。输出对象仍属于调用者，之后可以保留这次取得的17。</p><h3 id="fifo-rejection">满与空：拒绝是可依赖的结果</h3><p>count=4 时 push 返回 FULL，所有槽、head、tail、count 都保持；不覆盖最旧值。count=0 时 pop 返回 EMPTY，所有队列状态和输出原值都保持。调用者必须先检查状态；EMPTY 后输出里的102可能来自上一次成功，不能当作本次新数据。</p></div><div class="content-section" id="fifo-single-context" role="region" aria-labelledby="fifo-single-context-title"><h2 id="fifo-single-context-title">一个执行上下文是接口条件</h2><p><strong>本队列只能由单线程、单执行上下文拥有，且不可重入。</strong>一次调用结束后才能开始下一次。不能把同一队列交给任务与 ISR、DMA，或两个并发调用者；即使说“只有一个生产者、一个消费者（SPSC）”，这份实现仍不安全。这里不运行真实数据竞争。</p><p>给成员加 volatile 不会把槽位写入和元数据更新变成同步协议，也不保证整个操作原子。<a href="#fifo-source-gcc">GCC13.1 §6.46</a> 明确说明 volatile 不能作为给非 volatile 内存排序的屏障；C 的 volatile 访问本身也有实现定义条件。跨上下文需要重新设计并验证同步、所有权和生命周期，留到后续课程。</p><p>本章只证明指定软件输入的行为，不证明 RTOS、ISR、DMA、目标 MCU 时序、电气或硬件采集通过。</p></div><div class="content-section" id="fifo-lab" role="region" aria-labelledby="fifo-lab-title"><h2 id="fifo-lab-title">先预测状态与逻辑队列，再应用</h2><p>预测选项与状态对应：本次操作成功=OK，队列已经装满=FULL，队列目前为空=EMPTY，调用参数无效=INVALID_ARGUMENT，队列状态失配=BAD_STATE。下方结果给出真实状态名；C源码使用同义的FIFO_前缀枚举。</p><p>先选一个操作，在纸上写状态和操作后的有效值，再提交。字节域为十进制整数0..255；空、负数、小数、256 或其他文字不能先取模变成合法字节。pop 不使用输入字节。逻辑队列用逗号分开，最多四个0..255整数；没有值写“空”。</p><p>起点 reset：head=0、tail=0、count=0，物理槽都清零，输出原值165。所有控制只运行本页内存模型，单执行上下文、不可重入；不接任务、ISR 或 DMA。编辑条件会清除预测，标为待应用，上次结果保留且明确标注，不会提前给出新答案。</p><div class="lab"><form id="fifo-form" novalidate><div class="fields"><label class="field" for="fifo-operation">操作<select id="fifo-operation"><option value="push">push · 放入一个值</option><option value="pop">pop · 取出最旧值</option></select></label><label class="field" for="fifo-byte">待放入字节（十进制0..255）<input id="fifo-byte" type="number" min="0" max="255" step="1" value="17"></label><label class="field full" for="fifo-fault">可选故障夹具（真实已初始化对象的副本）<select id="fifo-fault"><option value="none">正常队列</option><option value="null-queue">空队列参数</option><option value="null-output">空pop输出参数</option><option value="bad-range">已初始化head=4</option><option value="bad-relation">已初始化tail与count关系失配</option></select></label><label class="field" for="fifo-status-prediction">预测返回状态<select id="fifo-status-prediction"><option value="">先选状态</option><option value="OK">本次操作成功</option><option value="FULL">队列已经装满</option><option value="EMPTY">队列目前为空</option><option value="INVALID_ARGUMENT">调用参数无效</option><option value="BAD_STATE">队列状态失配</option></select></label><label class="field" for="fifo-queue-prediction">预测操作后的逻辑队列<input id="fifo-queue-prediction" type="text" autocomplete="off" placeholder="如17,34；无值写空"></label></div><div class="controls"><button class="btn primary" id="fifo-apply" type="submit" disabled>提交预测并应用</button><button class="btn" id="fifo-reset" type="button">重置空队列</button></div><p class="pending" id="fifo-pending" role="status">待应用：push17；先填写两个预测。</p><p class="feedback" id="fifo-feedback" role="status">还没有应用新操作。</p></form><div class="applied-result" aria-label="上次已应用状态"><p id="fifo-state">已应用起点：head=0 tail=0 count=0；逻辑队列：空；物理槽：0,0,0,0；输出=165</p><p id="fifo-last">上次操作：reset。物理零字节此时都没有排队。</p></div></div><p>故障选择是在提交时创建一次独立、全字段已初始化的副本；失败保留该副本所有字段，正常交互队列仍保持上次有效状态。null-output 只用于 pop，选 push 时会拒绝该无意义组合。它不构造任意地址，不尝试通过模型证明 C 能检查悬空指针。</p></div><div class="content-section" id="fifo-replay" role="region" aria-labelledby="fifo-replay-title"><h2 id="fifo-replay-title">固定14步：装满、拒绝、回绕、排空</h2><p>回放从自己的空队列开始，与上面的自由实验独立。全部输入已固定：push17、34、51、68；再push85；pop两次；push85、102；pop四次；最后再pop。每步先预测状态和逻辑队列，应用才显示本步结果；不会先跑到末尾。最后停止，重置可以重做。</p><div class="lab"><p id="replay-operation">下一步1/14：push17</p><form id="replay-form" novalidate><div class="fields"><label class="field" for="replay-status-prediction">预测返回状态<select id="replay-status-prediction"><option value="">先选状态</option><option value="OK">本次操作成功</option><option value="FULL">队列已经装满</option><option value="EMPTY">队列目前为空</option><option value="INVALID_ARGUMENT">调用参数无效</option><option value="BAD_STATE">队列状态失配</option></select></label><label class="field" for="replay-queue-prediction">预测操作后的逻辑队列<input id="replay-queue-prediction" type="text" autocomplete="off" placeholder="如17,34；无值写空"></label></div><div class="controls"><button class="btn primary" id="replay-apply" type="submit" disabled>提交预测走一步</button><button class="btn" id="replay-reset" type="button">重置固定回放</button></div><p id="replay-pending" class="pending" role="status">先预测；当前仍为已应用起点。</p><p class="feedback" id="replay-feedback" role="status">输入已知，结果尚未应用。</p></form><div class="applied-result"><p id="replay-state">已应用起点：head=0 tail=0 count=0；逻辑队列：空；物理槽：0,0,0,0；输出=165</p><ol id="replay-log"></ol></div></div><details id="fifo-fixed-answer"><summary>自己算完后核对：完整静态14行与原因（无脚本可读）</summary><div class="table-wrap" role="region" aria-label="从空队列与输出165开始的独立固定答案" tabindex="0"><table><caption>从空队列与输出165开始的独立固定答案</caption><thead><tr><th scope="col">步/操作</th><th scope="col">状态</th><th scope="col">head</th><th scope="col">tail</th><th scope="col">count</th><th scope="col">逻辑顺序</th><th scope="col">输出</th></tr></thead><tbody><tr><td>1 push17</td><td>OK</td><td>0</td><td>1</td><td>1</td><td>17</td><td>165</td></tr><tr><td>2 push34</td><td>OK</td><td>0</td><td>2</td><td>2</td><td>17,34</td><td>165</td></tr><tr><td>3 push51</td><td>OK</td><td>0</td><td>3</td><td>3</td><td>17,34,51</td><td>165</td></tr><tr><td>4 push68</td><td>OK</td><td>0</td><td>0</td><td>4</td><td>17,34,51,68</td><td>165</td></tr><tr><td>5 push85</td><td>FULL</td><td>0</td><td>0</td><td>4</td><td>17,34,51,68</td><td>165</td></tr><tr><td>6 pop</td><td>OK</td><td>1</td><td>0</td><td>3</td><td>34,51,68</td><td>17</td></tr><tr><td>7 pop</td><td>OK</td><td>2</td><td>0</td><td>2</td><td>51,68</td><td>34</td></tr><tr><td>8 push85</td><td>OK</td><td>2</td><td>1</td><td>3</td><td>51,68,85</td><td>34</td></tr><tr><td>9 push102</td><td>OK</td><td>2</td><td>2</td><td>4</td><td>51,68,85,102</td><td>34</td></tr><tr><td>10 pop</td><td>OK</td><td>3</td><td>2</td><td>3</td><td>68,85,102</td><td>51</td></tr><tr><td>11 pop</td><td>OK</td><td>0</td><td>2</td><td>2</td><td>85,102</td><td>68</td></tr><tr><td>12 pop</td><td>OK</td><td>1</td><td>2</td><td>1</td><td>102</td><td>85</td></tr><tr><td>13 pop</td><td>OK</td><td>2</td><td>2</td><td>0</td><td>空</td><td>102</td></tr><tr><td>14 pop</td><td>EMPTY</td><td>2</td><td>2</td><td>0</td><td>空</td><td>102</td></tr></tbody></table></div><p>四次push使tail绕回0，count=4明确为满；第一次85没有写入。两次pop释放槽0和槽1，head到2。再写85和102使用这两个空位，逻辑顺序却从槽2开始：51、68、85、102。排空后head=tail=2但count=0。最后一次pop保持输出102；102是上次成功结果，不是又取到一个值。</p></details><p>本段交付物：遮住静态答案，按每步记录状态、下标、数量和逻辑顺序，再挑出一次成功回绕与一次拒绝说明原因。表格是人工固定期望，不由交互脚本生成。</p></div><div class="content-section" id="fifo-ownership" role="region" aria-labelledby="fifo-ownership-title"><h2 id="fifo-ownership-title">值所有权、有效对象与重置</h2><h3 id="fifo-copy-fixture">值复制：修改源变量，不会修改队列</h3><pre><code>uint8_t source = 17;
+/* 先检查 fifo_reset(&amp;queue) == FIFO_OK */
+/* 再检查 fifo_push(&amp;queue, source) == FIFO_OK */
+source = 99;
+/* fifo_pop(&amp;queue, &amp;output) == FIFO_OK 时 output 为17 */</code></pre><p>push 的参数按值传入，随后写进内部槽。source=99只修改源变量；队列拥有自己的17。pop 复制到独立输出对象后，调用者也拥有那份输出值。上面的片段只强调顺序，下面完整源码执行并检查所有返回值。</p><h3 id="fifo-pointer-contract">接口不能替调用者证明所有存储有效</h3><p>queue 必须指向真实、存活、可写且类型合适的 Fifo 对象；push/pop 前已经调用 fifo_reset。pop 的 output 必须是调用者真实存活的可写 uint8_t 对象，<strong>不能与队列对象的任何部分重叠</strong>，包括内部 slots。实现没有通用地址合法性或重叠检测，非空也不能证明生命周期和权限。不要把悬空、伪造或任意未初始化对象拿来测试“能否返回失败”。</p><p>空queue，或pop的空output，返回 INVALID_ARGUMENT，并在访问队列前拒绝。BAD_STATE 只用于已初始化对象的坏元数据：head/tail超0..3、count超0..4，或者范围都合法但关系不一致。它不代表能发现所有存储错误，也不能发现一个恰巧自洽但被外部篡改的值序列。</p><h3 id="fifo-reset-contract">reset 是写入一个新起点</h3><p>fifo_reset(NULL) 返回 INVALID_ARGUMENT；否则对真实可写对象直接写入全部槽为0、head=tail=count=0，返回OK，不读取原先payload或元数据。因此可以初始化尚未赋值的真实自动对象，也可恢复已初始化的坏元数据；reset 后旧队列内容被丢弃。这个重置不是并发恢复机制，其他执行上下文不能同时读写它。</p></div><div class="content-section" id="fifo-c-lab" role="region" aria-labelledby="fifo-c-lab-title"><h2 id="fifo-c-lab-title">完整C11模块与实际主机检查</h2><p><a href="../examples/bounded-fifo/fifo.c" download>下载完整 fifo.c</a> · <a href="../examples/bounded-fifo/README.txt" download>下载使用与复现说明</a>。这是本站原创、厂商无关的C11模块，没有GPIO地址访问。实现要求8位字节和uint8_t；不满足时编译报错，不悄悄换一种数据域。head/tail/count使用size_t，不假定MCU或主机的指针宽度。</p><div class="table-wrap" role="region" aria-label="公开C接口与五种状态" tabindex="0"><table><caption>公开C接口与五种状态</caption><thead><tr><th scope="col">接口/状态</th><th scope="col">条件与可见结果</th></tr></thead><tbody><tr><td>fifo_reset(Fifo *queue)</td><td>非空真实可写对象→OK；写入确定空起点，不读取旧值</td></tr><tr><td>fifo_push(Fifo *queue,uint8_t value)</td><td>先验证元数据；未满→复制值、前进tail、count+1，返回OK</td></tr><tr><td>fifo_pop(Fifo *queue,uint8_t *output)</td><td>先拒绝空参数，再验证元数据；非空→复制最旧值、前进head、count-1</td></tr><tr><td>FIFO_FULL / FIFO_EMPTY</td><td>容量满/无有效值；保持所有队列字段，pop不改output</td></tr><tr><td>FIFO_INVALID_ARGUMENT</td><td>queue为空，或pop output为空；不访问队列</td></tr><tr><td>FIFO_BAD_STATE</td><td>真实已初始化对象的元数据范围/关系失配；不读槽、不修改状态或output</td></tr></tbody></table></div><p>下面显示的<strong>完整源文件</strong>与下载、实际编译的源字节相同。只有定义 <code>FIFO_TEST</code> 才带测试main；不定义时可独立编译模块。C的uint8_t形参已经是字节域；调用者若在更宽整数转成uint8_t之前需要拒绝256，必须先在转换前验证，不能要求此形参恢复被转换丢掉的信息。浏览器输入在转换前拒绝越界。</p><details id="fifo-complete-source"><summary>展开完整可复用源码与全部测试</summary><pre><code>/******************************************************************************
+ * @file fifo.c
+ * @brief Original, vendor-independent teaching example for embedded-notes.
+ * @version V1.0 2026-10-17
+ *
+ * Contract: C11, eight-bit bytes and uint8_t. Four internal value slots.
+ * Call fifo_reset on a real writable Fifo before push/pop; reset never reads
+ * prior contents. All later calls require that same live initialized object.
+ * head is next read, tail next write, count occupancy; callers do not edit them.
+ * One thread, one execution context, non-reentrant: not task/ISR/DMA-safe,
+ * not concurrent SPSC. volatile does not supply synchronization or atomicity.
+ * Pop output must point to a live writable caller byte outside the Fifo object.
+ * Null is rejected; arbitrary dangling/forged pointers and overlap are NOT
+ * detected. Metadata checks apply to real fully initialized objects only.
+ * Rejection preserves all fields and pop output. Success copies byte values.
+ * Every operation is bounded: no allocation, blocking, wait or retry.
+ * Define FIFO_TEST for the executable, omit it for the reusable module.
+ * No hardware validation or target-specific synchronization is provided.
+ *****************************************************************************/
+#include &lt;limits.h&gt;
+#include &lt;stdbool.h&gt;
+#include &lt;stddef.h&gt;
+#include &lt;stdint.h&gt;
+#ifdef FIFO_TEST
+#include &lt;stdio.h&gt;
+#endif
+#define FIFO_CAPACITY 4U
+#if CHAR_BIT != 8 || !defined(UINT8_MAX)
+#error &quot;This example requires eight-bit bytes and uint8_t.&quot;
+#endif
+typedef enum {
+    FIFO_OK,
+    FIFO_FULL,
+    FIFO_EMPTY,
+    FIFO_INVALID_ARGUMENT,
+    FIFO_BAD_STATE
+} FifoStatus;
+
+typedef struct {
+    uint8_t slots[FIFO_CAPACITY];
+    size_t head;
+    size_t tail;
+    size_t count;
+} Fifo;
+/**
+ * @brief Check metadata before any slot access in an initialized object.
+ * @param[in] queue Non-null live initialized object.
+ * @return Whether ranges and occupancy relation agree.
+ */
+static bool fifo_valid(const Fifo *queue)
+{
+    /**
+     * Bound the addition before checking the modulo relation.
+     **/
+    return queue-&gt;head &lt; FIFO_CAPACITY &amp;&amp; queue-&gt;tail &lt; FIFO_CAPACITY &amp;&amp;
+        queue-&gt;count &lt;= FIFO_CAPACITY &amp;&amp; (queue-&gt;head + queue-&gt;count) % FIFO_CAPACITY == queue-&gt;tail;
+}
+/**
+ * @brief Establish an empty queue.
+ * @param[in,out] queue Real writable queue object, or null.
+ * @return FIFO_OK or FIFO_INVALID_ARGUMENT.
+ */
+FifoStatus fifo_reset(Fifo *queue)
+{
+    /**
+     * Assign all fields without inspecting the object&#x27;s prior contents.
+     **/
+    if (queue == NULL) {
+        return FIFO_INVALID_ARGUMENT;
+    }
+    *queue = (Fifo){{0U, 0U, 0U, 0U}, 0U, 0U, 0U};
+    return FIFO_OK;
+}
+/**
+ * @brief Copy one value into a single-context initialized queue.
+ * @param[in,out] queue Live initialized Fifo, or null.
+ * @param[in] value Byte copied by value; no source pointer is retained.
+ * @return FIFO_OK/FIFO_FULL/FIFO_INVALID_ARGUMENT/FIFO_BAD_STATE.
+ */
+FifoStatus fifo_push(Fifo *queue, uint8_t value)
+{
+    /**
+     * Reject before reading a slot or changing metadata.
+     **/
+    if (queue == NULL) {
+        return FIFO_INVALID_ARGUMENT;
+    }
+    if (!fifo_valid(queue)) {
+        return FIFO_BAD_STATE;
+    }
+    if (queue-&gt;count == FIFO_CAPACITY) {
+        return FIFO_FULL;
+    }
+    queue-&gt;slots[queue-&gt;tail] = value;
+    queue-&gt;tail = (queue-&gt;tail + 1U) % FIFO_CAPACITY;
+    queue-&gt;count += 1U;
+    return FIFO_OK;
+}
+/**
+ * @brief Copy the oldest value into a distinct caller-owned byte.
+ * @param[in,out] queue Live initialized Fifo, or null.
+ * @param[out] output Live writable byte outside queue, or null; overlap forbidden.
+ * @return FIFO_OK/FIFO_EMPTY/FIFO_INVALID_ARGUMENT/FIFO_BAD_STATE.
+ */
+FifoStatus fifo_pop(Fifo *queue, uint8_t *output)
+{
+    /**
+     * Null checks precede queue access; failure never writes output.
+     **/
+    if (queue == NULL || output == NULL) {
+        return FIFO_INVALID_ARGUMENT;
+    }
+    if (!fifo_valid(queue)) {
+        return FIFO_BAD_STATE;
+    }
+    if (queue-&gt;count == 0U) {
+        return FIFO_EMPTY;
+    }
+    *output = queue-&gt;slots[queue-&gt;head];
+    queue-&gt;head = (queue-&gt;head + 1U) % FIFO_CAPACITY;
+    queue-&gt;count -= 1U;
+    return FIFO_OK;
+}
+#ifdef FIFO_TEST
+static unsigned int g_failures;
+/**
+ * @brief Keep test failures active with NDEBUG.
+ * @param[in] condition Expected condition.
+ * @param[in] label Fixed case name.
+ * @return None.
+ */
+static void test_expect(bool condition, const char *label)
+{
+    /**
+     * No assert is used for test acceptance.
+     **/
+    if (!condition) {
+        g_failures += 1U;
+        if (fprintf(stderr, &quot;FAIL: %s\n&quot;, label) &lt; 0) {
+            g_failures += 1U;
+        }
+    }
+}
+/**
+ * @brief Compare meaningful fields, never structure padding.
+ * @param[in] left Initialized queue snapshot.
+ * @param[in] right Initialized queue snapshot.
+ * @return Whether every field is equal.
+ */
+static bool test_same(const Fifo *left, const Fifo *right)
+{
+    size_t index;
+    /**
+     * All four bytes include unused stale slots on rejection.
+     **/
+    if (left-&gt;head != right-&gt;head || left-&gt;tail != right-&gt;tail || left-&gt;count != right-&gt;count) {
+        return false;
+    }
+    for (index = 0U; index &lt; FIFO_CAPACITY; index += 1U) {
+        if (left-&gt;slots[index] != right-&gt;slots[index]) {
+            return false;
+        }
+    }
+    return true;
+}
+/**
+ * @brief Run independent literal rows including wrapped logical order.
+ * @return None.
+ */
+static void test_fixed_trace(void)
+{
+    typedef struct {
+        bool push;
+        uint8_t value;
+        FifoStatus status;
+        size_t head;
+        size_t tail;
+        size_t count;
+        uint8_t logical[4];
+        uint8_t output;
+    } TraceRow;
+    static const TraceRow rows[] = {
+        {true, 17U, FIFO_OK, 0U, 1U, 1U, {17U, 0U, 0U, 0U}, 165U},
+        {true, 34U, FIFO_OK, 0U, 2U, 2U, {17U, 34U, 0U, 0U}, 165U},
+        {true, 51U, FIFO_OK, 0U, 3U, 3U, {17U, 34U, 51U, 0U}, 165U},
+        {true, 68U, FIFO_OK, 0U, 0U, 4U, {17U, 34U, 51U, 68U}, 165U},
+        {true, 85U, FIFO_FULL, 0U, 0U, 4U, {17U, 34U, 51U, 68U}, 165U},
+        {false, 0U, FIFO_OK, 1U, 0U, 3U, {34U, 51U, 68U, 0U}, 17U},
+        {false, 0U, FIFO_OK, 2U, 0U, 2U, {51U, 68U, 0U, 0U}, 34U},
+        {true, 85U, FIFO_OK, 2U, 1U, 3U, {51U, 68U, 85U, 0U}, 34U},
+        {true, 102U, FIFO_OK, 2U, 2U, 4U, {51U, 68U, 85U, 102U}, 34U},
+        {false, 0U, FIFO_OK, 3U, 2U, 3U, {68U, 85U, 102U, 0U}, 51U},
+        {false, 0U, FIFO_OK, 0U, 2U, 2U, {85U, 102U, 0U, 0U}, 68U},
+        {false, 0U, FIFO_OK, 1U, 2U, 1U, {102U, 0U, 0U, 0U}, 85U},
+        {false, 0U, FIFO_OK, 2U, 2U, 0U, {0U, 0U, 0U, 0U}, 102U},
+        {false, 0U, FIFO_EMPTY, 2U, 2U, 0U, {0U, 0U, 0U, 0U}, 102U}
+    };
+    Fifo queue;
+    uint8_t output = 165U;
+    size_t index;
+    /**
+     * Expected rows are worked constants, not generated by the ring logic.
+     **/
+    test_expect(fifo_reset(&amp;queue) == FIFO_OK, &quot;trace reset&quot;);
+    for (index = 0U; index &lt; sizeof rows / sizeof rows[0]; index += 1U) {
+        const TraceRow *row = &amp;rows[index];
+        Fifo before = queue;
+        size_t item;
+        FifoStatus status = row-&gt;push ? fifo_push(&amp;queue, row-&gt;value) : fifo_pop(&amp;queue, &amp;output);
+        test_expect(status == row-&gt;status, &quot;fixed trace status&quot;);
+        test_expect(queue.head == row-&gt;head &amp;&amp; queue.tail == row-&gt;tail &amp;&amp; queue.count == row-&gt;count,
+            &quot;fixed trace metadata&quot;);
+        test_expect(output == row-&gt;output, &quot;fixed trace output&quot;);
+        for (item = 0U; item &lt; row-&gt;count; item += 1U) {
+            test_expect(queue.slots[(row-&gt;head + item) % FIFO_CAPACITY] == row-&gt;logical[item],
+                &quot;fixed trace logical order&quot;);
+        }
+        if (row-&gt;status != FIFO_OK) {
+            test_expect(test_same(&amp;queue, &amp;before), &quot;rejection snapshot&quot;);
+        }
+    }
+}
+/**
+ * @brief Test valid lifetime boundary and initialized corruption fixtures.
+ * @return None.
+ */
+static void test_boundaries(void)
+{
+    Fifo queue;
+    Fifo before;
+    uint8_t output = 165U;
+    uint8_t source = 17U;
+    size_t index;
+    static const Fifo corrupt[] = {
+        {{1U, 2U, 3U, 4U}, 4U, 0U, 0U},
+        {{1U, 2U, 3U, 4U}, 0U, 4U, 0U},
+        {{1U, 2U, 3U, 4U}, 0U, 0U, 5U},
+        {{1U, 2U, 3U, 4U}, 0U, 0U, 1U},
+        {{1U, 2U, 3U, 4U}, 1U, 2U, 0U},
+        {{1U, 2U, 3U, 4U}, SIZE_MAX, 0U, 0U},
+        {{1U, 2U, 3U, 4U}, 0U, SIZE_MAX, 0U},
+        {{1U, 2U, 3U, 4U}, 0U, 0U, SIZE_MAX}
+    };
+    /**
+     * Reset can initialize an automatic object without inspecting old bytes.
+     **/
+    test_expect(fifo_reset(&amp;queue) == FIFO_OK, &quot;initial reset&quot;);
+    before = queue;
+    test_expect(fifo_reset(NULL) == FIFO_INVALID_ARGUMENT, &quot;null reset&quot;);
+    test_expect(fifo_push(NULL, 7U) == FIFO_INVALID_ARGUMENT, &quot;null push&quot;);
+    test_expect(fifo_pop(NULL, &amp;output) == FIFO_INVALID_ARGUMENT, &quot;null pop queue&quot;);
+    test_expect(fifo_pop(&amp;queue, NULL) == FIFO_INVALID_ARGUMENT, &quot;null pop output&quot;);
+    test_expect(fifo_pop(NULL, NULL) == FIFO_INVALID_ARGUMENT, &quot;both null&quot;);
+    test_expect(test_same(&amp;queue, &amp;before) &amp;&amp; output == 165U, &quot;null preservation&quot;);
+    test_expect(fifo_pop(&amp;queue, &amp;output) == FIFO_EMPTY &amp;&amp; output == 165U, &quot;empty sentinel&quot;);
+    test_expect(fifo_push(&amp;queue, 0U) == FIFO_OK, &quot;zero push&quot;);
+    test_expect(fifo_push(&amp;queue, UINT8_MAX) == FIFO_OK, &quot;255 push&quot;);
+    test_expect(fifo_pop(&amp;queue, &amp;output) == FIFO_OK &amp;&amp; output == 0U, &quot;zero pop&quot;);
+    test_expect(fifo_pop(&amp;queue, &amp;output) == FIFO_OK &amp;&amp; output == UINT8_MAX, &quot;255 pop&quot;);
+    test_expect(fifo_reset(&amp;queue) == FIFO_OK, &quot;copy reset&quot;);
+    test_expect(fifo_push(&amp;queue, source) == FIFO_OK, &quot;copy push&quot;);
+    source = 99U;
+    test_expect(fifo_pop(&amp;queue, &amp;output) == FIFO_OK &amp;&amp; output == 17U &amp;&amp; source == 99U, &quot;copy ownership&quot;);
+    for (index = 0U; index &lt; sizeof corrupt / sizeof corrupt[0]; index += 1U) {
+        queue = corrupt[index];
+        before = queue;
+        output = 165U;
+        test_expect(fifo_push(&amp;queue, 9U) == FIFO_BAD_STATE, &quot;corrupt push&quot;);
+        test_expect(fifo_pop(&amp;queue, &amp;output) == FIFO_BAD_STATE, &quot;corrupt pop&quot;);
+        test_expect(test_same(&amp;queue, &amp;before) &amp;&amp; output == 165U, &quot;corrupt preservation&quot;);
+        test_expect(fifo_reset(&amp;queue) == FIFO_OK &amp;&amp; queue.head == 0U &amp;&amp; queue.tail == 0U &amp;&amp; queue.count == 0U,
+            &quot;reset recovers initialized metadata&quot;);
+    }
+}
+/**
+ * @brief Compare many ring operations with a linear shifting oracle.
+ * @return None.
+ */
+static void test_long_trace(void)
+{
+    Fifo queue;
+    uint8_t expected[4] = {0U, 0U, 0U, 0U};
+    size_t length = 0U;
+    unsigned long step;
+    uint8_t output = 165U;
+    /**
+     * This oracle shifts a list and has no head/tail or wrap calculation.
+     **/
+    test_expect(fifo_reset(&amp;queue) == FIFO_OK, &quot;long reset&quot;);
+    for (step = 0UL; step &lt; 20000UL; step += 1UL) {
+        bool push = step % 11UL &lt; 6UL;
+        uint8_t value = (uint8_t)((step * 73UL + 19UL) % 256UL);
+        uint8_t oldOutput = output;
+        Fifo before = queue;
+        FifoStatus expectedStatus = push ? (length == 4U ? FIFO_FULL : FIFO_OK) :
+            (length == 0U ? FIFO_EMPTY : FIFO_OK);
+        FifoStatus status = push ? fifo_push(&amp;queue, value) : fifo_pop(&amp;queue, &amp;output);
+        size_t item;
+        test_expect(status == expectedStatus, &quot;long status&quot;);
+        if (expectedStatus == FIFO_OK &amp;&amp; push) {
+            expected[length] = value;
+            length += 1U;
+            test_expect(output == oldOutput, &quot;push preserves output&quot;);
+        } else if (expectedStatus == FIFO_OK) {
+            test_expect(output == expected[0], &quot;long oldest byte&quot;);
+            length -= 1U;
+            for (item = 0U; item &lt; length; item += 1U) {
+                expected[item] = expected[item + 1U];
+            }
+        } else {
+            test_expect(test_same(&amp;queue, &amp;before) &amp;&amp; output == oldOutput, &quot;long rejection snapshot&quot;);
+        }
+        test_expect(queue.count == length &amp;&amp; queue.head &lt; 4U &amp;&amp; queue.tail &lt; 4U, &quot;long bounds&quot;);
+        for (item = 0U; item &lt; length; item += 1U) {
+            test_expect(queue.slots[(queue.head + item) % 4U] == expected[item], &quot;long logical sequence&quot;);
+        }
+    }
+}
+/**
+ * @brief Verify reset through the public interface.
+ * @return Zero on success, nonzero on failure even under NDEBUG.
+ */
+int main(void)
+{
+    Fifo queue = {{9U, 9U, 9U, 9U}, 2U, 2U, 4U};
+    const Fifo emptySeed = {{0U, 0U, 0U, 0U}, 0U, 0U, 0U};
+    /**
+     * Fixed expected seed is independent of the implementation.
+     **/
+    if (fifo_reset(&amp;queue) != FIFO_OK || !test_same(&amp;queue, &amp;emptySeed)) {
+        test_expect(false, &quot;reset establishes empty seed&quot;);
+        return 1;
+    }
+    test_fixed_trace();
+    test_boundaries();
+    test_long_trace();
+    if (g_failures != 0U) {
+        return 1;
+    }
+    if (puts(&quot;PASS FIFO: literal replay, boundaries, null, initialized corruption, snapshots, copy, 20000 steps&quot;) &lt; 0) {
+        return 1;
+    }
+    if (fflush(stdout) == EOF) {
+        return 1;
+    }
+    return 0;
+}
+#endif
+</code></pre></details><h3 id="fifo-c-reproduce">在自己的主机复现</h3><pre><code>cc -std=c11 -Wall -Wextra -Werror -pedantic -DFIFO_TEST fifo.c -o fifo-test
+./fifo-test
+cc -std=c11 -Wall -Wextra -Werror -pedantic -DFIFO_TEST -DNDEBUG fifo.c -o fifo-test-ndebug
+./fifo-test-ndebug
+cc -std=c11 -Wall -Wextra -Werror -pedantic -c fifo.c -o fifo.o</code></pre><p>Windows按实际编译器和终端使用.exe名称。先准备已有C11编译器，不要求特定开发板。若你所在工程要求统一构建入口，应把以上同一参数配置到工程允许的profile中。本次本地主机验证使用已安装GCC13.1.0，经mcu-build自定义profile执行validate→dry-run→build；正常、NDEBUG和无main模块编译退出0，两个可执行测试退出0。公开命令给出编译器参数，不要求读者拥有作者的私有路径。</p><p>实际测试输出：<code>PASS FIFO: literal replay, boundaries, null, initialized corruption, snapshots, copy, 20000 steps</code>。检查不依赖assert，因此NDEBUG不消除验收。固定14行检查字节顺序、状态、head/tail/count、输出以及拒绝前后所有命名字段和槽位；另测0/255、空参数、真实已初始化的越界/关系失配、reset恢复与复制17。长回放用一个线性移位列表作独立预期，连续20000次调用，核对最旧字节、数量、边界和拒绝保持；它没有复制环形下标算法。</p><p>本段交付物：保留编译器版本、实际命令和测试退出码，给一次FULL和一次EMPTY写出“哪些状态不能变”。主机C检查与页面脚本检查分别成立，都不构成硬件、RTOS或并发验证。</p></div><div class="content-section" id="fifo-practice" role="region" aria-labelledby="fifo-practice-title"><h2 id="fifo-practice-title">十题：基础、故障与迁移</h2><p class="practice-intro">合上前面的答案，先写结论与原因，再展开每题原生解析。每题输入独立，不依赖上次操作。普通打印展开解析后恢复原折叠；“只打印题目”保留全部题干，隐藏答案、模型读数和其他已解例子；打印失败也清除临时模式。无脚本可读全部正文和原生解析；题目专用打印按钮需脚本。</p><div class="notes-toolbar"><button class="btn" id="expand-notes" type="button">展开全部答案</button><button class="btn" id="collapse-notes" type="button">折叠全部答案</button><button class="btn primary" id="print-questions" type="button">只打印题目</button></div><div id="recall-questions"><article class="exercise" id="fifo-exercise-01"><h3 id="fifo-question-01">01 · 基础：同样的下标</h3><p>容量4，head=tail=2。对象A count=0，对象B count=4。分别表示什么？只凭head==tail能否区分？</p><details class="exercise-answer" id="fifo-answer-01"><summary>展开本题原因</summary><p>A为空，B为满；count保存占用数量，四个槽都可用。若只看下标相等，会把满误判为空。下一步先写count，再判断是否能读或写。</p></details></article><article class="exercise" id="fifo-exercise-02"><h3 id="fifo-question-02">02 · 基础：槽里有17就能读吗</h3><p>容量4，slots=[17,34,0,0]，head=1、tail=2、count=1，输出原值165。一次pop的状态、输出、元数据和逻辑队列是什么？</p><details class="exercise-answer" id="fifo-answer-02"><summary>展开本题原因</summary><p>OK，输出34；head=2、tail=2、count=0，逻辑队列为空。槽0的17是陈旧值，槽1随后也成为陈旧值；不能再因槽里留着字节而继续读。</p></details></article><article class="exercise" id="fifo-exercise-03"><h3 id="fifo-question-03">03 · 基础：跨过数组末尾</h3><p>容量4，slots=[0,0,51,68]，head=2、tail=0、count=2。push85成功后，写哪个槽，元数据和逻辑队列是什么？</p><details class="exercise-answer" id="fifo-answer-03"><summary>展开本题原因</summary><p>写槽0；head=2、tail=1、count=3，逻辑顺序51,68,85。tail回绕不改变FIFO顺序，不能按物理槽0到3抄为85,0,51,68。</p></details></article><article class="exercise" id="fifo-exercise-04"><h3 id="fifo-question-04">04 · 故障：满时覆盖最旧值</h3><p>容量4，slots=[17,34,51,68]，head=tail=0、count=4，输出原值165。push85返回什么，哪些值必须保持？</p><details class="exercise-answer" id="fifo-answer-04"><summary>展开本题原因</summary><p>FULL。四个槽和head=0、tail=0、count=4全部保持，输出也仍为165。本接口拒绝新值，没有覆盖最旧值模式；上层应显式处理丢弃或其他策略。</p></details></article><article class="exercise" id="fifo-exercise-05"><h3 id="fifo-question-05">05 · 故障：空输出为何看起来有效</h3><p>容量4，head=tail=2、count=0，槽仍是旧值，调用者output=102。pop返回EMPTY后，能否把102当作本次新采样？队列会怎样？</p><details class="exercise-answer" id="fifo-answer-05"><summary>展开本题原因</summary><p>不能。EMPTY后全部状态和output保持，102是上一次的值。只有OK才授权消费新输出；盯着output内容而忽略返回状态会重复处理旧数据。</p></details></article><article class="exercise" id="fifo-exercise-06"><h3 id="fifo-question-06">06 · 所有权：源变量被改写</h3><p>一个真实队列先reset，uint8_t source=17，push成功；随后source=99，再向独立输出对象pop成功。输出是多少？若调用者将output指向queue.slots[0]是否满足接口？</p><details class="exercise-answer" id="fifo-answer-06"><summary>展开本题原因</summary><p>输出17，队列复制了值，不借用source地址。output指向内部槽违反不重叠前提；此实现不承诺检测这类错误。应提供队列外、存活可写的输出字节。</p></details></article><article class="exercise" id="fifo-exercise-07"><h3 id="fifo-question-07">07 · 故障：范围内也可能失配</h3><p>真实全字段已初始化对象slots=[1,2,3,4]，head=0、tail=0、count=1，output=165。push9或pop分别如何处理？能用未初始化对象做同样试验吗？</p><details class="exercise-answer" id="fifo-answer-07"><summary>展开本题原因</summary><p>两者均BAD_STATE，因为(0+1)%4应为1而tail为0；所有字段与output保持。不能读取任意未初始化对象来测试拒绝，读取不确定成员本身可能就不成立。先有真实已初始化夹具，再单独改变元数据。</p></details></article><article class="exercise" id="fifo-exercise-08"><h3 id="fifo-question-08">08 · 恢复：reset需要先读旧值吗</h3><p>真实可写Fifo自动对象尚未赋值；另一真实对象已初始化但head=4。分别调用fifo_reset；空指针调用fifo_reset(NULL)。预期状态是什么？</p><details class="exercise-answer" id="fifo-answer-08"><summary>展开本题原因</summary><p>前两者都OK，完整写入零槽、head=tail=count=0，不读取旧payload或元数据。NULL返回INVALID_ARGUMENT。push/pop的已初始化前提不能因此删除；reset也不保护同时访问。</p></details></article><article class="exercise" id="fifo-exercise-09"><h3 id="fifo-question-09">09 · 迁移：一个生产者也不够</h3><p>主循环push，ISR中pop，同一个容量4队列；有人建议给head/tail/count加volatile，并声称这是SPSC所以安全。本章实现能否这样用？为什么？</p><details class="exercise-answer" id="fifo-answer-09"><summary>展开本题原因</summary><p>不能。此实现只允许单线程、单执行上下文且不可重入，槽和元数据的多步更新不是原子协议。volatile不提供所需同步与排序保证；必须在后续设计中另行解决跨上下文所有权和同步，不能把这个主机测试当作证明。</p></details></article><article class="exercise" id="fifo-exercise-10"><h3 id="fifo-question-10">10 · 迁移：换值与字节边界</h3><p>从reset开始，push0、push255、pop、push17、pop、pop、pop；所有pop连续复用同一个、独立于队列的output；仅在序列开始初始化为165。写出四次pop的状态/输出、最后head/tail/count。若浏览器输入256应怎样处理？</p><details class="exercise-answer" id="fifo-answer-10"><summary>展开本题原因</summary><p>四次pop依次OK/0、OK/255、OK/17、EMPTY/17；最后head=tail=3、count=0。浏览器在转换前拒绝256，保留上次有效队列和输出，不把它取模为0。把数值换为其他合法字节，队列的顺序规则仍相同。</p></details></article></div><p class="practice-intro">练习成果：一张不依赖物理槽顺序的逻辑轨迹、一份拒绝保持检查和一次实际C测试记录。隔一天换为0、255、7、9，从空队列再做“装满→拒绝→两次读→回绕写入”，解释每一步；不要只背17的序列。若卡住，可把“head与tail方向”“陈旧槽位”“输出保持”或“单上下文前提”中的具体一处交给助手追问。完成章节或一次选对都不能推出长期掌握。</p></div><div class="content-section" id="fifo-sources" role="region" aria-labelledby="fifo-sources-title"><h2 id="fifo-sources-title">核对来源、版本与适用范围</h2><p>技术资料核对日期2026-10-17。图、回放、解释和练习是原创教学材料，不复制私有或付费课程。来源支撑下述语言条件；队列策略和固定答案仍由本章合同、独立测试和审阅负责。</p><ul class="source-list"><li id="fifo-source-c"><a href="https://www.open-std.org/jtc1/sc22/wg14/www/docs/n1570.pdf">WG14 N1570，Committee Draft，2011-04-12</a>：实际阅读§6.2.4（对象生命周期、不确定初值），§6.3.1.1/6.3.1.3（整数提升及无符号转换），§6.5.6（同数组与端点），§6.7.3（限定符及实现定义volatile访问），§7.19（size_t），§7.20.1.1（可选的精确宽度整数）。它是公开委员会草案，不冒充购买的最终ISO标准。<strong>首选阅读任务：</strong>先读§6.2.4第1—2、6段，解释为何“非空地址”不足以替代live object前提，再对照本章output合同。</li><li id="fifo-source-gcc"><a href="https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/Volatiles.html">GCC13.1手册§6.46：When is a Volatile Object Accessed?</a>：完整页面已读，说明实现的volatile访问语义，以及它不替非volatile内存提供排序屏障。只支撑GCC版本限定的访问条件，不作为ISR/DMA安全或FIFO原子性的证明。</li><li id="fifo-source-teach"><a href="https://github.com/mattpocock/skills/blob/main/skills/productivity/teach/SKILL.md?plain=1">Matt Pocock teach</a>：知识先行、短成果、预测反馈、回忆与迁移的教学组织方法；不提供C技术正确性证明。</li></ul></div><div class="content-section" id="fifo-next" role="region" aria-labelledby="fifo-next-title"><h2 id="fifo-next-title">下一段：构建与启动</h2><p>上章对象与边界给本章的存储前提，本章交付一份可解释的队列轨迹。接下来课程单元06—09是构建与启动，仍待建设；之后单元10才进入定时器。本页没有把未交付章节伪装成可打开的新课。</p><div class="next-links"><a href="../learn/c-objects-bounds.html">上一章：C对象与边界</a><a href="../learn/bounded-fifo-reference.html">本章打印速查</a><a href="../learn/engineering-map.html#stage-01">阶段01地图</a></div></div></main><footer class="wrap">原创嵌入式教材 · 不保存个人作答、进度或掌握记录 · 硬件未验证</footer></div><script id="fifo-model">
+const FifoModel = (() => {
+  const create = () => ({ slots: [0, 0, 0, 0], head: 0, tail: 0, count: 0 });
+  const valid = q => q && [q.head, q.tail, q.count].every(Number.isInteger) &&
+    q.head >= 0 && q.head < 4 && q.tail >= 0 && q.tail < 4 && q.count >= 0 && q.count <= 4 &&
+    (q.head + q.count) % 4 === q.tail && Array.isArray(q.slots) && q.slots.length === 4 &&
+    q.slots.every(v => Number.isInteger(v) && v >= 0 && v <= 255);
+  const logical = q => valid(q) ? Array.from({length:q.count}, (_, i) => q.slots[(q.head+i)%4]) : [];
+  const apply = (q, op, byte, output = 165) => {
+    const result = {queue:q, status:'INVALID_ARGUMENT', output, reason:'空参数或操作/字节不合法；没有访问队列。'};
+    if (!q || !['push','pop'].includes(op) || (op === 'pop' && output === null) || (op === 'push' && (!Number.isInteger(byte) || byte < 0 || byte > 255))) return result;
+    if (!valid(q)) return {...result, status:'BAD_STATE', reason:'已初始化元数据的范围或 head/count/tail 一致性不成立；不读取槽位。'};
+    if (op === 'push' && q.count === 4) return {...result, status:'FULL', reason:'count=4，没有可用槽；拒绝写入，全部状态保持。'};
+    if (op === 'pop' && q.count === 0) return {...result, status:'EMPTY', reason:'count=0，没有最旧字节；队列与调用者输出保持。'};
+    const next = {...q, slots:q.slots.slice()};
+    if (op === 'push') {
+      next.slots[q.tail]=byte; next.tail=(q.tail+1)%4; next.count+=1;
+      return {queue:next,status:'OK',output,reason:'复制字节到 tail；tail 回绕前进，count 加一。head 保持。'};
+    }
+    next.head=(q.head+1)%4; next.count-=1;
+    return {queue:next,status:'OK',output:q.slots[q.head],reason:'取 head 指向的最旧字节；head 回绕前进，count 减一。槽内旧值成为陈旧字节。'};
+  };
+  return { create, valid, logical, apply };
+})();
+</script><script id="fifo-controller">
+(() => {
+  const el = id => document.getElementById(id);
+  const parseQueue = text => {
+    if (text.trim() === '空') return [];
+    if (!/^\s*\d+\s*(,\s*\d+\s*)*$/.test(text)) return null;
+    const values=text.split(',').map(Number);
+    return values.length<=4 && values.every(v=>Number.isInteger(v)&&v>=0&&v<=255) ? values : null;
+  };
+  const statuses=['OK','FULL','EMPTY','INVALID_ARGUMENT','BAD_STATE'];
+  const queueText = q => FifoModel.logical(q).join(',') || '空';
+  const stateText = (q,out) => `已应用：head=${q.head} tail=${q.tail} count=${q.count}；逻辑队列：${queueText(q)}；物理槽：${q.slots.join(',')}；输出=${out}`;
+  const inputs=[['push',17],['push',34],['push',51],['push',68],['push',85],['pop',0],['pop',0],['push',85],['push',102],['pop',0],['pop',0],['pop',0],['pop',0],['pop',0]];
+  const setup = (prefix,replay) => {
+    let queue=FifoModel.create(), output=165, step=0, history=[];
+    const status=el(prefix+'-status-prediction'), prediction=el(prefix+'-queue-prediction'), apply=el(prefix+'-apply');
+    const ready = () => {apply.disabled=!(statuses.includes(status.value)&&parseQueue(prediction.value)!==null) || (replay&&step===inputs.length);};
+    const consume = () => {status.value='';prediction.value='';ready();};
+    const pending = () => {consume();el(prefix+'-pending').textContent='待应用：条件已改；保留上次已应用结果，重新填写两个预测。';el(prefix+'-feedback').textContent='当前条件尚未应用。';};
+    const operationText = () => {
+      if (replay) el('replay-operation').textContent=step===inputs.length?'回放已结束14/14；重置后可重做。':`下一步${step+1}/14：${inputs[step][0]}${inputs[step][0]==='push'?inputs[step][1]:''}`;
+    };
+    status.addEventListener('change',ready);prediction.addEventListener('input',ready);
+    if (!replay) for (const id of ['fifo-operation','fifo-byte','fifo-fault']) {
+      el(id).addEventListener(id==='fifo-byte'?'input':'change',pending);
+    }
+    el(prefix+'-form').addEventListener('submit',event=>{
+      event.preventDefault();
+      const expected=parseQueue(prediction.value);
+      if (!statuses.includes(status.value)||expected===null||(replay&&step===inputs.length)) return;
+      let op,byte,fault='none';
+      if (replay) [op,byte]=inputs[step];
+      else {op=el('fifo-operation').value;const text=el('fifo-byte').value;byte=Number(text);fault=el('fifo-fault').value;
+        if (!['push','pop'].includes(op)||!['none','null-queue','null-output','bad-range','bad-relation'].includes(fault)||
+          (op==='push'&&(!/^\d+$/.test(text)||!Number.isInteger(byte)||byte<0||byte>255))||(fault==='null-output'&&op!=='pop')) {
+          el(prefix+'-feedback').textContent='输入无效：push字节必须是0..255整数，空pop输出夹具只用于pop；上次有效队列与输出保持。';consume();return;
+        }
+      }
+      let attempt=queue;
+      if(fault==='null-queue') attempt=null;
+      if(fault==='bad-range') attempt={...queue,slots:queue.slots.slice(),head:4};
+      if(fault==='bad-relation') attempt={...queue,slots:queue.slots.slice(),tail:(queue.tail+1)%4};
+      const result=FifoModel.apply(attempt,op,byte,fault==='null-output'?null:output);
+      if(fault==='none'){queue=result.queue;output=result.output;}
+      const correct=status.value===result.status&&JSON.stringify(expected)===JSON.stringify(FifoModel.logical(queue));
+      el(prefix+'-feedback').textContent=(correct?'预测正确。':'预测不同。')+`返回${result.status}。`+result.reason+` 当前逻辑队列：${queueText(queue)}。下一次先检查count，再沿head数有效值。`;
+      el(prefix+'-state').textContent=stateText(queue,output);
+      if(replay){history.push(`${step+1}. ${op}${op==='push'?byte:''} → ${result.status}；head=${queue.head} tail=${queue.tail} count=${queue.count}；队列${queueText(queue)}；输出${output}`);step+=1;el('replay-log').innerHTML=history.map(line=>'<li>'+line+'</li>').join('');operationText();}
+      else el('fifo-last').textContent=`上次操作：${op}${op==='push'?byte:''}；${fault}；返回${result.status}。${fault==='none'?'未使用独立故障副本。':'独立故障副本未改变，正常队列保留。'}`;
+      consume();el(prefix+'-pending').textContent=replay&&step===inputs.length?'已到末尾；没有额外步骤。':'本步已应用；下次先重新预测。';
+    });
+    el(prefix+'-reset').addEventListener('click',()=>{
+      queue=FifoModel.create();output=165;step=0;history=[];
+      if(!replay){el('fifo-operation').value='push';el('fifo-byte').value='17';el('fifo-fault').value='none';el('fifo-last').textContent='上次操作：reset。物理零字节此时都没有排队。';}
+      else el('replay-log').innerHTML='';
+      consume();el(prefix+'-state').textContent=stateText(queue,output);el(prefix+'-feedback').textContent='已重置；新预测尚未提交。';el(prefix+'-pending').textContent='待应用：当前为确定空起点，先填写两个预测。';operationText();
+    });
+    ready();operationText();
+  };
+  setup('fifo',false);setup('replay',true);
+})();
+</script><script id="fifo-reader">
+(() => {
+  document.getElementById('expand-notes').addEventListener('click',()=>document.querySelectorAll('details').forEach(panel=>{panel.open=true;}));
+  document.getElementById('collapse-notes').addEventListener('click',()=>document.querySelectorAll('details').forEach(panel=>{panel.open=false;}));
+})();
+</script>
+<script id="fifo-worksheet">
+(() => {
+  let folds;
+  const clearMode = () => {
+    document.body.classList.remove('exercise-print');
+    folds?.forEach(([panel,open])=>{panel.open=open;});folds=undefined;
+  };
+  window.addEventListener('afterprint',clearMode);
+  document.getElementById('print-questions').addEventListener('click',()=>{
+    folds=[...document.querySelectorAll('details')].map(panel=>[panel,panel.open]);
+    document.body.classList.add('exercise-print');
+    try {window.print();} catch {clearMode();window.dispatchEvent(new Event('afterprint'));}
+  });
+})();
+</script><script id="note-deep-links">
+(() => {
+  const reveal = () => {
+    let id;try{id=decodeURIComponent(window.location.hash.slice(1));}catch{return;}
+    if(!id) return;
+    const target=document.getElementById(id);if(!target) return;
+    let panel=target.closest('details');
+    while(panel) {panel.open=true;panel=panel.parentElement?.closest?.('details')||null;}
+    target.closest('section')?.querySelectorAll?.('details').forEach(detail=>{detail.open=true;});
+    requestAnimationFrame(()=>target.scrollIntoView({block:'start'}));
+  };
+  window.addEventListener('hashchange',reveal);window.addEventListener('pageshow',reveal);reveal();
+})();
+</script>
+<script id="note-print">
+(() => {
+  let previous;
+  window.addEventListener('beforeprint',()=>{
+    if(previous) return;
+    previous=[...document.querySelectorAll('details')].map(panel=>[panel,panel.open]);
+    previous.forEach(([panel])=>{panel.open=true;});
+  });
+  window.addEventListener('afterprint',()=>{previous?.forEach(([panel,open])=>{panel.open=open;});previous=undefined;});
+})();
+</script></body></html>

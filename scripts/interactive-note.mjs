@@ -16,7 +16,13 @@ export const interactiveNotes = [
   { path: notePaths[10], source: 'gpio-button.html' },
   { path: notePaths[11], source: 'gpio-button-reference.html' },
   { path: notePaths[12], source: 'gpio-led.html' },
-  { path: notePaths[13], source: 'gpio-led-reference.html' }
+  { path: notePaths[13], source: 'gpio-led-reference.html' },
+  { path: notePaths[14], source: 'c-bits-registers.html' },
+  { path: notePaths[15], source: 'c-bits-registers-reference.html' },
+  { path: notePaths[16], source: 'c-objects-bounds.html' },
+  { path: notePaths[17], source: 'c-objects-bounds-reference.html' },
+  { path: notePaths[18], source: 'bounded-fifo.html' },
+  { path: notePaths[19], source: 'bounded-fifo-reference.html' }
 ]
 
 export function readInteractiveNote(path = notePath) {

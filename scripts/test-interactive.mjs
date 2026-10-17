@@ -23,7 +23,13 @@ assert.deepEqual(interactiveNotes.slice(originalNotes.length), [
   { path: 'learn/gpio-button.html', source: 'gpio-button.html' },
   { path: 'learn/gpio-button-reference.html', source: 'gpio-button-reference.html' },
   { path: 'learn/gpio-led.html', source: 'gpio-led.html' },
-  { path: 'learn/gpio-led-reference.html', source: 'gpio-led-reference.html' }
+  { path: 'learn/gpio-led-reference.html', source: 'gpio-led-reference.html' },
+  { path: 'learn/c-bits-registers.html', source: 'c-bits-registers.html' },
+  { path: 'learn/c-bits-registers-reference.html', source: 'c-bits-registers-reference.html' },
+  { path: 'learn/c-objects-bounds.html', source: 'c-objects-bounds.html' },
+  { path: 'learn/c-objects-bounds-reference.html', source: 'c-objects-bounds-reference.html' },
+  { path: 'learn/bounded-fifo.html', source: 'bounded-fifo.html' },
+  { path: 'learn/bounded-fifo-reference.html', source: 'bounded-fifo-reference.html' }
 ], 'New interactive readers must append after the stable original routes')
 
 for (const base of ['/', '/embedded-notes/']) {
@@ -215,6 +221,9 @@ await import('./test-ota.mjs')
 await import('./test-learning-map.mjs')
 await import('./test-gpio-button.mjs')
 await import('./test-gpio-led.mjs')
+await import('./test-c-bits-registers.mjs')
+await import('./test-c-objects-bounds.mjs')
+await import('./test-bounded-fifo.mjs')
 for (const path of ['learn/gpio-button.html', 'learn/gpio-button-reference.html']) {
   const article = await readInteractiveNote(path)
   assert.ok(article.includes('href="gpio-led.html"'), 'Previous chapter must link to the real LED reader: ' + path)
@@ -222,3 +231,11 @@ for (const path of ['learn/gpio-button.html', 'learn/gpio-button-reference.html'
   assert.ok(!article.includes('下一章“GPIO 输出与 LED 限流”'), 'Previous chapter must not call the available next chapter unfinished: ' + path)
 }
 console.log('PASS: previous GPIO chapter and reference lead to the registered LED chapter and printable reference.')
+
+for (const [name, next] of [['gpio-led', 'c-bits-registers'], ['c-bits-registers', 'c-objects-bounds'], ['c-objects-bounds', 'bounded-fifo']]) {
+  for (const suffix of ['', '-reference']) {
+    const article = await readInteractiveNote('learn/' + name + suffix + '.html')
+    assert.ok(article.includes(next + '.html'), 'Course sequence must reach the real next chapter: ' + name + suffix + ' -> ' + next)
+  }
+}
+console.log('PASS: course links connect unit02 to03,04 and05 without changing the stable fourteen-reader prefix.')

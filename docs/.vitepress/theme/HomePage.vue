@@ -15,9 +15,15 @@ const notes = [
   { n: '12', category: '学习中心', title: 'GPIO 按键：可打印速查', desc: '回看电平、悬空和连续稳定过滤规则，用回忆与迁移题检验理解。', path: '/learn/gpio-button-reference.html', detail: '电路状态 · 11 ms 固定样例 · 上板验证清单' },
   { n: '13', category: '学习中心', title: 'GPIO 输出与 LED 驱动', desc: '先预测推挽与开漏的电流路径，再检查限流和同时电流预算，把一次按下映射为 LED 期望状态。', path: '/learn/gpio-led.html', detail: '16 组路径 · 条件预算 · 故障诊断与十题迁移' },
   { n: '14', category: '学习中心', title: 'GPIO 输出与 LED 驱动：可打印速查', desc: '压缩回看 LED 方向、输出模式、预算公式、特殊引脚脚注与外接驱动条件。', path: '/learn/gpio-led-reference.html', detail: '路径规则 · 最坏条件核算 · 原厂手册边界' },
+  { n: '15', category: '学习中心', title: '位运算与寄存器读写', desc: '从位图和掩码预测 RW、RO、W1C 的写入结果，解释两条错误读改写时间线。', path: '/learn/c-bits-registers.html', detail: '整数提升 · 两类 RMW 失败 · 可复现 C11 实验' },
+  { n: '16', category: '学习中心', title: '位运算与寄存器读写：可打印速查', desc: '回看宽度、移位、访问属性与拒绝合同，按历史手册条件核对寄存器案例。', path: '/learn/c-bits-registers-reference.html', detail: '掩码规则 · 写出数据与新状态 · 手册范围' },
+  { n: '17', category: '学习中心', title: 'C 对象、指针与边界', desc: '在虚构内存格上核对对象、长度与生命周期，用检查后的字节拼接解码小端数值。', path: '/learn/c-objects-bounds.html', detail: 'one-past · read_le16 · 失败保留输出' },
+  { n: '18', category: '学习中心', title: 'C 对象、指针与边界：可打印速查', desc: '用对象审计、字节序和整数类别检查表，保留真实存储与调用者前提。', path: '/learn/c-objects-bounds-reference.html', detail: '长度与生命周期 · 零长度 · 整数转换边界' },
+  { n: '19', category: '学习中心', title: '单执行上下文的有界 FIFO', desc: '先预测四字节队列的状态和顺序，再重放装满、拒绝、回绕与排空。', path: '/learn/bounded-fifo.html', detail: '固定容量 · 值所有权 · 单上下文 C11 模块' },
+  { n: '20', category: '学习中心', title: '有界 FIFO：可打印速查', desc: '压缩回看 head、tail、count、不变量和失败保持规则，明确并发使用限制。', path: '/learn/bounded-fifo-reference.html', detail: '14 步轨迹 · 空满边界 · 复现与条件' },
 ]
 const categories = [
-  { title: '学习中心', path: '/learn/', count: '5 篇' },
+  { title: '学习中心', path: '/learn/', count: '11 篇' },
   { title: 'C 语言与内存', path: '/c-memory/', count: '1 篇' },
   { title: 'MCU 基础与外设', path: '/mcu/', count: '4 篇' },
   { title: '工程工具与协作', path: '/tools/', count: '3 篇' },
@@ -32,14 +38,14 @@ const categories = [
       <h1 id="notebook-title">嵌入式技术笔记</h1>
       <p class="intro-description">从内存到时钟，从原理到工程。<br>动手操作模型，再读懂背后的原理、代码与适用边界。</p>
       <div class="intro-actions">
-        <a class="notebook-button primary" href="#notes">浏览 14 篇笔记 <span aria-hidden="true">↓</span></a>
+        <a class="notebook-button primary" href="#notes">浏览 20 篇笔记 <span aria-hidden="true">↓</span></a>
         <a class="intro-route" :href="withBase('/learn/')">从工程学习地图开始 <svg class="ui-arrow" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-5-5 5 5-5 5"/></svg></a>
         <a class="intro-route" :href="withBase('/guide/memory-roadmap.html')">从 MCU 内存学习路线开始 <svg class="ui-arrow" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-5-5 5 5-5 5"/></svg></a>
       </div>
     </section>
 
     <section class="home-section" aria-labelledby="notes">
-      <div class="home-section-heading"><h2 id="notes">交互笔记</h2><span>14 篇 · 5 个主题</span></div>
+      <div class="home-section-heading"><h2 id="notes">交互笔记</h2><span>20 篇 · 5 个主题</span></div>
       <div class="note-list">
         <article v-for="note in notes" :key="note.path" class="note-entry">
           <span class="note-number" aria-hidden="true">{{ note.n }}</span>

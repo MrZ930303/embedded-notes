@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="C 对象、指针、生命周期、真实跨度、one-past、little-endian 受检解码与失败哨兵。"><meta name="theme-color" content="#fafbf8"><link rel="icon" href="../favicon.svg" type="image/svg+xml"><title>C 对象、指针与边界 · 嵌入式技术笔记</title><style>
+:root{--paper:#fafbf8;--ink:#21382e;--muted:#526359;--line:#dce3d7;--green:#22664f;--pale:#eef2e9;--lime:#d5e7b3;--dark:#193e33;--mono:Consolas,ui-monospace,monospace;--amber:#92611e}*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:110px}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.9 system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif}a{color:var(--green);text-underline-offset:4px}button,input,select{font:inherit}button{cursor:pointer}.wrap{width:min(1120px,calc(100% - 64px));margin:auto}.skip{position:absolute;top:-90px;left:16px;z-index:20;background:white;padding:8px 12px}.skip:focus{top:8px}.topbar{position:sticky;top:0;z-index:10;border-bottom:1px solid var(--line);background:#fafbf8f5}.brand{text-decoration:none}.topbar nav a{white-space:nowrap}.hero{padding:48px 0 40px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:1.2fr 1fr;gap:48px;align-items:center}.tag{font-size:12px;color:var(--green);font-weight:700;letter-spacing:.08em}.hero h1{font-size:clamp(32px,3.6vw,44px);line-height:1.35;letter-spacing:-.035em;margin:16px 0}.hero-intro{font-size:17px;max-width:32rem}.hero-card{padding:26px;background:var(--pale);border:1px solid var(--line);border-radius:12px}.hero-card strong{font-size:25px;line-height:1.6}.hero-card p{margin:12px 0 0}.small,.date-note{font-size:13px;color:var(--muted)}.meta{display:flex;flex-wrap:wrap;gap:8px}.meta span{font-size:12px;border:1px solid var(--line);border-radius:4px;padding:3px 9px}.section-nav{display:flex;gap:10px;flex-wrap:wrap;padding:16px 0}.section-nav a{text-decoration:none}.content-section{padding:48px 0;border-bottom:1px solid var(--line);scroll-margin-top:115px}h2{font-size:28px;line-height:1.5;margin:0 0 18px}h3{font-size:20px;line-height:1.5;margin:0 0 12px}p{margin:0 0 16px}section>p{max-width:44rem}.section-head{display:flex;gap:18px;align-items:baseline}.num{font:700 13px var(--mono);color:var(--green);flex-shrink:0}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.card{border:1px solid var(--line);background:#fffefb;border-radius:12px;padding:22px;min-width:0}.card p:last-child{margin-bottom:0}.callout{padding:16px 20px;background:var(--pale);border-left:4px solid var(--green);border-radius:0 8px 8px 0;margin:20px 0;font-size:14px}.callout.warn{background:#fbf0dc;border-color:var(--amber)}.lab{padding:24px;border:1px solid var(--line);border-radius:12px;background:#fffefb}.lab-grid{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,1fr);gap:24px;align-items:start}.field{display:grid;gap:6px;min-width:0;font-size:14px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.field.full{grid-column:1/-1}select,input{width:100%;min-width:0;min-height:44px;border:1px solid #b9c8ba;border-radius:6px;padding:8px 10px;background:white;color:var(--ink);font-size:16px}.btn{min-height:44px;min-width:44px;padding:9px 15px;border:1px solid #b9c8ba;border-radius:6px;background:white;color:var(--ink);font-size:14px}.btn.primary{background:var(--dark);border-color:var(--dark);color:white}.btn:disabled{opacity:.58;cursor:default}.controls{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0}.feedback{padding:16px;background:var(--pale);border-radius:8px;margin-top:16px;font-size:14px;line-height:1.85}.feedback strong{display:block;font-size:18px}.circuit-figure{margin:0;padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--paper)}.circuit-figure svg{display:block;width:100%;height:auto}.circuit-figure figcaption{font-size:13px;color:var(--muted);line-height:1.8;margin-top:8px}.circuit-figure text{font-family:system-ui,"Microsoft YaHei",sans-serif;fill:var(--ink)}.applied{display:flex;gap:8px;flex-wrap:wrap;font-size:13px;margin-bottom:10px}.applied span{border:1px solid var(--line);padding:2px 8px;border-radius:4px}.circuit-readout{padding:16px 0 0;display:grid;grid-template-columns:70px 1fr;gap:6px 12px;font-size:14px}.circuit-readout dt{color:var(--muted)}.circuit-readout dd{margin:0}.wave{width:100%;display:block;height:auto;border:1px solid var(--line);border-radius:8px;background:var(--paper)}.wave text{font-family:var(--mono);font-size:13px;fill:var(--muted)}.wave path{vector-effect:non-scaling-stroke}.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:20px 0}.metric{background:var(--pale);padding:14px;border-radius:8px}.metric span{display:block;font-size:12px;color:var(--muted)}.metric strong{font:700 26px/1.5 var(--mono)}.timeline-fields{display:grid;grid-template-columns:minmax(130px,1fr) minmax(0,2fr);gap:16px;align-items:start}.checkbox{display:flex;gap:10px;align-items:flex-start;min-height:44px;padding-top:27px;font-size:14px}.checkbox input{width:20px;min-height:20px;flex:0 0 20px;margin-top:4px}.event-log{padding-left:22px;font-size:14px}.event-log li{margin-bottom:6px}details{margin:14px 0;padding:16px 20px;border:1px solid var(--line);border-radius:8px;background:#fffefb}summary{cursor:pointer;font-weight:700;min-height:44px}details p,details ul,details ol{margin:12px 0 0}li{margin-bottom:8px}.notes-toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:22px}pre{overflow-x:auto;background:var(--pale);padding:18px;border-radius:8px;font:14px/1.8 var(--mono)}code{font-family:var(--mono)}.table-wrap{max-width:100%;overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:14px;text-align:left}th,td{padding:12px;border-bottom:1px solid var(--line);vertical-align:top}th{background:var(--pale)}.source-list{padding-left:22px}.source-list a{overflow-wrap:anywhere}.next-links{display:flex;gap:20px;flex-wrap:wrap}.next-links a{display:inline-flex;align-items:center;min-height:44px}footer{padding:28px 0 36px;color:var(--muted);font-size:13px}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid #ad751d;outline-offset:4px}
+@media(max-width:760px){.hero,.lab-grid{grid-template-columns:1fr;gap:24px}.grid{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.timeline-fields{grid-template-columns:1fr}.checkbox{padding-top:0}.hero-card{padding:20px}.lab{padding:18px}}@media(max-width:520px){.wrap{width:calc(100% - 36px)}.hero{padding-top:32px}.fields{grid-template-columns:1fr}.field.full{grid-column:auto}.controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.controls .btn{padding-inline:6px}.section-head{gap:12px;align-items:flex-start}.content-section{padding:34px 0}.lab{padding:14px}.circuit-figure{padding:6px}.metrics{gap:8px}.metric{padding:10px}.metric strong{font-size:23px}h2{font-size:24px}details{padding:14px}.wave text{font-size:15px}}
+@media print{body{background:white;color:#15251b;font-size:11pt}.wrap{width:100%;max-width:none}.topbar,.skip,.section-nav,.controls,.fields,.timeline-fields,.notes-toolbar,.quiz-controls{display:none!important}.hero{display:block;padding:0 0 16px}.hero h1{font-size:26pt}.hero-card{display:none}.content-section{padding:18px 0}.lab-grid{grid-template-columns:1fr 1fr;gap:16px}.lab{padding:12px}.grid{grid-template-columns:1fr}.card,figure,table{break-inside:avoid}h2{font-size:17pt}h3{font-size:13pt}.feedback{padding:10px}.metrics{grid-template-columns:repeat(4,1fr)}.metric strong{font-size:18pt}details{break-inside:auto}a{color:inherit}.next-links{display:none}footer{font-size:9pt}pre{white-space:pre-wrap;overflow:visible}}
+</style>
+<style>
+/* Shared reading layer: keep this block identical in all standalone notes. */
+@media screen {
+:root{--paper:#fafbf8;--ink:#21382e;--muted:#526359;--line:#dce3d7;--green:#22664f;--pale:#eef2e9;--lime:#d5e7b3;--dark:#193e33}
+.notes-article{font-size:16px;line-height:1.9}
+.notes-article .wrap{width:min(1120px,calc(100% - 64px));max-width:none;padding-inline:0;margin-inline:auto}
+.notes-article .topbar{background:#fafbf8f5;z-index:10}
+.notes-article .topbar-inner{height:auto;min-height:68px;display:flex;align-items:center;justify-content:space-between;gap:24px;padding-block:0}
+.notes-article .brand{display:inline-flex;align-items:center;gap:10px;min-height:44px;margin:0;font-size:15px;font-weight:700;letter-spacing:0;color:var(--ink)}
+.notes-article .brandmark{display:grid;place-items:center;width:30px;height:30px;margin:0;border-radius:6px;background:var(--dark);color:#e0edcb;font:19px/1 var(--mono)}
+.notes-article .topbar nav{display:flex;align-items:center;gap:18px;margin:0;padding:0;width:auto;flex-wrap:nowrap}
+.notes-article .topbar nav a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:4px 3px;font-size:14px;font-weight:500;color:var(--muted);text-decoration:none;border-radius:4px}
+.notes-article .topbar nav a:hover,.notes-article .topbar nav a[aria-current="location"]{color:var(--green);background:var(--pale)}
+.notes-article .topbar nav a[aria-current="location"]{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:6px}
+.notes-article .hero{padding-block:48px 40px;gap:48px;grid-template-columns:1.12fr 1fr}
+.notes-article .hero h1{font-size:clamp(32px,3.6vw,44px);line-height:1.35;letter-spacing:-.035em;text-wrap:balance}
+.notes-article .hero h1 span{font-size:.78em;line-height:1.5;margin-top:8px}
+.notes-article .hero-intro{font-size:17px;line-height:1.9;max-width:32rem;margin-block:20px}
+.notes-article .hero>.hero-card,.notes-article .hero-flow,.notes-article .intro-map{box-shadow:none;border-radius:12px}
+.notes-article .hero .tag{font-size:12px;border-radius:4px;padding:4px 9px;margin:0 0 16px;line-height:1.7}
+.notes-article .hero>.hero-figure .map{transform:none;box-shadow:none}
+.notes-article .hero>div>.eyebrow{display:none}
+.notes-article .hero>.hero-card>.eyebrow,.notes-article .hero>.hero-flow>.eyebrow{display:block;font-size:12px;line-height:1.7}
+.notes-article .hero-links{gap:12px 22px;margin-top:24px}
+.notes-article .hero .text-link{display:inline-flex;align-items:center;min-height:44px;font-size:14px}
+.notes-article .hero figcaption,.notes-article .hero-figure figcaption,.notes-article .date-note{font-size:13px;line-height:1.8}
+.notes-article .hero-card p:last-child,.notes-article .hero-flow .small,.notes-article .intro-map>p:last-child{font-size:14px;line-height:1.85}
+.notes-article .hero-numbers span,.notes-article .hero-step small{font-size:13px}
+.notes-article h2{font-size:28px;line-height:1.5;text-wrap:balance}
+.notes-article .section-head p{font-size:15px;line-height:1.85}
+.notes-article .content-section,.notes-article .article-section{padding-block:52px}
+.notes-article .content-section+.content-section{padding-top:48px}
+.notes-article .note-section{scroll-margin-top:100px}
+.notes-article .note-section>summary{min-height:56px;font-size:18px;line-height:1.6}
+.notes-article .note-section>summary h2{font-size:20px;line-height:1.6}
+.notes-article .note-body{max-width:none;font-size:16px;line-height:1.95}
+.notes-article .note-body p,.notes-article .note-body li{font-size:16px;line-height:1.95}
+.notes-article .note-body>p,.notes-article .note-body>ul,.notes-article .note-body>ol,.notes-article .article-section>p,.notes-article .article-section>ul,.notes-article .article-section>ol{max-width:44rem;font-size:16px;line-height:1.95}
+.notes-article .note-body h3{font-size:21px;margin-block:28px 12px;scroll-margin-top:100px}
+.notes-article .note-body pre,.notes-article pre{font-size:14px;line-height:1.8}
+.notes-article .note-body table,.notes-article table{font-size:14px;line-height:1.8}
+.notes-article .note-body th,.notes-article .note-body td{font-size:14px;line-height:1.8}
+.notes-article .article-section>h2{font-size:28px}
+.notes-article .concept p,.notes-article .subnote p,.notes-article .risk p,.notes-article .monitor-step p,.notes-article .monitor-step ul,.notes-article .step-card p{font-size:15px;line-height:1.85}
+.notes-article .callout,.notes-article .model-scope,.notes-article .demo-disclaimer,.notes-article .version-card,.notes-article .version-card p{font-size:14px;line-height:1.85}
+.notes-article .source-list a,.notes-article .source-list span,.notes-article #plane-references~ul{font-size:14px;line-height:1.85}
+.notes-article #plane-overview~ul{max-width:none}
+.notes-article #plane-overview~ul li{font-size:15px;line-height:1.85}
+.notes-article .note-body .source-list{max-width:none}
+.notes-article .small,.notes-article .lab-note,.notes-article .lab-foot,.notes-article .lab-footer,.notes-article .clock-lab-foot,.notes-article .print-hint{font-size:13px;line-height:1.85}
+.notes-article .principle,.notes-article .principles span{font-size:13px;line-height:1.8}
+.notes-article .principles strong{font-size:15px}
+.notes-article .memory-motto,.notes-article .motto{background:var(--pale);color:var(--ink);border-radius:8px;text-align:left;padding:24px;margin-top:30px}
+.notes-article .memory-motto span,.notes-article .motto small{color:var(--muted);font-size:14px}
+.notes-article button,.notes-article .btn,.notes-article .notes-toolbar button{min-height:44px;min-width:44px;font-size:14px}
+.notes-article button,.notes-article .btn,.notes-article .topbar a,.notes-article summary,.notes-article .section-nav a,.notes-article .toc a{transition:background .18s,color .18s,border-color .18s,transform .18s}
+.notes-article button:enabled:hover{filter:brightness(1.06)}
+.notes-article button:enabled:active,.notes-article .btn:active{transform:translateY(1px)}
+.notes-article button:disabled{opacity:.58}
+.notes-article .graph-node:disabled,.notes-article .work-card:disabled{opacity:1}
+.notes-article :focus-visible{outline:3px solid #ad751d;outline-offset:4px}
+.notes-article .lab :focus-visible,.notes-article .clock-lab :focus-visible{outline-color:#f0cc80}
+.notes-article .toc a,.notes-article .section-nav a{display:inline-flex;align-items:center;min-height:44px;border-radius:5px;font-size:14px;padding:8px 12px}
+.notes-article .checklist label,.notes-article .clock-check{min-height:44px;font-size:14px;line-height:1.8}
+.notes-article .clock-field label,.notes-article .clock-controls small,.notes-article .clock-node small,.notes-article .clock-node span{font-size:13px;line-height:1.6}
+.notes-article .clock-current p,.notes-article .clock-candidate,.notes-article .clock-warnings{font-size:14px;line-height:1.8}
+.notes-article .clock-node strong,.notes-article .hero-numbers strong,.notes-article .metric strong{font-variant-numeric:tabular-nums}
+.notes-article .task-option strong,.notes-article .work-card strong{font-size:14px;line-height:1.65}
+.notes-article .task-option span,.notes-article .scope-buttons small,.notes-article .card-id,.notes-article .card-project,.notes-article .card-status,.notes-article .card-tags>span,.notes-article .lane-en{font-size:12px;line-height:1.6}
+.notes-article .scope-explanation,.notes-article .detail-copy>p,.notes-article .detail .acceptance,.notes-article .state-controls>p,.notes-article .board-heading p{font-size:14px;line-height:1.8}
+.notes-article .lane h4{font-size:14px;line-height:1.5;flex-wrap:wrap}
+.notes-article .lane-count{font-size:12px}
+.notes-article .lab .task-option{min-height:96px}
+.notes-article .skills-step-card dd,.notes-article .route-pane p,.notes-article .chooser-intro,.notes-article .permissions-pane>p{font-size:14px;line-height:1.85}
+.notes-article .skills-step-card dt,.notes-article .step-counter,.notes-article .permissions-pane small,.notes-article .permission-list span,.notes-article .graph-legend,.notes-article .graph-arrow-note{font-size:13px;line-height:1.8}
+.notes-article .ui-arrow{width:18px;height:18px;display:inline-block;vertical-align:middle;flex-shrink:0}
+.notes-article .selection-jump,.notes-article .choice-result{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;padding:10px 12px;border-radius:5px;font-size:13px;font-weight:600;line-height:1.6;text-decoration:none}
+.notes-article .selection-jump{background:#22664f;color:#fff}
+.notes-article .choice-result{color:#e2efca;border:1px solid #829873;background:#173e33;margin-top:7px}
+.notes-article .task-choice{min-width:0}
+.notes-article .task-choice .task-option{width:100%}
+.notes-article .task-option[aria-pressed="false"]+.choice-result{display:none}
+.notes-article #selected-skill,.notes-article #plane-selected-title{scroll-margin-top:128px}
+.notes-article footer,.notes-article .footer{font-size:13px;line-height:1.8}
+.notes-article footer a,.notes-article .footer a{display:inline-flex;align-items:center;min-height:44px}
+.notes-article .note-body p,.notes-article .hero-intro,.notes-article .article-section>p{text-wrap:pretty}
+@media(max-width:760px){
+.notes-article .wrap{width:calc(100% - 40px)}
+.notes-article .topbar-inner{flex-wrap:wrap;gap:0;padding-top:6px}
+.notes-article .brand{min-height:44px;font-size:15px}
+.notes-article .topbar nav{width:100%;gap:12px;overflow-x:auto;flex-wrap:nowrap;padding:0 0 4px;scrollbar-width:thin}
+.notes-article .topbar nav a{font-size:13px;flex-shrink:0;padding-inline:2px}
+.notes-article .hero{grid-template-columns:1fr;gap:28px;padding-block:32px}
+.notes-article .hero h1{font-size:32px;line-height:1.4}
+.notes-article .hero-intro{font-size:16px;max-width:none;margin-block:16px}
+.notes-article .hero-figure{max-width:500px}
+.notes-article .hero .tag{margin-bottom:12px}
+.notes-article .content-section,.notes-article .article-section{padding-block:36px}
+.notes-article .content-section+.content-section{padding-top:36px}
+.notes-article h2,.notes-article .article-section>h2{font-size:24px}
+.notes-article .section-head p{font-size:15px}
+.notes-article .note-section>summary{font-size:17px}
+.notes-article .note-section>summary h2{font-size:18px}
+.notes-article .note-body p,.notes-article .note-body li{font-size:16px}
+.notes-article .note-body pre,.notes-article pre{font-size:13px}
+.notes-article .note-body th,.notes-article .note-body td{font-size:14px}
+.notes-article .principles{grid-template-columns:1fr;gap:14px}
+.notes-article .principles strong{display:inline;margin-right:8px}
+.notes-article .principles span{display:inline}
+.notes-article .task-options{grid-template-columns:1fr 1fr;align-items:start}.notes-article .lab .task-option{min-height:76px;padding:12px}
+.notes-article .board{grid-template-columns:1fr 1fr}
+.notes-article .lane:last-child .lane-cards{display:flex}
+.notes-article .lane-cards{min-height:0}
+.notes-article .lane{padding:14px}
+.notes-article .lane-en{margin-bottom:10px}
+.notes-article .work-card{padding:14px}
+.notes-article .card-tags{gap:6px}
+.notes-article .lab-top{flex-wrap:wrap}
+.notes-article .lab-top .tag{white-space:normal}
+.notes-article .note-section,.notes-article .note-body h3,.notes-article .article-section,.notes-article .article-section>h3{scroll-margin-top:124px}
+}
+@media(max-width:370px){.notes-article .task-options,.notes-article .board{grid-template-columns:1fr}.notes-article .hero h1{font-size:30px}.notes-article .topbar nav{gap:8px}}
+}
+@media(prefers-reduced-motion:reduce){.notes-article *,.notes-article *::before,.notes-article *::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+</style>
+<style>
+.objects-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start}.memory-figure{margin:0;max-width:420px}.memory-figure svg{width:100%;height:auto;display:block}.memory-figure text{font-family:system-ui,"Microsoft YaHei",sans-serif;fill:#21382e}.memory-figure figcaption{font-size:13px;line-height:1.8}.objects-result{padding:18px;border:1px solid var(--line);border-radius:8px;background:var(--pale);margin-top:16px}.objects-result strong{display:block}.exercise{padding:20px 0;border-bottom:1px dashed var(--line)}.exercise h3{margin-top:0}.exercise-answer{margin-bottom:0}.worksheet-heading{display:none}.source-list li{overflow-wrap:anywhere}.objects-grid>div{min-width:0}.nowrap{white-space:nowrap}.table-wrap:focus-visible{outline:3px solid #ad751d;outline-offset:3px}.table-wrap table{min-width:500px}.module-source{max-height:42rem}.readout{font:700 22px/1.6 var(--mono)}.ref-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.ref-grid .card{break-inside:avoid}
+@media(max-width:760px){.objects-grid,.ref-grid{grid-template-columns:1fr}.memory-figure{margin:auto}.module-source{max-height:none}}
+@media print{.module-source{max-height:none}.objects-grid,.ref-grid{display:block}.table-wrap{overflow:visible}.table-wrap table{min-width:0}.objects-result{break-inside:avoid}body.exercise-print .topbar,body.exercise-print .hero,body.exercise-print .section-nav,body.exercise-print main>.content-section,body.exercise-print footer{display:none!important}body.exercise-print #practice{display:block!important;border:0;padding:0}body.exercise-print #practice>.practice-intro,body.exercise-print #practice>.notes-toolbar{display:none!important}body.exercise-print .exercise-answer{display:none!important}body.exercise-print .worksheet-heading{display:block}body.exercise-print .exercise{break-inside:avoid;padding:10px 0}body.exercise-print #practice h2{font-size:19pt}}
+</style></head>
+<body class="notes-article"><a class="skip" href="#main">跳到正文</a><header class="topbar"><div class="wrap topbar-inner"><a class="brand" href="../" data-no-router><span class="brandmark" aria-hidden="true">∿</span>嵌入式技术笔记</a><nav aria-label="顶部导航"><a href="../learn/" data-no-router>返回分类</a><a href="#grid-lab" data-no-router>交互实验</a><a href="#learning-path" data-no-router>完整笔记</a><a href="../?search=1" data-no-router>搜索笔记</a></nav></div></header><main id="main" class="wrap"><div class="hero" id="overview"><div><p class="tag">第 04 单元 · C 基础</p><h1 id="objects-title">C 对象、指针与边界</h1><p class="hero-intro">从“地址像是正确的”走到一张可解释的对象审计记录。</p><div class="meta"><span>板卡无关</span><span>C11 与固定字节模型</span><span>未做硬件验证</span></div></div><aside class="hero-card"><strong>先证明可以读，<br>再解释读出的数。</strong><p>对象活着 + 类型适合 + 范围真实。长度不是存储凭证，终点不是元素。</p></aside></div><div class="content-section" id="learning-path"><h2 id="learning-path-title">从输出意图走到可信的字节</h2><p>第 03 单元已经把寄存器写入拆成读值、写入数据和结果。本单元回到 C：采集终端拿到一段字节后，先证明对象仍存在、范围真实，再解出一个数。数值看起来正常，并不能倒过来证明一次读取合法。</p><p><strong>前置：</strong>能读简单数组、函数调用和无符号数。<strong>本单元产物：</strong>一张对象审计记录（对象/类型/范围/生命周期/操作/结论），以及一条成功或拒绝的 read_le16 记录。无需购买开发板。</p><p>分三次完成：① 用约 8 分钟区分对象与指针并审计一格；② 用约 10 分钟解两个字节并检查失败；③ 离开模型做十题，隔一天换一组字节重新说明原因。时间只是建议，练习覆盖不等于长期掌握。</p></div><nav class="section-nav" aria-label="本章段落"><a href="#object-vocabulary">对象与格子</a><a href="#span-contract">跨度约定</a><a href="#decode-contract">受检解码</a><a href="#practice">十题回忆</a><a href="#sources">来源</a></nav><section class="content-section" id="object-vocabulary"><h2 id="object-vocabulary-title">01 · 先说清楚：对象、值、类型与地址</h2>
+<p><strong>对象（object）</strong>是程序执行环境中的一块数据存储区域，它的内容可以表示值。<strong>值</strong>是解释后的内容，例如无符号数 18；<strong>类型</strong>规定访问时如何解释内容以及允许的操作。<code>uint8_t sample = 0x12;</code> 中，sample 是对象的名字，0x12 是初始值，uint8_t 是这里要求存在的精确八位无符号类型。</p>
+<p><strong>指针值</strong>在类型与生命周期规则下指向对象、函数，或允许的终点；它自身也可以存储在一个指针对象里。<code>&amp;sample</code> 取得指向 sample 的指针；<code>*p</code> 通过 p 指定目标对象。纸上的“地址 0x1001”只是教学位置标记，不能凭这个数字制造一个合法、对齐且活着的 C 对象。</p>
+<p><strong>存储期（storage duration）</strong>决定存储保留的方式；<strong>生命周期（lifetime）</strong>是执行过程中保证为该对象保留存储的那段时间。自动存储期对象通常随所在块执行而生灭；静态存储期对象持续整个程序执行。C 还区分线程和分配存储期，本章不展开。它们不是语言承诺的“栈区/堆区地址表”。</p>
+<p>自动对象所在块结束后，不能继续使用指向它的旧指针；原目标或其 one-past 目标生命周期结束时，相关指针值变为不确定。即使调试画面还留着字节，也没有继续读取许可。<a href="#source-n1570">N1570 §3.15、§6.2.4</a>支持这些对象与生命周期规则。</p>
+<div class="callout"><strong>随手产物：</strong>写“对象 sample；类型 uint8_t；值 0x12；生命周期内可访问；地址画法不提供额外保证”。先把四栏分开，再看下面的格子。</div></section><section class="content-section" id="memory-audit"><h2 id="memory-audit-title">02 · 在格子上做一次完整审计</h2><div class="objects-grid"><figure class="memory-figure" id="memory-grid"><svg viewBox="0 0 320 390" role="img" aria-labelledby="memory-title memory-desc"><title id="memory-title">原创虚构存储格：一个四字节数组与它的终点</title><desc id="memory-desc">活着的 uint8_t frame[4] 四个元素，虚构标记 0x1000 到 0x1003，字节依次 34、12、A0、00。0x1004 只标示 one-past，不是 frame 元素；另画的对象不会扩展数组。</desc><g fill="#eef2e9" stroke="#22664f" stroke-width="2"><rect x="18" y="52" width="284" height="240" rx="8"/><path d="M18 112H302M18 172H302M18 232H302M122 52V292"/><rect x="18" y="305" width="284" height="56" rx="8" fill="#fbf0dc" stroke-dasharray="6 4"/></g><g font-size="18"><text x="18" y="28">frame[4] · 活着 · 八位字节</text><text x="30" y="89">0x1000</text><text x="136" y="89">[0] = 0x34</text><text x="30" y="149">0x1001</text><text x="136" y="149">[1] = 0x12</text><text x="30" y="209">0x1002</text><text x="136" y="209">[2] = 0xA0</text><text x="30" y="269">0x1003</text><text x="136" y="269">[3] = 0x00</text><text x="30" y="340">0x1004 · one-past：不读</text><text x="18" y="385" font-size="14">虚构位置，不是真实 ABI 或指针转储。</text></g></svg><figcaption>原创格子只假定：CHAR_BIT=8，uint8_t 存在，四个元素连续、已初始化且生命周期有效。它们是四个独立字节，不需要主机大小端假设。另一对象的邻接不会把 frame 变长。</figcaption></figure><div><h3 id="grid-worked">一起做：读取 frame[1]</h3><p>对象是图中真实存在的四元素数组；读取的类型是 uint8_t；索引 1 落在 0..3；生命周期仍有效。因此 <code>frame[1]</code> 的值为声明的 <code>0x12</code>，十进制 18。结论来自这五个前提，不是来自“0x1001 看起来像地址”。</p><p><code>frame + 4</code> 则只形成数组末尾后一个位置，叫 <strong>one-past</strong>。它可作遍历终点，不能读取成第五个元素。<code>frame + 5</code> 的形成已经超出允许范围；不能说“只要没解引用就总安全”。</p><h3 id="same-array">同一数组是指针运算的范围</h3><p>同一活数组中，<code>(frame + 4) - frame</code> 得 4，因为两个端点均在该数组/one-past 范围，差值还须可由 ptrdiff_t 表示。不要对两个无关数组做指针相减，也不要把整数地址相减冒充这种规则。单独对象在这些运算中按长度为 1 的数组处理。</p><p><a href="#source-n1570">N1570 §6.5.6 ¶7–9</a>同时约束形成、解引用与相减。先问“是否同一数组”，再问“操作落在哪个元素或终点”。</p></div></div>
+<h3 id="invalid-operation-table">静态对照：指出禁止的是哪一步</h3><div class="table-wrap" role="region" aria-label="格子操作分类表，可横向滚动" tabindex="0"><table><thead><tr><th>固定场景</th><th>结论</th><th>因果理由</th></tr></thead><tbody><tr><td>活 frame[4]，frame[1]</td><td>读取 0x12</td><td>有效元素、类型匹配、仍活着。</td></tr><tr><td>活 frame[4]，仅形成 frame+4</td><td>只形成终点</td><td>one-past 不是元素。</td></tr><tr><td>活 frame[4]，读取 frame[4]</td><td>没有定义好的 C 读取结果</td><td>解引用了 one-past。</td></tr><tr><td>活 frame[4]，形成 frame+5</td><td>没有定义好的 C 结果</td><td>形成已越过允许范围。</td></tr><tr><td>p=NULL，执行 *p</td><td>没有定义好的 C 读取结果</td><td>空指针没有指向对象。</td></tr><tr><td>自动对象已结束生命周期，想沿旧指针读</td><td>不能继续求值/读取旧指针</td><td>指针值已变为不确定；旧字节画面没有许可。</td></tr><tr><td>把字节数组转成 uint16_t* 并读</td><td>不能批准该宽类型读取</td><td>转型不建立 uint16_t 对象、访问类型或对齐保证。</td></tr></tbody></table></div></section><div class="content-section" id="grid-lab" role="region" aria-labelledby="grid-lab-title"><h2 id="grid-lab-title">03 · 先预测允许的操作，再显示分类</h2><p>下列活动只分类声明的规则场景，绝不执行所列非法 C。输入只允许列表中的七例；格子仍是上一段活着的 frame[4]，除非场景明确改成空指针或过期对象。先选“读元素 / 只形成终点 / 不能执行”，提交后再检查理由。</p><form class="lab" id="grid-form"><div class="fields"><div class="field full"><label for="grid-case">审计场景（七个固定前提）</label><select id="grid-case"><option value="element">活 frame[4]：读取 frame[1]</option><option value="endpoint">活 frame[4]：仅形成 frame+4</option><option value="past-read">活 frame[4]：读取 frame[4]</option><option value="outside">活 frame[4]：形成 frame+5</option><option value="null">p=NULL：读取 *p</option><option value="expired">自动对象已结束：再用旧指针读</option><option value="cast">字节数组：转换 uint16_t* 后读取</option></select></div><div class="field full"><label for="grid-prediction">你的预测（选后才能应用）</label><select id="grid-prediction"><option value="">先独立预测</option><option value="endpoint">只形成终点</option><option value="forbidden">不允许执行</option><option value="read">可读取元素</option></select></div></div><p class="small" id="grid-pending" aria-live="polite">待应用：尚未显示本次分类。</p><div class="controls"><button class="btn primary" id="grid-apply" type="submit" disabled>应用并解释</button><button class="btn" id="grid-reset" type="button">重置本活动</button></div></form><div class="objects-result" id="grid-result" hidden><strong id="grid-applied"></strong><p id="grid-feedback" aria-live="polite"></p></div><noscript><p>JavaScript 关闭：请在上一段的七行完整对照表上先遮住结论，独立写原因，再核对；非法场景没有读取数值。</p></noscript></div><section class="content-section" id="span-contract"><h2 id="span-contract-title">04 · 指针、长度和生命周期必须同时成立</h2><p>接口收到 <code>input</code> 和 <code>length</code>，并没有收到能自动验证存储的凭证。<strong>span</strong> 在这里指“起点指针 + 真实可读长度”的接口约定：调用者保证 input 来自真实、活着、可访问的字节数组，length 不超过从该起点起可读的连续字节数；可以只交出更短前缀。空指针检查与数值范围检查不能鉴别任意伪造指针、悬空指针或谎报长度。</p>
+<h3 id="sizeof-array-pointer">数组 sizeof 与函数参数不是一回事</h3><pre><code>uint8_t bytes[4] = { 0x7E, 0x34, 0x12, 0xFF };
+/* 在本作用域：sizeof bytes == 4；sizeof bytes[0] == 1。 */
+void inspect(const uint8_t bytes[4]);
+/* 参数声明会调整为 const uint8_t *；这里的 [4] 不传递数组大小。
+   在函数体内 sizeof bytes 量的是指针类型，不是调用者数组。 */</code></pre>
+<p>数组表达式在多数场合转换为首元素指针；sizeof 数组时保留数组类型。普通数组形参会调整为指针形参，长度须显式传入；不要用 sizeof 参数恢复调用者容量。<a href="#source-n1570">N1570 §6.3.2.1、§6.5.3.4（含脚注 103）、§6.7.6.3 ¶7</a>给出这几条不同的规则。本例没有采用形参 static 最小长度约定。</p>
+<h3 id="zero-and-size">size_t、零长度与算术顺序</h3><p><code>size_t</code> 是 sizeof 结果使用的无符号整数类型。它多宽、指针有多大，都不是固定的“MCU 常数”。在本章 decoder 中 length=0 表示空跨度，必定拒绝读取两个字节；NULL 也必定拒绝。零长度不会使 <code>NULL + 0</code> 成为允许的指针运算。</p>
+<p>无符号尺寸减法会回绕：当 offset&gt;length 时，先算 length−offset 可能得到很大的数。因此先判断 <code>offset &gt; length</code>，再求剩余字节；同样不用 <code>offset + 2 &lt;= length</code> 当唯一守卫，因为加法可能回绕。范围证明完成后才索引，保证 offset+1 本身也不会溢出。<a href="#source-n1570">§7.19、§6.5.6 与无符号规则</a>支撑这里的类型和范围条件。</p>
+<h3 id="qualifier-limits">const / volatile 都不能补齐缺少的对象</h3><p><code>const uint8_t *input</code> 限制通过这条访问路径修改字节，不延长生命周期、不证明地址有效，也不保证别处没人修改。对象若本来定义为 const，绕开限定强行写它是未定义行为。</p><p><code>volatile</code> 涉及实现对可观察访问的处理，不提供所有权、数组边界、原子性或线程同步。GCC 13.1 文档还明确普通内存访问不会仅因旁边有 volatile 就获得所需顺序；本模块不用 volatile。调用期间字节必须稳定，外部并发写入要由另一个明确协议解决。参见 <a href="#source-gcc">GCC 13.1 §6.46</a>与 <a href="#source-n1570">N1570 §6.7.3</a>。</p></section><section class="content-section" id="wire-representation"><h2 id="wire-representation-title">05 · 存储布局不能替代线格式</h2><p><strong>对齐</strong>是某类型对象可以放置和访问的位置要求；<strong>填充 padding</strong>是实现可能留在结构成员之间或末尾的额外空间。成员声明顺序有规则，却不保证紧挨着；对象表示、类型宽度和主机字节序也有实现条件。把一个缓冲区转成宽整数指针，不会自动满足类型与对齐。</p><h3 id="padding-example">明确虚构布局：结构不是三字节报文</h3><pre><code>struct Reading { uint8_t tag; uint16_t value; };
+/* 只为作图选的假布局：tag@0，padding@1，value@2..3，sizeof=4。
+   不是实际编译器的布局断言；padding 的内容不作为协议数据。 */</code></pre><p>即使某次主机观察刚好得到四字节，也不能把 <code>sizeof(struct Reading)</code> 个原始字节当可移植报文。实现可能有不同对齐与填充，填充值不承诺；little-endian（低有效字节先）与 big-endian（高有效字节先）是线格式必须显式约定的顺序。<a href="#source-n1570">N1570 §6.2.6、§6.7.2.1 ¶14–17</a>只支撑语言布局条件，不批准任何特定 ABI。</p>
+<h3 id="decode-worked">手算一次：低字节 34，高字节 12</h3><p>线格式声明：每字节八位，两字节表示无符号 little-endian 数。字节 <code>0x34,0x12</code> 组成 <code>0x12 × 256 + 0x34 = 0x1234 = 4660</code>；若线格式改成 big-endian，同样两字节会表示 0x3412。要按协议选顺序，不能根据主机字节序猜。</p><p>完整调用例：真实且活着的 <code>frame={0x7E,0x34,0x12,0xFF}</code>，length=4，offset=1，另一个活 uint16_t 输出对象初值 0xBEEF。先看 1≤4，再算剩余 3≥2，最后读取索引 1 和 2，成功写 0x1234。offset=3 只剩一字节，拒绝并保留 0xBEEF。注意这里的 frame 与格子活动是两组明确独立的字节。</p></section><section class="content-section" id="decode-contract"><h2 id="decode-contract-title">06 · read_le16：先拒绝，再索引，最后写输出</h2><p>接口 <code>bool read_le16(const uint8_t *input, size_t length, size_t offset, uint16_t *output)</code> 只承担两个字节的受检解码。<strong>调用者前提：</strong>真实、活着、类型适合且可读的 input 字节数组，真实 length；另一个独立、活着、对齐正确且可写的 uint16_t output 对象，不能与输入存储重叠。输入在调用期间保持稳定。它不能替调用者验证伪造或悬空指针，也不建立并发协议。</p><p>此示例要求 <strong>CHAR_BIT=8 且 uint8_t / uint16_t 精确宽度类型存在</strong>；这些类型在 C11 中是有条件提供的。本源码在不支持的实现上用 #error 报告前提不成立，而不假装所有 C 机器都适用。</p><ol><li>先检查 input / output 是否 NULL，及 offset 是否超过 length；任何一个失败直接返回 false。</li><li>已证 offset≤length 后才做 <code>length-offset&lt;2</code> 判断；零长度、短跨度、终点处均拒绝，无输入读取。</li><li>通过后读取两个字节，用 unsigned int 拼接。它至少能表示 0..65535；左移 8 前先转为此无符号类型，避免小类型提升与有符号中间值的陷阱。</li><li>完整值就绪后才写 *output 并返回 true。所有 false 路径保留旧输出，调用者必须检查 bool，不能把旧输出误认作新帧。</li></ol>
+<div class="table-wrap" role="region" aria-label="受检解码固定输入结果表，可横向滚动" tabindex="0"><table id="decode-fixtures"><thead><tr><th>每行输出先置 BEEF；真实输入</th><th>length / offset</th><th>状态与输出（十六进制）</th></tr></thead><tbody><tr><td>34 12</td><td>2 / 0</td><td>true → 1234</td></tr><tr><td>7E 34 12 FF</td><td>4 / 1</td><td>true → 1234</td></tr><tr><td>7E 34 12 FF</td><td>4 / 2</td><td>true → FF12</td></tr><tr><td>00 FF</td><td>2 / 0</td><td>true → FF00</td></tr><tr><td>FF FF</td><td>2 / 0</td><td>true → FFFF</td></tr><tr><td>34 12，交出空前缀</td><td>0 / 0</td><td>false → BEEF</td></tr><tr><td>真实单字节 34</td><td>1 / 0</td><td>false → BEEF</td></tr><tr><td>34 12</td><td>2 / 1、2、3 或 SIZE_MAX</td><td>false → BEEF（每个 offset 分别调用）</td></tr><tr><td>NULL 输入</td><td>0 / 0 或 2 / 0</td><td>false → BEEF，无读取</td></tr><tr><td>34 12，output=NULL</td><td>2 / 0</td><td>false，没有输出对象可写</td></tr></tbody></table></div><p>SIZE_MAX 测试只作为对真实小对象的过大 offset；没有把微小数组配上虚构巨大 length，也没有形成越界或悬空指针去试探函数。NULL 是接口显式接纳的拒绝值，其他无效指针不能因此被当作安全故障输入。</p></section><div class="content-section" id="decode-lab" role="region" aria-labelledby="decode-lab-title"><h2 id="decode-lab-title">07 · 先预测一次解码，再检验旧值是否保留</h2><p>固定的真实跨度模型为四个已初始化字节 <code>7E 34 12 FF</code>；length 是它的可读前缀，范围 0..4。offset 是非负安全整数或字面词 SIZE_MAX（只代表一定超过这段长度的偏移，不模拟主机 SIZE_MAX 宽度）。输出模型起点 BEEF，成功后成为新值，拒绝后仍是上次值。input=NULL / output=NULL 仅模拟本接口已定义的拒绝条件。</p><form id="decode-form" class="lab"><div class="fields"><div class="field"><label for="decode-length">可读前缀 length（整数 0..4）</label><input id="decode-length" type="number" min="0" max="4" step="1" value="4"></div><div class="field"><label for="decode-offset">offset（非负安全整数或 SIZE_MAX）</label><input id="decode-offset" type="text" value="1" spellcheck="false"></div><div class="field"><label for="decode-input">输入指针条件</label><select id="decode-input"><option value="live">活着的字节数组</option><option value="null">明确的空指针值</option></select></div><div class="field"><label for="decode-output">输出指针条件（独立对象）</label><select id="decode-output"><option value="live">活着的独立输出</option><option value="null">明确的空指针值</option></select></div><div class="field full"><label for="decode-prediction">你的预测</label><select id="decode-prediction"><option value="">先独立预测</option><option value="success">成功并写结果</option><option value="rejected">拒绝并保留值</option></select></div></div><p class="small" id="decode-pending" aria-live="polite">待应用：尚未显示本次解码。</p><div class="controls"><button class="btn primary" id="decode-apply" type="submit" disabled>应用并核对</button><button class="btn" id="decode-reset" type="button">重置本活动</button></div></form><div class="objects-result" id="decode-result" hidden><strong id="decode-applied"></strong><p>调用后模型输出：<span id="decode-value" class="readout"></span></p><p id="decode-feedback" aria-live="polite"></p></div><noscript><p>无脚本时，使用上一段固定表并在每次调用前写出输出旧值；这些静态步骤已包含正常、终点、空指针和极大偏移，不需要运行非法 C。</p></noscript></div><section class="content-section" id="integer-categories"><h2 id="integer-categories-title">08 · 四类整数规则，不能混成一个“溢出”</h2><p><strong>整数提升：</strong>小整数在某些表达式中先转成 int（若能表示全部原值），否则转成 unsigned int。uint8_t 变量不保证每个中间结果都只有八位。解码模块在移位前主动转成 unsigned int，使计算类型与范围可说明。</p><p><strong>定义好的无符号转换：</strong>在本例精确八位 uint8_t 存在时，<code>(uint8_t)-1</code> 按模 256 转换，结果 255；这不是“执行有符号溢出后截断”。无符号尺寸运算也按自身范围回绕，故需要前述检查顺序。</p><p><strong>有符号算术溢出：</strong>例如 int 已为 INT_MAX 再执行 +1，结果不可表示，没有定义好的 C 结果。本课只分类，不执行它，也不给一个固定的负值。</p><p><strong>超范围转成有符号类型：</strong>例如本例存在 int8_t 时把 255 转成 int8_t，C11 允许实现定义的结果，或引发实现定义的信号。这不同于无符号模转换，也不同于有符号算术溢出。不能把本机观察的 −1 宣称为所有 C11 实现的唯一结果。</p><p>依据：<a href="#source-n1570">N1570 §6.3.1.1、§6.3.1.3 ¶1–3、§6.5 ¶5</a>。下载测试只执行定义好的 uint8_t 负数转换；没有“用 UB 跑出来的标准答案”。</p></section><section class="content-section" id="portable-c"><h2 id="portable-c-title">09 · 下载并复现同一个 C11 模块</h2><p>下面是下载文件里完整的可复用模块部分，和实际编译的实现一致；<code>OBJECTS_TEST</code> 宏才启用文件后面的测试 main，不定义时没有 main。检查由 if/return 执行，NDEBUG 不会移除失败验证。它不分配存储、不读取硬件，也不是完整 MCU 工程。</p><p><a href="../examples/c-objects-bounds/objects.c" download>下载 objects.c（模块与测试）</a> · <a href="../examples/c-objects-bounds/README.txt" download>下载完整操作说明</a></p><pre class="module-source"><code id="decoder-source">/******************************************************************************
+ * @file objects.c
+ * @brief Original, board-independent C11 byte-decoding teaching module.
+ * @version V1.0 2026-10-17
+ * Ownership and licensing follow the repository; no vendor affiliation claimed.
+ *****************************************************************************/
+#include &lt;stdbool.h&gt;
+#include &lt;stddef.h&gt;
+#include &lt;stdint.h&gt;
+#include &lt;limits.h&gt;
+
+#if CHAR_BIT != 8 || !defined(UINT8_MAX) || !defined(UINT16_MAX)
+#error &quot;This example requires eight-bit bytes, uint8_t and uint16_t.&quot;
+#endif
+
+/**
+ * @brief Decode two little-endian bytes within a truthful live input span.
+ * @param[in] input Real readable byte array; length must not exceed its extent.
+ * @param[in] length Truthful accessible byte count from input; zero is empty.
+ * @param[in] offset Byte index to the first of the two required bytes.
+ * @param[out] output Distinct live writable uint16_t object, outside input storage.
+ * @return true on success; false preserves output and does not read input.
+ * Null arguments are rejected. Non-null pointer validity, lifetime, alignment,
+ * truthful extent and distinct output ownership remain caller preconditions.
+ */
+bool read_le16(const uint8_t *input, size_t length, size_t offset, uint16_t *output)
+{
+    /** Establish bounds before subtraction, indexing or pointer arithmetic. **/
+    if (input == NULL || output == NULL || offset &gt; length) {
+        return false;
+    }
+    if (length - offset &lt; 2U) {
+        return false;
+    }
+    /** Cast before shifting: unsigned int can represent at least 0..65535. **/
+    *output = (uint16_t)((unsigned int)input[offset]
+                       | ((unsigned int)input[offset + 1U] &lt;&lt; 8U));
+    return true;
+}</code></pre>
+<h3 id="c-run-steps">复现步骤与证据范围</h3><p>使用已安装且支持这些前提的 C11 编译器。仓库维护者通过 mcu-build 的 custom profile 依次 validate → dry-run → build，保存实际命令、退出码、源码与产物哈希，再运行测试程序；编译器命令如下，按本地现有工具名配置 profile，不把机器路径写进课程。</p><pre><code>cc -std=c11 -Wall -Wextra -Werror -pedantic -DOBJECTS_TEST objects.c -o objects-test
+cc -std=c11 -Wall -Wextra -Werror -pedantic -DOBJECTS_TEST -DNDEBUG objects.c -o objects-ndebug
+cc -std=c11 -Wall -Wextra -Werror -pedantic -c objects.c -o objects.o</code></pre><p>运行前两个程序（Windows 使用产生的 .exe 文件）。成功消息为 <code>PASS objects C11: 5 successful reads, 9 rejections, unchanged sentinels, unsigned conversion.</code>；任一检查失败返回非零并列出 FAIL 案例。诊断 fprintf 失败仍返回失败，成功消息 puts 失败也返回非零；puts 成功后立即检查 fflush(stdout)，缓冲输出失败仍返回非零；输出 API 返回值均立即检查。输出用例与上一表相同，还检查所有失败哨兵。独立编译 -c 验证模块不依赖测试入口。</p><p>本地使用 GCC 13.1.0 完成严格普通、NDEBUG 与模块编译，并运行前两者。这个证据只覆盖所列宿主 C11 输入；浏览器模型单独验证其交互。<strong>未做硬件验证</strong>：没有烧录、目标 ABI、真实寄存器、ISR、DMA、RTOS 或并发测试。</p></section><div class="content-section" id="practice" role="region" aria-labelledby="practice-title"><h2 id="practice-title">10 · 十题：基础、故障和迁移</h2><p class="practice-intro">先合上结果，在纸上写“结论 + 缺少或满足的前提”，再展开解析；每题的完整输入都在题目里。可请 Agent 针对“one-past 为何不能读”或“旧输出为何不能当新数据”等具体困惑继续解释。隔一天换字节和偏移重做，覆盖本页不构成个人掌握记录。</p><p class="practice-intro">“只打印题目”依赖 JavaScript，隐藏答案、已应用结果和前文解题；普通浏览器打印会展开解析，打印结束恢复原折叠。若题目打印调用失败，也清理临时模式并恢复折叠。无脚本仍可阅读全文与原生 details 解析，普通打印不必依赖活动。</p><div class="notes-toolbar"><button class="btn" id="expand-notes" type="button">展开全部答案</button><button class="btn" id="collapse-notes" type="button">折叠全部答案</button><button class="btn primary" id="print-questions" type="button">只打印题目</button></div><p class="worksheet-heading">C 对象、指针与边界 · 空白练习单。每题写结论、原因和下一条检查。</p><article class="exercise" id="exercise-01"><h3 id="question-01">01 · 对象和地址不是同一栏</h3><p>给定活着且已初始化的 uint8_t sample=0x12，纸上把它画在虚构 0x2000；p=&sample。分别说出对象、值、类型，以及 p 指向什么。能仅拿整数 0x2000 当成可读对象吗？</p><details class="exercise-answer" id="answer-01"><summary>展开本题原因</summary><p>对象是 sample 的数据存储，值为 0x12（18），类型为 uint8_t，p 指向 sample。整数标记不证明存储、对齐、访问类型或生命周期，不能因此批准读取。</p></details></article><article class="exercise" id="exercise-02"><h3 id="question-02">02 · 终点允许做什么</h3><p>给定活 uint8_t a[4]={0x10,0x20,0x30,0x40}。分别分类 a[3]、仅形成 a+4、读取 a[4]、仅形成 a+5；非法项不要写猜测读值。</p><details class="exercise-answer" id="answer-02"><summary>展开本题原因</summary><p>a[3] 读取 0x40；a+4 只形成允许的 one-past；a[4] 解引用终点，不存在定义好的读取结果；a+5 的形成就越界。判断单位是同一数组，不是碰巧相邻的地址。</p></details></article><article class="exercise" id="exercise-03"><h3 id="question-03">03 · 相邻数组也不能相减</h3><p>给定两个独立活数组 uint8_t a[4] 与 b[4]，全已初始化。画图时 b 恰在 a 后。比较 (a+4)-a 与 b-a；假设前者差值可由 ptrdiff_t 表示。</p><details class="exercise-answer" id="answer-03"><summary>展开本题原因</summary><p>前者是同一数组内的端点相减，得 4；b-a 不符合相同数组/one-past 前提，不能由相邻画图得到定义好的差值。不要改用整数地址差冒充指针差。</p></details></article><article class="exercise" id="exercise-04"><h3 id="question-04">04 · 指针不保存数组容量</h3><p>调用者 uint8_t bytes[4]={1,2,3,4}，接口 void inspect(const uint8_t bytes[4])。调用者所在作用域 sizeof bytes 与函数体内 sizeof bytes 各量什么？主机指针宽度未给。</p><details class="exercise-answer" id="answer-04"><summary>展开本题原因</summary><p>调用者量完整数组，得 4 个 C 字节；函数形参已调整为指针，量的是该指针类型大小，题目不能给一个通用数字。长度须另传，参数 [4] 不是数组容量证明。</p></details></article><article class="exercise" id="exercise-05"><h3 id="question-05">05 · 零长度不能授权空运算</h3><p>本章 read_le16，input=NULL，length=0，offset=0；另一个活 uint16_t output 初值 BEEF。应返回什么、输出什么？能否先算 input+offset 再判断？</p><details class="exercise-answer" id="answer-05"><summary>展开本题原因</summary><p>返回 false，output 保持 BEEF，没有输入读取。先拒绝 NULL，不能用“加零”给空指针制造合法数组运算。长度为零意味着无字节可读。</p></details></article><article class="exercise" id="exercise-06"><h3 id="question-06">06 · 过期对象与 const</h3><p>块内 const uint8_t local[2]={0x34,0x12}，保存指向 local 的指针；块已经结束。有人说 const 使数据不变所以仍可读。应检查哪项，能否给一个固定结果？</p><details class="exercise-answer" id="answer-06"><summary>展开本题原因</summary><p>生命周期已结束，指向原对象或其终点的指针值变为不确定，不能继续沿旧指针读取。const 不延寿，也不把画面里残留字节变成结果；不给固定值。</p></details></article><article class="exercise" id="exercise-07"><h3 id="question-07">07 · 非零偏移的成功记录</h3><p>真实活 uint8_t frame[4]={0x7E,0x34,0x12,0xFF}，另一个独立活输出初值 BEEF；length=4，offset=1，little-endian，八位字节。列检查顺序、索引、返回和输出。</p><details class="exercise-answer" id="answer-07"><summary>展开本题原因</summary><p>先检查非空与 1≤4；再算 4−1=3≥2；读索引 1、2，0x12×256+0x34=0x1234；返回 true，输出 1234。不能按主机顺序转型读取。</p></details></article><article class="exercise" id="exercise-08"><h3 id="question-08">08 · 巨大偏移不要先加二</h3><p>真实活 uint8_t pair[2]={0x34,0x12}，length=2，offset=SIZE_MAX；独立活输出 BEEF。本章实现先判 offset>length，另一实现只判 offset+2<=length。谁有足够守卫？</p><details class="exercise-answer" id="answer-08"><summary>展开本题原因</summary><p>本章先拒绝过大 offset，返回 false，输出 BEEF；另一守卫的无符号 offset+2 会回绕，可能让检查失效。不能执行随后潜在越界读取；没有伪造巨大 length。</p></details></article><article class="exercise" id="exercise-09"><h3 id="question-09">09 · 结构布局迁移到报文</h3><p>某假实现 struct {uint8_t tag; uint16_t value;} 的布局为 tag@0、padding@1、value@2..3、sizeof=4。协议要求 tag 后紧跟 little-endian 两字节。能直接发送结构原始四字节吗？</p><details class="exercise-answer" id="answer-09"><summary>展开本题原因</summary><p>不能作为可移植的三字节线格式：有填充，主机字节序和表示还可能不同。应按协议逐字段编码；解码用八位无符号字节拼接，不用未证明类型与对齐的宽指针转型。</p></details></article><article class="exercise" id="exercise-10"><h3 id="question-10">10 · 把三种结果类别分开</h3><p>假设 uint8_t、int8_t 存在。只分类：(uint8_t)-1；int x=INT_MAX 后执行 x+1；把整数 255 转成 int8_t。不执行后两者，哪项有通用数值，哪项没有？</p><details class="exercise-answer" id="answer-10"><summary>展开本题原因</summary><p>第一项定义好按模 256，得 255；第二项是有符号算术溢出，未定义行为；第三项超范围转为有符号类型，C11 为实现定义的结果或实现定义的信号。不能统一说成截断为 −1，也不能用一次本机运行替代规则。</p></details></article></div><section class="content-section" id="sources"><h2 id="sources-title">来源、首读任务与验证边界</h2><p>核对日期：2026-10-17。文字、地址格子、协议字节、分类场景和练习均为原创教学设计；技术来源只支撑各自列出的规则。</p><ul class="source-list"><li id="source-n1570"><a href="https://www.open-std.org/jtc1/sc22/wg14/www/docs/n1570.pdf">WG14 N1570，2011-04-12 公开 Committee Draft</a>：§3.15 对象；§6.2.4 生命周期；§6.2.5 ¶9 无符号计算；§6.2.6 表示；§6.3.1.1 / §6.3.1.3 提升及转换；§6.3.2.1 / §6.3.2.3 数组与指针；§6.5 ¶5–7 溢出与访问类型；§6.5.3.4 sizeof；§6.5.6 同数组/终点；§6.7.2.1 ¶14–17 结构对齐及填充；§6.7.3 限定；§6.7.6.3 ¶7 参数调整；§7.19 size_t / ptrdiff_t；§7.20.1.1 精确宽度类型。已按实际条款核对，不宣称持有最终 ISO 出版物或最新标准。</li><li id="source-gcc"><a href="https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/Volatiles.html#Volatiles">GCC 13.1 文档 §6.46</a>：已读这一版本关于 volatile 访问与普通内存顺序的限制；它不保证全部 MCU、外设或并发行为。</li></ul><p><strong>建议先读：</strong>N1570 §6.5.6 ¶8–9，把 same array 与 one past 两个条件圈出，再对照第 02 段。然后读 §6.3.1.3，分开无符号转换与有符号超范围转换。原文有困难时，可请 Agent 逐句解释本章已列的条件。</p><p>JavaScript 只做规则分类与固定四字节算术，不运行 C 或验证任意指针。宿主 C 测试只证明上述有效对象与拒绝输入；没有验证真实 MCU、ABI、缓存、ISR、DMA、RTOS、并发或电气时序。<strong>未做硬件验证</strong>。本站不保存答案或个人进度。</p></section><section class="content-section" id="next-lesson"><h2 id="next-lesson-title">把解码结果交给下一个有界模块</h2><p>完成对象审计和解码记录后，继续第 05 单元：让接受的字节进入单执行上下文有界 FIFO。长度约束解决不了队列状态一致性，volatile 也不能让它自动用于中断。06–09 的构建与启动知识在后续批次，定时器仍在单元 10。</p><div class="next-links"><a href="c-objects-bounds-reference.html">对象与边界速查</a><a href="c-bits-registers.html">上一单元：位与寄存器</a><a href="bounded-fifo.html">下一单元：有界 FIFO</a><a href="../learn/engineering-map.html#stage-01">回到工程地图</a></div></section></main><footer class="wrap">原创公开课程 · 规则与固定模型，不保存个人答案或进度。未做硬件验证。</footer><script id="objects-model">
+const ObjectsModel = {
+  classify(caseId) {
+    const cases = {
+      element: { kind: 'read', value: '0x12', reason: 'frame[1] 对象活着、类型正确且下标 1 在 0..3 内，可读出声明的字节 0x12。' },
+      endpoint: { kind: 'endpoint', reason: 'frame+4 仅形成同一数组的 one-past 终点；没有读元素，允许形成但不能解引用。' },
+      'past-read': { kind: 'forbidden', reason: 'frame[4] 试图解引用 one-past，它不是元素；没有定义好的 C 读取结果。' },
+      outside: { kind: 'forbidden', reason: 'frame+5 的形成已越过同一数组与 one-past 范围；无需等到读取才出错。' },
+      null: { kind: 'forbidden', reason: '空指针不指向可读对象，*p 的读取没有定义好的 C 结果；加 0 也没有获得数组。' },
+      expired: { kind: 'forbidden', reason: '自动对象已结束生命周期，旧指针值变为不确定；不能用旧地址画面作为继续求值或读取它的许可。' },
+      cast: { kind: 'forbidden', reason: '字节数组未提供 uint16_t 对象与所需对齐保证；转型不建立这些前提，不能批准宽类型读取。' }
+    };
+    if (!Object.hasOwn(cases, caseId)) throw new Error('Invalid case');
+    return { ...cases[caseId] };
+  }
+};
+</script>
+<script id="objects-controller">
+(() => {
+  const el = id => document.getElementById(id);
+  const labels = { read: '可读取元素', endpoint: '只形成终点', forbidden: '不允许执行' };
+  function pending(prefix) {
+    el(prefix + '-prediction').value = '';
+    el(prefix + '-apply').disabled = true;
+    el(prefix + '-pending').textContent = '待应用：输入已改变；下方若有内容，仅是上次已应用结果。';
+  }
+  el('grid-case').addEventListener('change', () => pending('grid'));
+  el('grid-prediction').addEventListener('change', () => { el('grid-apply').disabled = !Object.hasOwn(labels, el('grid-prediction').value); });
+  el('grid-form').addEventListener('submit', event => {
+    event.preventDefault();
+    const prediction = el('grid-prediction').value;
+    if (!Object.hasOwn(labels, prediction)) return;
+    try {
+      const result = ObjectsModel.classify(el('grid-case').value);
+      el('grid-applied').textContent = '上次已应用：' + el('grid-case').value + ' → ' + labels[result.kind] + (result.value ? '，' + result.value : '');
+      el('grid-feedback').textContent = (prediction === result.kind ? '预测正确。' : '预测不符；你选了“' + labels[prediction] + '”。') + result.reason + ' 下一步先核对对象是否活着，再区分形成和读取。';
+      el('grid-result').hidden = false;
+      el('grid-pending').textContent = '已应用；更改场景后需要重新预测。';
+    } catch {
+      el('grid-pending').textContent = '输入无效：只允许七个声明场景；保留上次结果。';
+    }
+    el('grid-prediction').value = ''; el('grid-apply').disabled = true;
+  });
+  el('grid-reset').addEventListener('click', () => {
+    el('grid-case').value = 'element'; el('grid-prediction').value = '';
+    el('grid-apply').disabled = true; el('grid-result').hidden = true;
+    el('grid-applied').textContent = ''; el('grid-feedback').textContent = '';
+    el('grid-pending').textContent = '待应用：尚未显示本次分类。';
+  });
+})();
+</script>
+<script id="objects-decode-model">
+ObjectsModel.decode = (length, offset, inputKind, outputKind, previous) => {
+  if (!Number.isInteger(length) || length < 0 || length > 4 || !['live', 'null'].includes(inputKind) || !['live', 'null'].includes(outputKind) || !Number.isInteger(previous) || previous < 0 || previous > 65535) throw new Error('Invalid span model input');
+  if (offset !== 'SIZE_MAX' && (!Number.isSafeInteger(offset) || offset < 0)) throw new Error('Invalid offset');
+  if (inputKind === 'null' || outputKind === 'null') return { kind: 'rejected', value: previous, reason: '先拒绝空指针；不读取输入，也没有新的输出写入。' };
+  if (offset === 'SIZE_MAX' || offset > length) return { kind: 'rejected', value: previous, reason: 'offset 超过真实 length，先拒绝而不做减法或索引；旧输出保持。' };
+  if (length - offset < 2) return { kind: 'rejected', value: previous, reason: '剩余字节不足两个；包括空跨度或终点，拒绝且旧输出保持。' };
+  const bytes = [0x7E, 0x34, 0x12, 0xFF];
+  return { kind: 'success', value: bytes[offset] | (bytes[offset + 1] << 8), reason: '非空、真实范围和剩余两个字节的条件均满足；按 little-endian 拼接后才更新输出。' };
+};
+</script>
+<script id="objects-decode-controller">
+(() => {
+  const el = id => document.getElementById(id);
+  const labels = { success: '成功并写结果', rejected: '拒绝并保留值' };
+  let previous = 0xBEEF;
+  function pending() {
+    el('decode-prediction').value = ''; el('decode-apply').disabled = true;
+    el('decode-pending').textContent = '待应用：输入已改变；下方若有内容，仅是上次已应用结果。';
+  }
+  for (const id of ['decode-length', 'decode-offset', 'decode-input', 'decode-output']) {
+    el(id).addEventListener('input', pending); el(id).addEventListener('change', pending);
+  }
+  el('decode-prediction').addEventListener('change', () => { el('decode-apply').disabled = !Object.hasOwn(labels, el('decode-prediction').value); });
+  el('decode-form').addEventListener('submit', event => {
+    event.preventDefault();
+    const prediction = el('decode-prediction').value;
+    if (!Object.hasOwn(labels, prediction)) return;
+    try {
+      const lengthText = el('decode-length').value.trim(), offsetText = el('decode-offset').value.trim();
+      if (!/^\d+$/.test(lengthText) || (offsetText !== 'SIZE_MAX' && !/^\d+$/.test(offsetText))) throw new Error('Invalid number text');
+      const length = Number(lengthText), offset = offsetText === 'SIZE_MAX' ? offsetText : Number(offsetText);
+      const inputKind = el('decode-input').value, outputKind = el('decode-output').value;
+      const result = ObjectsModel.decode(length, offset, inputKind, outputKind, previous);
+      previous = result.value;
+      el('decode-applied').textContent = '上次已应用：length=' + length + '，offset=' + offsetText + '，input=' + inputKind + '，output=' + outputKind + ' → ' + labels[result.kind];
+      el('decode-value').textContent = '0x' + previous.toString(16).toUpperCase().padStart(4, '0');
+      el('decode-feedback').textContent = (prediction === result.kind ? '预测正确。' : '预测不符；你选了“' + labels[prediction] + '”。') + result.reason + ' 下一步按非空 → offset≤length → 剩余≥2 逐项核对。';
+      el('decode-result').hidden = false; el('decode-pending').textContent = '已应用；更改输入后需要重新预测。';
+    } catch {
+      el('decode-pending').textContent = '输入无效：length 只允许 0..4 整数，offset 只允许非负安全整数或 SIZE_MAX；保留上次结果。';
+    }
+    el('decode-prediction').value = ''; el('decode-apply').disabled = true;
+  });
+  el('decode-reset').addEventListener('click', () => {
+    previous = 0xBEEF;
+    for (const [id,value] of [['decode-length','4'],['decode-offset','1'],['decode-input','live'],['decode-output','live'],['decode-prediction','']]) el(id).value = value;
+    el('decode-apply').disabled = true; el('decode-result').hidden = true;
+    for (const id of ['decode-applied','decode-value','decode-feedback']) el(id).textContent = '';
+    el('decode-pending').textContent = '待应用：尚未显示本次解码。';
+  });
+})();
+</script>
+<script id="objects-reader">
+(() => {
+  document.getElementById('expand-notes').addEventListener('click', () => document.querySelectorAll('details').forEach(panel => { panel.open = true; }));
+  document.getElementById('collapse-notes').addEventListener('click', () => document.querySelectorAll('details').forEach(panel => { panel.open = false; }));
+})();
+</script>
+<script id="objects-worksheet">
+(() => {
+  const clearMode = () => document.body.classList.remove('exercise-print');
+  window.addEventListener('afterprint', clearMode);
+  document.getElementById('print-questions').addEventListener('click', () => {
+    document.body.classList.add('exercise-print');
+    try { window.print(); } catch {
+      window.dispatchEvent(new Event('afterprint'));
+      clearMode();
+    }
+  });
+})();
+</script>
+<script id="note-deep-links">
+(() => {
+  const reveal = () => {
+    let id;try{id=decodeURIComponent(window.location.hash.slice(1));}catch{return;}
+    if(!id) return;
+    const target=document.getElementById(id);if(!target) return;
+    let panel=target.closest('details');
+    while(panel) {panel.open=true;panel=panel.parentElement?.closest?.('details')||null;}
+    target.closest('section')?.querySelectorAll?.('details').forEach(detail=>{detail.open=true;});
+    requestAnimationFrame(()=>target.scrollIntoView({block:'start'}));
+  };
+  window.addEventListener('hashchange',reveal);window.addEventListener('pageshow',reveal);reveal();
+})();
+</script>
+<script id="note-print">
+(() => {
+  let previous;
+  window.addEventListener('beforeprint',()=>{
+    if(previous) return;
+    previous=[...document.querySelectorAll('details')].map(panel=>[panel,panel.open]);
+    previous.forEach(([panel])=>{panel.open=true;});
+  });
+  window.addEventListener('afterprint',()=>{previous?.forEach(([panel,open])=>{panel.open=open;});previous=undefined;});
+})();
+</script></body></html>

@@ -13,7 +13,7 @@ description: 用八阶段工程主线连接 MCU 交互笔记，对照项目训�
 
 主线围绕通用原理、驱动设计和调试方法展开，不绑定开发板或固定引脚。交互模型与独立练习可先在浏览器、主机测试或桩驱动中完成；后续硬件验证可自主选择目标。STM32/GD32、Cortex-M、FreeRTOS 以及 Keil/J-Link 只作为明确适用范围的实现或工具案例。上板时必须核对真实芯片的数据手册、参考手册与板级资料，寄存器配置不能跨 MCU 直接套用。嵌入式 Linux 是后续独立方向，不要求同时铺开。高级工程能力以需求、实现、测量、故障复盘和可维护交付证明，课程完成量不能保证岗位或收入。
 
-**先有能验证的结果，再往下一步。**现有学习地图与三路资料对照、GPIO 按键章和 LED 输出章及各自速查；其余原创小课建设中。本页不表示已学习或验证全部课程。互动帮助理解，工程结论需要实际硬件、测试条件与版本记录。
+**先有能验证的结果，再往下一步。**现有学习地图与三路资料对照、GPIO 输入与 LED 输出、位与寄存器、C 对象与边界、单上下文有界 FIFO 五章及各自速查，共十一份学习资料；后续原创课程建设中。本页不表示已学习或验证全部课程。互动帮助理解，工程结论需要实际硬件、测试条件与版本记录。
 
 ## 点选阶段，看见下一份证据 {#stage-map}
 
@@ -35,7 +35,9 @@ description: 用八阶段工程主线连接 MCU 交互笔记，对照项目训�
 
 [第一课：按下按钮，为什么读到 0？](gpio-button.html) · [第二章：GPIO 输出与 LED 驱动](gpio-led.html) · [LED 驱动可打印速查](gpio-led-reference.html)
 
-本阶段从一个能解释清楚的输入事件开始，再在第二章追踪 LED 电流路径、核算限流与同时预算，并把已过滤的事件映射为期望状态。首章有 C 主机实验，第二章只增加 JavaScript 教学模型，二者都未做硬件验证。接下来的 03—05 单元为位与寄存器掩码、C 对象与边界、单上下文有界缓冲区，仍在建设中；之后进入 06—09 单元的构建与启动链。定时器与非阻塞周期控制属于第 10 单元。两章不等于完成本阶段，模型和主机测试不等于上板验证。
+[第三章：位运算与寄存器读写](c-bits-registers.html) · [位与寄存器速查](c-bits-registers-reference.html) · [第四章：C 对象、指针与边界](c-objects-bounds.html) · [C 对象与边界速查](c-objects-bounds-reference.html) · [第五章：单上下文有界 FIFO](bounded-fifo.html) · [有界 FIFO 速查](bounded-fifo-reference.html)
+
+本阶段从可靠输入和 LED 输出意图，进入 03—05 单元的位与寄存器掩码、C 对象与边界、单执行上下文有界 FIFO。四份 C 实验分别验证按键过滤、掩码与假寄存器、字节解码和队列行为；第二章只增加 JavaScript 教学模型。内容、模型、主机 C、审查和发布分别记录，全部未做硬件验证。接下来是仍待编写的 06—09 单元构建与启动链；定时器与非阻塞周期控制属于第 10 单元。本批本地检查不代表阶段已发布，模型和主机测试不等于上板验证。
 
 ### 02 启动与内存：解释程序怎样开始运行 {#stage-02}
 
@@ -211,12 +213,14 @@ Beads、Plane 和学习方法工具都不是学习 MCU 电路、外设的先修�
 - [SEGGER RTT](https://www.segger.com/products/debug-probes/j-link/technology/about-real-time-transfer/)与[Git bisect](https://git-scm.com/docs/git-bisect/)：06 阶段的观测与回归定位。
 - [ST 安全启动与安全固件更新](https://wiki.st.com/stm32mcu/wiki/Security%3AIntroduction_to_Secure_boot_and_Secure_firmware_update)：07 阶段的方案入口。
 
+第 01 阶段本批实际核对：WG14 N1570（2011-04-12 公开委员会草案）的对象、转换、位操作、数组、限定符与类型条款；GCC 13.1 §6.46 volatile；ST RM0008 June 2009 Doc ID13902 Rev9 的 IDR / ODR / BSRR / EXTI_PR 历史例。具体已读范围见三章来源表；不代表最新手册、目标 ABI 或硬件验收。后续 ABI、构建启动、外设与 RTOS 等来源仍须逐项核对。
+
 资料核对与课程建设分别标注。以上链接提供依据与继续阅读方向；不代表本页已经完成相应硬件实验。
 
 ## 从一个可靠的按下事件开始 {#next-step}
 
 第一节原创小课只完成一个目标：从电路解释一次可靠的按下事件。先预测上拉电路，再观察人工抖动时间轴与稳定过滤；之后将相同推理迁移到下拉电路。
 
-[进入 GPIO 按键首课](gpio-button.html) · [打开按键可打印速查](gpio-button-reference.html) · [进入 GPIO 输出与 LED 驱动](gpio-led.html) · [打开 LED 可打印速查](gpio-led-reference.html)
+[进入 GPIO 按键首课](gpio-button.html) · [打开按键可打印速查](gpio-button-reference.html) · [进入 GPIO 输出与 LED 驱动](gpio-led.html) · [打开 LED 可打印速查](gpio-led-reference.html) · [第三章：位运算与寄存器读写](c-bits-registers.html) · [位与寄存器速查](c-bits-registers-reference.html) · [第四章：C 对象、指针与边界](c-objects-bounds.html) · [C 对象与边界速查](c-objects-bounds-reference.html) · [第五章：单上下文有界 FIFO](bounded-fifo.html) · [有界 FIFO 速查](bounded-fifo-reference.html)
 
-能解释可靠输入事件后，进入第二章 GPIO 输出与 LED 驱动，再按先修顺序补齐 C 与缓冲区。其余原创课程建设中，不声称已整理完整课程、个人掌握或完成硬件验证。
+能解释可靠输入事件后，沿第二章 LED 输出 → 第三章位与寄存器 → 第四章 C 对象与边界 → 第五章有界 FIFO 继续。下一批 06—09 构建与启动仍待编写，不声称已整理完整课程、个人掌握或完成硬件验证。
