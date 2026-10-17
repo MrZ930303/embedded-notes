@@ -20,7 +20,7 @@ const ids = new Map()
 let checked = 0
 const pages = files.filter(p=>p.endsWith('.html'))
 for (const file of files) {
-  if (!/\.(?:html|js|json|css|svg)$/.test(file)) continue
+  if (!/\.(?:html|js|json|css|svg|c|h|txt)$/.test(file)) continue
   const text=await readFile(file,'utf8')
   assert.ok(!/\b(?:C51|8051|ML51)\b/i.test(text), 'Excluded architecture content in public output: ' + file)
   assert.ok(!/https?:\/\/(?:chatgpt|chat)\.com\/(?:share|space)\//i.test(text), 'Private link in output')
@@ -97,8 +97,8 @@ const queries = {
   'mcu/cortex-m-cpu-registers.html': ['R13', 'BASEPRI', 'CONTROL', 'EXC_RETURN'],
   'mcu/hardfault-stack-trace.html': ['HardFault', 'EXC_RETURN', 'CFSR', 'MMFAR', 'BFAR', 'LSPACT', 'STKERR', 'Fault Reports'],
   'learn/engineering-map.html': ['先修', 'F103', 'F407', '数据采集', '建设中'],
-  'learn/gpio-button.html': ['GPIO', '上拉', '悬空', '抖动', '11'],
-  'learn/gpio-button-reference.html': ['GPIO', '速查', '稳定', '11'],
+  'learn/gpio-button.html': ['GPIO', '上拉', '悬空', '抖动', '11', '高阻', 'VIH', 'VIL', '启动', 'maxGapMs'],
+  'learn/gpio-button-reference.html': ['GPIO', '速查', '稳定', '11', '高阻', 'VIH', 'VIL', '启动', 'maxGapMs'],
   'mcu/mcu-ota.html': ['OTA', 'Bootloader', '暂存', 'Swap', 'A/B', '回滚', 'KiB', 'CRC'],
   'debug/easylogger.html': ['EasyLogger', 'Mutex', 'SEGGER_RTT_SetFlagsUpBuffer', 'NOINIT', 'MicroLIB', 'pendingWrite', 'LeakSanitizer']
 }
@@ -134,6 +134,22 @@ for (const [query, anchor] of Object.entries(hardFaultSearchTargets)) {
   assert.ok(results.some(result => result.id.startsWith(base + 'mcu/hardfault-stack-trace.html#' + anchor)), 'Search result must open the matching HardFault section: ' + query + ' -> ' + anchor)
 }
 assert.equal(search.search('zzzxxyyunknownquery').length, 0)
+for (const [query, anchor] of [
+  ['1.2', 'voltage-exercise'],
+  ['启动', 'scenario-boot'],
+  ['释放', 'scenario-short-release'],
+  ['maxGapMs', 'scenario-gap'],
+  ['0.2', 'scenario-glitch'],
+  ['打印', 'recall-questions']
+]) {
+  assert.ok(search.search(query).some(result => result.id.startsWith(base + 'learn/gpio-button.html#' + anchor)), 'GPIO search must reach the corresponding exercise: ' + query + ' -> ' + anchor)
+}
+assert.ok(!files.some(file => /[\\/]public[\\/]examples[\\/]gpio-button[\\/]README\.html$/.test(file)), 'Download-only GPIO README must not become an extra documentation page')
+for (const filename of ['button.c', 'README.txt']) {
+  const original = await readFile(path.resolve(import.meta.dirname, '../docs/public/examples/gpio-button', filename))
+  const published = await readFile(path.join(root, 'examples/gpio-button', filename))
+  assert.deepEqual(published, original, 'Published GPIO lab must copy source bytes exactly: ' + filename)
+}
 for (const [query, anchor] of Object.entries({
   'KiB': 'capacity',
   'CRC': 'image-trust',
@@ -159,5 +175,7 @@ const easyLoggerSearchTargets = {
 for (const [query, anchor] of Object.entries(easyLoggerSearchTargets)) {
   assert.ok(search.search(query).some(result => result.id.startsWith(base + 'debug/easylogger.html#' + anchor)), 'Search must open the matching EasyLogger section: ' + query + ' -> ' + anchor)
 }
-for (const excluded of ['C51', '8051', 'ML51']) assert.equal(search.search(excluded).length, 0, 'Excluded architecture search result: ' + excluded)
+// Topic absence is exact: fuzzy C51 matches legitimate C11 prose. Strict source/output scans above remain in force.
+for (const excluded of ['C51', '8051', 'ML51']) assert.equal(search.search(excluded, { fuzzy: false, prefix: false }).length, 0, 'Excluded architecture exact search result: ' + excluded)
+assert.ok(search.search('C11', { fuzzy: false, prefix: false }).some(result => result.id.startsWith(base + 'learn/gpio-button.html#')), 'Exact C11 search must reach the GPIO chapter')
 console.log('PASS: generated Chinese/English/API full-text search, client tokenizer serialization and empty-result query.')

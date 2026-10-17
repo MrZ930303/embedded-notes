@@ -18,7 +18,7 @@ export async function scan(dir) {
     if (excluded.has(entry.name)) continue
     const file = path.join(dir, entry.name)
     if (entry.isDirectory()) await scan(file)
-    else if (/\.(?:md|html|css|[cm]?[jt]s|vue|json|ya?ml|svg)$/.test(entry.name)) {
+    else if (/\.(?:md|html|css|[cm]?[jt]s|vue|json|ya?ml|svg|c|h|txt)$/.test(entry.name)) {
       const text = await readFile(file, 'utf8')
       for (const pattern of patterns) assert.ok(!pattern.test(text), 'Potential private data or credential: ' + path.relative(root, file))
       if (file.startsWith(path.join(root, 'docs'))) {

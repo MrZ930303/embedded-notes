@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="从上拉与按键电路预测GPIO原始值，再用人工抖动时间轴理解连续稳定过滤与一次按下事件。"><meta name="theme-color" content="#fafbf8"><link rel="icon" href="../favicon.svg" type="image/svg+xml"><title>GPIO 按键：按下为什么读到 0？ · 嵌入式技术笔记</title>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="从电压、GPIO高阻与上下拉到采样消抖，包含原理练习、可下载C11状态机与验证边界。"><meta name="theme-color" content="#fafbf8"><link rel="icon" href="../favicon.svg" type="image/svg+xml"><title>GPIO 按键：从电压到一次可靠事件 · 嵌入式技术笔记</title>
 <style>
 :root{--paper:#fafbf8;--ink:#21382e;--muted:#526359;--line:#dce3d7;--green:#22664f;--pale:#eef2e9;--lime:#d5e7b3;--dark:#193e33;--mono:Consolas,ui-monospace,monospace;--amber:#92611e}*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:110px}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.9 system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif}a{color:var(--green);text-underline-offset:4px}button,input,select{font:inherit}button{cursor:pointer}.wrap{width:min(1120px,calc(100% - 64px));margin:auto}.skip{position:absolute;top:-90px;left:16px;z-index:20;background:white;padding:8px 12px}.skip:focus{top:8px}.topbar{position:sticky;top:0;z-index:10;border-bottom:1px solid var(--line);background:#fafbf8f5}.brand{text-decoration:none}.topbar nav a{white-space:nowrap}.hero{padding:48px 0 40px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:1.2fr 1fr;gap:48px;align-items:center}.tag{font-size:12px;color:var(--green);font-weight:700;letter-spacing:.08em}.hero h1{font-size:clamp(32px,3.6vw,44px);line-height:1.35;letter-spacing:-.035em;margin:16px 0}.hero-intro{font-size:17px;max-width:32rem}.hero-card{padding:26px;background:var(--pale);border:1px solid var(--line);border-radius:12px}.hero-card strong{font-size:25px;line-height:1.6}.hero-card p{margin:12px 0 0}.small,.date-note{font-size:13px;color:var(--muted)}.meta{display:flex;flex-wrap:wrap;gap:8px}.meta span{font-size:12px;border:1px solid var(--line);border-radius:4px;padding:3px 9px}.section-nav{display:flex;gap:10px;flex-wrap:wrap;padding:16px 0}.section-nav a{text-decoration:none}.content-section{padding:48px 0;border-bottom:1px solid var(--line);scroll-margin-top:115px}h2{font-size:28px;line-height:1.5;margin:0 0 18px}h3{font-size:20px;line-height:1.5;margin:0 0 12px}p{margin:0 0 16px}section>p{max-width:44rem}.section-head{display:flex;gap:18px;align-items:baseline}.num{font:700 13px var(--mono);color:var(--green);flex-shrink:0}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.card{border:1px solid var(--line);background:#fffefb;border-radius:12px;padding:22px;min-width:0}.card p:last-child{margin-bottom:0}.callout{padding:16px 20px;background:var(--pale);border-left:4px solid var(--green);border-radius:0 8px 8px 0;margin:20px 0;font-size:14px}.callout.warn{background:#fbf0dc;border-color:var(--amber)}.lab{padding:24px;border:1px solid var(--line);border-radius:12px;background:#fffefb}.lab-grid{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,1fr);gap:24px;align-items:start}.field{display:grid;gap:6px;min-width:0;font-size:14px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.field.full{grid-column:1/-1}select,input{width:100%;min-width:0;min-height:44px;border:1px solid #b9c8ba;border-radius:6px;padding:8px 10px;background:white;color:var(--ink);font-size:16px}.btn{min-height:44px;min-width:44px;padding:9px 15px;border:1px solid #b9c8ba;border-radius:6px;background:white;color:var(--ink);font-size:14px}.btn.primary{background:var(--dark);border-color:var(--dark);color:white}.btn:disabled{opacity:.58;cursor:default}.controls{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0}.feedback{padding:16px;background:var(--pale);border-radius:8px;margin-top:16px;font-size:14px;line-height:1.85}.feedback strong{display:block;font-size:18px}.circuit-figure{margin:0;padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--paper)}.circuit-figure svg{display:block;width:100%;height:auto}.circuit-figure figcaption{font-size:13px;color:var(--muted);line-height:1.8;margin-top:8px}.circuit-figure text{font-family:system-ui,"Microsoft YaHei",sans-serif;fill:var(--ink)}.applied{display:flex;gap:8px;flex-wrap:wrap;font-size:13px;margin-bottom:10px}.applied span{border:1px solid var(--line);padding:2px 8px;border-radius:4px}.circuit-readout{padding:16px 0 0;display:grid;grid-template-columns:70px 1fr;gap:6px 12px;font-size:14px}.circuit-readout dt{color:var(--muted)}.circuit-readout dd{margin:0}.wave{width:100%;display:block;height:auto;border:1px solid var(--line);border-radius:8px;background:var(--paper)}.wave text{font-family:var(--mono);font-size:13px;fill:var(--muted)}.wave path{vector-effect:non-scaling-stroke}.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:20px 0}.metric{background:var(--pale);padding:14px;border-radius:8px}.metric span{display:block;font-size:12px;color:var(--muted)}.metric strong{font:700 26px/1.5 var(--mono)}.timeline-fields{display:grid;grid-template-columns:minmax(130px,1fr) minmax(0,2fr);gap:16px;align-items:start}.checkbox{display:flex;gap:10px;align-items:flex-start;min-height:44px;padding-top:27px;font-size:14px}.checkbox input{width:20px;min-height:20px;flex:0 0 20px;margin-top:4px}.event-log{padding-left:22px;font-size:14px}.event-log li{margin-bottom:6px}details{margin:14px 0;padding:16px 20px;border:1px solid var(--line);border-radius:8px;background:#fffefb}summary{cursor:pointer;font-weight:700;min-height:44px}details p,details ul,details ol{margin:12px 0 0}li{margin-bottom:8px}.notes-toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:22px}pre{overflow-x:auto;background:var(--pale);padding:18px;border-radius:8px;font:14px/1.8 var(--mono)}code{font-family:var(--mono)}.table-wrap{max-width:100%;overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:14px;text-align:left}th,td{padding:12px;border-bottom:1px solid var(--line);vertical-align:top}th{background:var(--pale)}.source-list{padding-left:22px}.source-list a{overflow-wrap:anywhere}.next-links{display:flex;gap:20px;flex-wrap:wrap}.next-links a{display:inline-flex;align-items:center;min-height:44px}footer{padding:28px 0 36px;color:var(--muted);font-size:13px}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid #ad751d;outline-offset:4px}
 @media(max-width:760px){.hero,.lab-grid{grid-template-columns:1fr;gap:24px}.grid{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.timeline-fields{grid-template-columns:1fr}.checkbox{padding-top:0}.hero-card{padding:20px}.lab{padding:18px}}@media(max-width:520px){.wrap{width:calc(100% - 36px)}.hero{padding-top:32px}.fields{grid-template-columns:1fr}.field.full{grid-column:auto}.controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.controls .btn{padding-inline:6px}.section-head{gap:12px;align-items:flex-start}.content-section{padding:34px 0}.lab{padding:14px}.circuit-figure{padding:6px}.metrics{gap:8px}.metric{padding:10px}.metric strong{font-size:23px}h2{font-size:24px}details{padding:14px}.wave text{font-size:15px}}
@@ -130,27 +130,594 @@
 }
 @media(prefers-reduced-motion:reduce){.notes-article *,.notes-article *::before,.notes-article *::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 </style>
+<style>
+/* GPIO chapter controls only; the shared reading layer remains unchanged. */
+@media screen{.notes-article #voltage-exercise,.notes-article #sampling-limits,.notes-article .scenario-card,.notes-article #c-syntax,.notes-article #c-contract,.notes-article #c-source,.notes-article #c-host-lab,.notes-article #recall-questions,.notes-article #recall-answers,.notes-article .exercise,.notes-article .exercise-answer{scroll-margin-top:124px}}
+.reasoning-form{margin:18px 0}.reasoning-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.reasoning-form .btn{margin-top:12px}.reasoning-form .feedback{margin-top:12px}.reasoning-form select{white-space:normal}.scenario-card{margin-bottom:18px}
+@media(max-width:760px){.reasoning-fields{grid-template-columns:1fr}}
+@media print{.reasoning-form,.print-hint{display:none!important}body.exercise-print .hero,body.exercise-print .section-nav,body.exercise-print footer,body.exercise-print main>section{display:none!important}body.exercise-print main>#lesson-notes{display:block!important;border:0;padding:0}body.exercise-print #lesson-notes>:not(#recall-questions){display:none!important}body.exercise-print .exercise-answer{display:none!important}body.exercise-print #recall-questions>.notes-toolbar,body.exercise-print #recall-questions>.print-hint{display:none!important}body.exercise-print #recall-questions .exercise{break-inside:avoid;margin:12px 0;padding:14px 18px;min-height:95px}body.exercise-print #recall-questions .exercise h3{font-size:12pt}}
+</style>
 </head><body class="notes-article"><a class="skip" href="#main">跳到正文</a><header class="topbar"><div class="wrap topbar-inner"><a class="brand" href="../"><span class="brandmark" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span>嵌入式技术笔记</a><nav aria-label="笔记导航"><a href="../learn/">返回分类</a><a href="#circuit-lab">交互实验</a><a href="#lesson-notes">完整笔记</a><a href="../?search=1">搜索笔记</a></nav></div></header>
-<div class="wrap"><div class="hero"><div><div class="tag">原创小课 01 · 电路与 C</div><h1 id="overview">按下按钮，<br>为什么读到 0？</h1><p class="hero-intro">只完成一件事：沿着线路解释原始电平，再把有抖动的输入变成一次可靠的“按下”事件。</p><div class="meta"><span>不绑定开发板或固定引脚</span><span>通用 GPIO 输入原理</span><span>人工交互模型 · 未做硬件验证</span></div></div><aside class="hero-card"><div class="tag">今天的成果</div><strong>动作 → 电压 → 逻辑值 → 事件</strong><p>这四步分清了，就能解释“按下为 0”，也能知道为什么一次动作可能被程序数成三次。</p><p class="small">先修：会分辨电源与共地。目标属于<a href="../learn/engineering-map.html#stage-01">学习地图第 01 阶段</a>。</p></aside></div>
-<nav class="section-nav" aria-label="章节"><a href="#core-idea">先看电路</a><a href="#circuit-lab">预测再操作</a><a href="#bounce-lab">观察抖动</a><a href="#lesson-notes">解释与验收</a><a href="gpio-button-reference.html">打印速查</a></nav>
-<main id="main"><noscript><p class="callout">交互需要 JavaScript；下面的电路解释、答案表、人工时间轴规则、验收与来源仍可完整阅读。此页不连接真实设备。</p></noscript>
-<section class="content-section" id="core-idea"><div class="section-head"><span class="num" aria-hidden="true">01 /</span><h2>按下是动作，0 和 1 是电路的结果</h2></div><p>手指按下是动作；引脚电压是物理量；程序读到的 0/1 是输入电路判定后的逻辑值。<strong>“按下”并不天然等于 1。</strong>逻辑 1 的有效电压范围由具体芯片的数据手册规定，不能把它理解成固定的 1 伏。</p><div class="grid"><article class="card"><h3>松开，有上拉</h3><p>电阻把输入连向允许的 I/O 电源。按钮断开时，引脚被拉向高电平，原始值预期为 <strong>1</strong>。</p></article><article class="card"><h3>按下，可靠接地</h3><p>按钮把输入连接到 GND；引脚被拉低，原始值预期为 <strong>0</strong>。程序可把这个 0 解释成按下。</p></article><article class="card"><h3>松开，移除上拉</h3><p>没有其他驱动时，输入可能悬空，原始值<strong>无法保证</strong>。悬空不代表必然随机翻转。</p></article></div><p class="callout">本课的交互模型与独立练习不依赖指定开发板，讲解“上拉电阻 + 按钮接地”的低电平有效原理。STM32/GD32 等芯片资料仅作实现案例；接入硬件后，内部上拉与外部电阻如何选择，仍须核对实际板级设计和型号要求。输入模式、电气门限与允许电压参考 <a href="#source-st">ST AN4899</a>。</p></section>
+<div class="wrap"><div class="hero"><div><div class="tag">原创教材首章 · 原理必读 / C 代码进阶</div><h1 id="overview">从 GPIO 电压到<br>一次可靠的按键事件</h1><p class="hero-intro">从零解释“按下为什么读到 0”，再把抖动的采样变成一次通知。先懂电路，再读程序。</p><div class="meta"><span>无需指定开发板</span><span>人工采样模型</span><span>主机实验 ≠ 硬件验证</span></div></div><aside class="hero-card"><div class="tag">本章成果</div><strong>动作 → 电压 → 逻辑值 → 事件</strong><p>先完成原理检查点；C 语法与可运行状态机是第二层。电源、GND 与输入概念从第 0 节开始解释。</p><p class="small">属于<a href="../learn/engineering-map.html#stage-01">学习地图第 01 阶段</a>，其余章节持续建设。</p></aside></div><nav class="section-nav" aria-label="章节"><a href="#zero-entry">零基础入口</a><a href="#core-idea">输入与门限</a><a href="#circuit-lab">预测电路</a><a href="#bounce-lab">采样时间轴</a><a href="#recall-questions">十题解析</a><a href="#c-advanced">C 进阶</a><a href="gpio-button-reference.html">打印速查</a></nav><main id="main"><noscript><p class="callout">交互需要 JavaScript；电路解释、人工输入、规则、代码、全部练习与答案仍可完整阅读，点击“展开”即可查看。此页不连接真实设备。</p></noscript>
+<section class="content-section" id="chapter-goals"><h2>本章做到什么：两个检查点</h2>
+<p>本章只追一个结果：<strong>从电路解释一次可靠的按键事件</strong>。无需先买开发板，也不指定引脚或芯片厂商。电路、人工输入、程序和习题为本站原创；动画与主机测试不等于真实芯片的电气、时序或抗干扰验证。</p>
+<p>分两层学习，不要求一次跨过全部门槛：</p>
+<ul>
+<li><strong>原理必读：</strong>从第 0 节开始，解释电压参考、GPIO 输入、高阻与上下拉；沿线路预测 0、1 或无法保证；手算原始变化怎样形成一次事件。完成十题中的 1—6、9—10，即可检查这一层。</li>
+<li><strong>C 代码进阶：</strong>先读语法桥梁，再运行独立 C11 状态机；解释启动按住、丢采样和计时回绕。完成第 7—8 题与主机实验。没有 C 基础时，可以先停在第一个检查点，之后回来读代码。</li>
+</ul>
+<p>本页和<a href="gpio-button-reference.html">速查卡</a>属于<a href="../learn/engineering-map.html#stage-01">学习地图第 01 阶段</a>的一章，不能代替整个电路与 C 阶段。GPIO 输出、LED 限流、完整 C 语言基础和缓冲区课程仍在建设中。</p>
+</section>
+<section class="content-section" id="zero-entry"><h2>0. 零基础入口：先认识节点与电压</h2>
+<p><strong>MCU（微控制器）</strong>能运行程序，并通过引脚与外部电路交换信号。<strong>GPIO</strong> 是 General-Purpose Input/Output，即通用输入/输出。输入模式让程序观察引脚的逻辑值；输出模式由程序控制输出驱动电路，具体输出模式留到后续章节。本章只使用数字输入，不要求配置任何厂商寄存器。某个引脚是否支持数字输入、复位时是什么状态，仍须查真实型号手册。</p>
+<p><strong>电压是两个点之间的差。</strong>“GPIO 是 3.3 V”在这里表示 GPIO 节点相对本电路 GND 的电压是 3.3 V。GND 是选定的参考节点，不天然等于大地。VIO 表示与该输入相适配的 I/O 电源，不表示所有 MCU 都使用 3.3 V。两个设备若要直接交换这种电平，必须有设计明确的参考关系；本章先讨论同一低压电路内的节点。</p>
+<p>理想导线直接连在一起的点视作同一个节点；闭合的理想开关也视作直接连接。按钮松开是<strong>断路</strong>；按下是把两个触点连通。GPIO 与 GND 不会因为画在同一页上就成为同一个节点。经过电阻虽然可能有电流路径，但电阻两端可以有电压差，不能因此叫作同一点。真实按钮还有接触电阻与抖动，后面再加上这些限制。</p>
+<p>电流描述电荷流动，单位安培 A；电压单位伏特 V；电阻单位欧姆 Ω。电阻两端的电压差 U、支路电流 I 与阻值 R 满足本章使用的关系 <strong>I = U / R</strong>。例如 10 kΩ = 10000 Ω，1 mA = 0.001 A。不要把“节点有电压”误解为“必须有很大的电流流进 GPIO”。</p>
+<p><strong>入门自检：</strong>GPIO 电压相对谁？相对该电路 GND。GPIO 与 GND 在松开按钮时必然是同一点吗？不是；要看线路是否把它们连通。先解释这两问，再记“按下为零”。</p>
+<p>以后接硬件时先断电核对原理图、供电和仪器接地；不将未知电压或市电接入 GPIO，不随意把不同系统的地短接。需隔离的系统不能用“共地”二字代替设计。本章纸面与主机实验不涉及这些接线操作。</p>
+</section>
+<section class="content-section" id="core-idea"><h2>1. 输入收到电压，程序读到逻辑值</h2>
+<p>手指按下是<strong>动作</strong>；引脚电压是<strong>物理量</strong>；程序读到的 0/1 是数字输入电路判定后的<strong>逻辑值</strong>；应用收到的“按下”是软件定义的<strong>事件</strong>。动作名称不决定逻辑值，逻辑 1 也不是固定 1 V，更不是一次精确电压测量。</p>
+<p><strong>数字输入门限</strong>要看数据手册：常用 <strong>VIL(max)</strong> 表示保证低电平的输入电压上界，<strong>VIH(min)</strong> 表示保证高电平的输入电压下界。在允许输入电压、供电、温度等规定条件内，低于或等于前者的有效输入可保证识别为低，高于或等于后者可保证识别为高。两者之间不保证作何判定，不能创造“半按下”业务状态。实际翻转点也不必等于保证界限；施密特输入还有与先前状态有关的滞回，须另查对应规格。<a href="#source-logic">TI 数据手册阅读指南 §4.5.5—4.5.6、§4.6.1—4.6.3</a>可帮助区分这些概念。</p>
+<p><strong>假设门限练习，非真实器件规格：</strong>设 VIO=3.3 V，允许输入范围暂设为 0—3.3 V，VIL(max)=0.8 V，VIH(min)=2.0 V。只按这组虚构规格推理：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>练习输入</th>
+<th>结论</th>
+<th>原因</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0.2 V</td>
+<td>保证为低（0）</td>
+<td>在允许范围内，且不超过 0.8 V</td>
+</tr>
+<tr>
+<td>1.4 V</td>
+<td>无法保证 0 或 1</td>
+<td>落在两个保证区间之间</td>
+</tr>
+<tr>
+<td>3.0 V</td>
+<td>保证为高（1）</td>
+<td>在允许范围内，且不低于 2.0 V</td>
+</tr>
+<tr>
+<td>−1 V 或 5 V</td>
+<td>不能套用此表接线</td>
+<td>超出这道练习声明的允许范围</td>
+</tr>
+</tbody>
+</table></div>
+<p>这组数只用于练习，不是 STM32/GD32 或任意 MCU 的规格。绝对最大额定值不是推荐工作条件；“耐较高电压”也可能受具体引脚、供电和模式限制。数值最终来自完整料号的数据手册，<a href="#source-st">ST AN4899 §5.1、§5.1.4 与 §6.3</a>只是 STM32 情形的阅读对照。</p>
+<p>数字输入常呈现<strong>高输入阻抗</strong>：它主要观察节点，不像强力电源把节点固定到高或低。但高阻不等于完全没有电流、电容或保护结构。没有外部驱动、上下拉或其他确定偏置时，电荷、漏电和干扰会影响节点，这叫<strong>悬空</strong>。悬空不保证 0，不保证 1，也不保证每次都随机跳动；偶尔一直读到 1 仍不能证明线路可靠。</p>
+<article class="card" id="voltage-exercise"><h3>换一个输入，再预测</h3><p>仍用上文假设器件：允许范围 0—3.3 V，VIL(max)=0.8 V，VIH(min)=2.0 V。若输入改为 1.2 V，你能保证程序读到什么？先选择 0、1 或无法保证，并给出理由。</p><form class="reasoning-form" id="voltage-prediction-form">
+<div class="reasoning-fields"><label class="field">假设器件的输入电压（V）<input type="number" step="any" value="1.2" id="voltage-input" required aria-describedby="voltage-input-help"></label>
+<label class="field">你预测能保证的结果<select id="voltage-prediction" required><option value="">先判断所在区间</option><option value="low">保证低电平（0）</option><option value="high">保证高电平（1）</option><option value="unknown">允许范围内，但无法保证 0/1</option><option value="outside">超出本题允许范围，不能套门限</option></select></label></div>
+<p class="small" id="voltage-input-help">可改电压再试：0.8 V、2.0 V 恰好在保证边界；允许范围两端为 0 V、3.3 V。负数或高于 3.3 V 只能作为纸面判断，不能据此接线。</p>
+<button class="btn primary" type="submit" id="voltage-submit" disabled>提交门限预测</button>
+<p class="feedback" aria-live="polite" id="voltage-feedback">尚未揭晓。先判断允许范围，再比较 VIL(max) 与 VIH(min)。</p>
+</form><details id="voltage-exercise-answer" class="exercise-answer"><summary id="voltage-answer-heading">展开原题 1.2 V 的门限推理</summary>
+<p id="voltage-answer-text">1.2 V 在允许范围内，但高于低电平保证上界、低于高电平保证下界，因此不能保证读到 0 或 1。输入仍在允许范围不代表有可靠的数字判定；这是假设门限练习，不能用于实物接线。</p>
+</details>
+</article></section>
+<section class="content-section" id="pull-resistors"><h2>2. 上拉、下拉与有效电平</h2>
+<p>先沿这条理想线路推理：<strong>VIO → 电阻 R → GPIO 节点 → 按钮 → GND</strong>。GPIO 配置为数字输入。</p>
+<p><strong>松开：</strong>按钮断路，输入只需很小的漏电流时，电阻压降通常很小，GPIO 节点被拉向 VIO；满足高电平门限才读到 1。上拉提供的是默认偏置，不是在命令程序“已经按下”。</p>
+<p><strong>按下：</strong>按钮将 GPIO 节点可靠连接到 GND，节点电压接近 0，满足低电平门限才读到 0。同时 VIO → R → 按钮 → GND 形成电流支路；主要电流经过电阻和按钮，不是全部灌进 GPIO 输入。</p>
+<p>算术例子：VIO=3.3 V，R=10 kΩ，忽略按钮电阻，则按下电流约为 <strong>3.3 / 10000 A = 0.33 mA</strong>。这不是通用选型建议。把 R 换成导线会在按下时把电源直接接地，产生短路风险；R 过小则增加按下电流和功耗。R 也不是越大越好：漏电引起的压降、寄生电容充放电、线路与环境干扰都要纳入门限裕量和响应要求。<a href="#source-ti">TI SCEA094 的 Design Considerations</a>讨论了硬件方案里的漏电压降与电阻/功耗取舍，并未给本章软件算法背书。</p>
+<p><strong>下拉迁移：</strong>电阻改接 GPIO 到 GND，按钮改接 GPIO 到合适的 VIO，松开就读 0，按下读 1。所谓<strong>低电平有效</strong>，只是业务上的有效状态用电气低表示；高电平有效则相反，不评价信号质量。不要死记“按钮就是零”，而要追踪节点连到了哪里。</p>
+<p>内部与外部上拉都能提供偏置，但内部电阻范围、复位时是否启用、低功耗时是否保留，依器件而定。板上若已有上下拉或其他驱动，必须一起画入线路。下方模型只演示单电阻和按钮，省略保护、输入漏电与电容，不能当完整原理图或实际接线指南。<a href="#source-st">ST AN4899 §4.2—4.3.1</a>解释其 STM32 输入/输出缓冲及上下拉情形；其中 §5.1.5 的开漏/I²C 计算不能充作所有按钮的电阻表。</p>
+</section>
 <section class="content-section" id="circuit-lab"><div class="section-head"><span class="num" aria-hidden="true">02 /</span><h2>先预测，再改变线路</h2></div><p>先设置<strong>下一次</strong>要应用的电路，再预测原始值，最后揭晓。下方图和读数始终对应“已应用”状态；只改设置不会提前更新答案。</p><div class="lab"><div class="lab-grid"><div><div class="applied" id="applied-state"><span>已应用：上拉</span><span>电阻接入</span><span>按钮松开</span></div><figure class="circuit-figure"><div id="circuit-svg"><svg viewBox="0 0 420 350" role="img" aria-labelledby="circuit-title circuit-desc"><title id="circuit-title">已应用的上拉按键电路</title><desc id="circuit-desc">电阻接入，按钮松开。GPIO节点位于电阻和按钮之间。</desc><defs><marker id="current-arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0L8 4L0 8" fill="none" stroke="#22664f"/></marker></defs><text x="210" y="23" text-anchor="middle" font-size="17">允许的 I/O 电源</text><path d="M90 40H290M90 310H290M90 185H350" fill="none" stroke="#718574" stroke-width="3"/><path d="M90 40V75m0 70v40" fill="none" stroke="#718574" stroke-width="3"/><rect x="79" y="75" width="22" height="70" fill="#eef2e9" stroke="#21382e" stroke-width="3"/><text x="18" y="114" font-size="16">上拉 R</text><path d="M290 185v35m0 50v40" fill="none" stroke="#718574" stroke-width="3"/><path d="M290 220l28 40" fill="none" stroke="#21382e" stroke-width="3"/><circle cx="290" cy="220" r="4" fill="#21382e"/><circle cx="290" cy="270" r="4" fill="#21382e"/><text x="316" y="250" font-size="16">松开</text><path d="M90 40V185H290" stroke="#22664f" stroke-width="4" fill="none" opacity=".7" stroke-dasharray="6 5"/><circle cx="210" cy="185" r="7" fill="#22664f"/><text x="220" y="165" font-size="17">GPIO 输入</text><path d="M190 310v12m-16 0h32m-26 7h20m-14 6h8" fill="none" stroke="#21382e" stroke-width="2"/><text x="226" y="333" font-size="17">GND</text></svg></div><figcaption>原创逻辑电路示意，省略输入保护等细节；非硬件波形、非实际接线指南。绿色表示当前有效连接；仅在形成电源—电阻—地回路时画支路电流箭头。</figcaption></figure><dl class="circuit-readout"><dt>原始值</dt><dd id="raw-value">1 · 高电平</dd><dt>电压区域</dt><dd id="voltage-region">在本理想模型中接近允许的 I/O 电源；实际门限查数据手册。</dd><dt>线路解释</dt><dd id="current-path">上拉提供确定的高电平；按钮断开，无电源到地的闭合支路，忽略微小输入漏电。</dd></dl></div><form id="prediction-form"><div class="tag">设置下一次状态</div><div class="fields"><label class="field full">电路形式<select id="pending-mode"><option value="up">上拉 · 按钮接地</option><option value="down">下拉 · 按钮接允许电源</option></select></label><label class="field">电阻<select id="pending-resistor"><option value="connected">接入电阻</option><option value="removed">移除电阻</option></select></label><label class="field">按钮<select id="pending-button"><option value="released">松开按钮</option><option value="pressed">按下按钮</option></select></label><label class="field full">你预测的原始逻辑值<select id="prediction" required><option value="">先想线路，再选择</option><option value="0">应为 0</option><option value="1">应为 1</option><option value="unknown">不保证</option></select></label></div><p class="small" id="pending-summary">下一次：上拉，接入电阻，松开按钮。</p><button class="btn primary" type="submit" id="apply-circuit" disabled>提交预测并应用</button><div class="feedback" id="circuit-feedback" aria-live="polite">先选下一次状态和预测，再提交。试试按下，随后移除电阻并松开，最后迁移到下拉电路。</div></form></div></div></section>
-<section class="content-section" id="bounce-lab"><div class="section-head"><span class="num" aria-hidden="true">03 /</span><h2>一次动作，为什么出现三个下降沿？</h2></div><p>机械触点可能短暂反复通断，一次按下形成多个电气边沿，这叫触点抖动。<strong>上拉解决悬空问题，不能保证消除抖动。</strong>见 <a href="#source-ti">TI：Debounce a Switch</a>。</p><p>先看本课<strong>人为构造的数据</strong>：初始原始值为 1；在 2、3、4、5、6 ms 依次变为 0、1、0、1、0，然后保持 0 到 20 ms。它有 3 个原始下降沿。若每个下降沿都加一次，一次动作就会被多计。</p><div class="lab"><div class="timeline-fields"><label class="field">连续稳定阈值（ms）<input id="threshold" type="number" value="5" min="1" max="12" step="1" inputmode="numeric"></label><label class="checkbox"><input id="extended" type="checkbox"><span>增加释放与第二次按下<br><span class="small">24/25/26 ms：1/0/1；34/35/36 ms：0/1/0；保持至 50 ms。</span></span></label></div><p class="small" id="timeline-rule">每 1 ms 采样；候选值连续不变满 5 ms 才更新稳定值。任何原始值改变都重新计时。</p><svg class="wave" id="timeline-svg" viewBox="0 0 480 235" role="img" aria-labelledby="wave-title wave-desc"><title id="wave-title">人工抖动与稳定过滤时间轴</title><desc id="wave-desc">原始值在2、3、4、5、6毫秒反复切换；默认阈值5毫秒，11毫秒确认一次按下。</desc><g id="wave-content"></g></svg><p class="small">人工教学样例，非硬件波形。竖线为当前采样时刻，曲线仅显示已回放的部分；可以逐步看候选值何时开始计时。</p><div class="metrics"><div class="metric"><span>当前时间 / ms</span><strong id="sample-time">0</strong></div><div class="metric"><span>原始 / 稳定值</span><strong id="sample-values">1 / 1</strong></div><div class="metric"><span>原始下降沿</span><strong id="fall-count">0</strong></div><div class="metric"><span>稳定按下事件</span><strong id="press-count">0</strong></div></div><div class="controls"><button class="btn primary" id="timeline-step">前进 1 ms</button><button class="btn" id="timeline-play">完整回放</button><button class="btn" id="timeline-finish">查看完整结果</button><button class="btn" id="timeline-reset">重置回放</button></div><div class="feedback" id="timeline-feedback" aria-live="polite">初始 raw=1，stable=1；尚未产生按下事件。</div><ol class="event-log" id="event-log"><li>尚无稳定值变化。</li></ol></div><p class="callout"><strong>默认答案：11 ms，1 次按下。</strong>最后一次变为 0 在 6 ms，连续到 11 ms 才满 5 ms。保持 0 不再计数。5 ms 是教学参数；过短可能把抖动当事件，过长会增加延迟并忽略持续时间不足的短按。真实参数需要测量。</p></section>
-<section class="content-section" id="lesson-notes"><div class="notes-toolbar"><button class="btn" id="expand-notes">展开全部笔记</button><button class="btn" id="collapse-notes">收起全部笔记</button></div><div class="section-head"><span class="num" aria-hidden="true">04 /</span><h2>把答案变成能解释的规则</h2></div><details open id="raw-vs-event"><summary>原始值、稳定值与事件，分别是什么？</summary><p>原始值是一次 GPIO 采样结果；稳定值是过滤器已经接受的状态；事件是稳定值从松开转成按下时的一次通知。本课上拉电路中，稳定值 1→0 产生按下事件；之后持续为 0 不再通知。下拉电路的有效电平要相应改成 1。</p><div class="table-wrap"><table><thead><tr><th>电路</th><th>电阻</th><th>按钮</th><th>理想模型的原始值</th></tr></thead><tbody><tr><td>上拉，按钮接地</td><td>接入</td><td>松开</td><td>1</td></tr><tr><td>上拉，按钮接地</td><td>接入或移除</td><td>按下并可靠接地</td><td>0</td></tr><tr><td>上拉，按钮接地</td><td>移除</td><td>松开，无其他驱动</td><td>无法保证</td></tr><tr><td>下拉，按钮接允许电源</td><td>接入</td><td>松开 / 按下</td><td>0 / 1</td></tr><tr><td>下拉，按钮接允许电源</td><td>移除</td><td>松开，无其他驱动</td><td>无法保证</td></tr></tbody></table></div></details>
-<details id="filter-rule"><summary>最小例子：连续稳定满 5 ms 才接受</summary><p>每 1 ms 采样一次。原始值一变，就把它记作新的候选值，并从当前时刻重新计时；候选值连续保持满阈值，才替换稳定值。下面是算法示意，时间来自单调计时，未包含具体芯片驱动、计时器回绕与并发处理。</p><pre><code>初始：candidate = stable = 1，since = 0
+<section class="content-section" id="bounce-lab"><div class="section-head"><span class="num" aria-hidden="true">03 /</span><h2>一次动作，为什么出现三个下降沿？</h2></div><p>raw 从 1 变 0 叫下降沿，从 0 变 1 叫上升沿；边沿是一次采样数据变化，不天然等于一次手指动作。</p><p>机械触点可能短暂反复通断，一次按下形成多个电气边沿，这叫触点抖动。<strong>上拉解决悬空问题，不能保证消除抖动。</strong>见 <a href="#source-ti">TI：Debounce a Switch</a>。</p><p>先看本课<strong>人为构造的数据</strong>：初始原始值为 1；在 2、3、4、5、6 ms 依次变为 0、1、0、1、0，然后保持 0 到 20 ms。它有 3 个原始下降沿。若每个下降沿都加一次，一次动作就会被多计。</p><p class="callout"><strong>时间原点：</strong>图上 t=0 前，已用释放电平完成至少所选阈值的确认；默认是 5 ms。预热不显示在图内。这里不是刚开机就开始按的波形；改变阈值时，基线仍代表已确认释放。只讨论采样到的值，采样间毛刺可能未被看见。</p><div class="lab"><div class="timeline-fields"><label class="field">候选确认时长（ms）<input id="threshold" type="number" value="5" min="1" max="12" step="1" inputmode="numeric"></label><label class="checkbox"><input id="extended" type="checkbox"><span>增加释放与第二次按下<br><span class="small">24/25/26 ms：1/0/1；34/35/36 ms：0/1/0；保持至 50 ms。</span></span></label></div><p class="small" id="timeline-rule">每 1 ms 采样；显示前已完成 5 ms 释放确认；观测到候选未变满 5 ms 才更新稳定值。采样间仍可能有未看见的毛刺。</p><svg class="wave" id="timeline-svg" viewBox="0 0 480 235" role="img" aria-labelledby="wave-title wave-desc"><title id="wave-title">人工抖动与稳定过滤时间轴</title><desc id="wave-desc">原始值在2、3、4、5、6毫秒反复切换；默认阈值5毫秒，11毫秒确认一次按下。</desc><g id="wave-content"></g></svg><p class="small">采样记录：人工教学样例，非硬件波形。竖线为当前采样时刻，曲线仅显示已回放的部分；可以逐步看候选值何时开始计时。</p><div class="metrics"><div class="metric"><span>当前时间 / ms</span><strong id="sample-time">0</strong></div><div class="metric"><span>原始 / 稳定值</span><strong id="sample-values">1 / 1</strong></div><div class="metric"><span>原始下降沿</span><strong id="fall-count">0</strong></div><div class="metric"><span>稳定按下事件</span><strong id="press-count">0</strong></div></div><div class="controls"><button class="btn primary" id="timeline-step">前进 1 ms</button><button class="btn" id="timeline-play">完整回放</button><button class="btn" id="timeline-finish">查看完整结果</button><button class="btn" id="timeline-reset">重置回放</button></div><div class="feedback" id="timeline-feedback" aria-live="polite">t=0 前已确认释放；此刻 raw=1，stable=1，尚无按下事件。</div><ol class="event-log" id="event-log"><li>尚无稳定值变化。</li></ol></div><p class="callout"><strong>默认答案：11 ms，1 次按下。</strong>前提是 t=0 前已确认释放；最后一次观察到变为 0 在 6 ms，至 11 ms 才满 5 ms。保持 0 不再计数。5 ms 是教学参数；过短可能把抖动当事件，过长会增加延迟并忽略持续时间不足的短按。真实参数需要测量。</p></section>
+<section class="content-section" id="lesson-notes"><div class="notes-toolbar"><button class="btn" id="expand-notes">展开全部笔记</button><button class="btn" id="collapse-notes">收起全部笔记</button></div><h2>3. 从采样推导一次事件</h2>
+<details id="raw-vs-event" open><summary>原始值、候选值、稳定值与事件</summary>
+<p><strong>raw</strong> 是这一次采样得到的电平；<strong>candidate</strong> 是正在等待确认的候选电平；<strong>stable</strong> 是过滤器已接受的状态；<strong>event</strong> 是一次通知。稳定状态不变，事件就不会每次采样都重复发出。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>电路与条件</th>
+<th>松开</th>
+<th>可靠按下</th>
+<th>一个按下事件</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>上拉，按钮接地</td>
+<td>1</td>
+<td>0</td>
+<td>已接受的 stable 从 1→0</td>
+</tr>
+<tr>
+<td>下拉，按钮接允许的 VIO</td>
+<td>0</td>
+<td>1</td>
+<td>已接受的 stable 从 0→1</td>
+</tr>
+<tr>
+<td>电阻移除，松开且无其他驱动</td>
+<td>无法保证</td>
+<td>由按钮连接的地或电源决定</td>
+<td>先恢复可靠默认电平</td>
+</tr>
+</tbody>
+</table></div>
+<p>上拉和下拉的过滤规则相同，只有“哪个电平代表按下”不同。代码将映射集中在 activeHigh：rawHigh 表示采样为高；activeHigh 表示高是否对应按下，两者相等才表示物理输入正在表达按下。原始边沿、已接受的状态变化与业务事件应分开记录。</p>
+</details>
+<details id="filter-rule" open><summary>观察候选满阈值：为什么是 11 ms</summary>
+<p>先用<strong>已确认释放的基线</strong>理解核心规则，暂时不讨论上电初始化。每 1 ms 先读取该时刻输入，再更新候选，最后检查时长。raw 与 candidate 不同，就更新候选，并将 since 记成此刻；候选达到阈值后才接受为 stable。伪代码只是理解桥梁，完整契约与 C 实现在进阶层。</p>
+<pre><code>前提：已经确认释放，candidate = stable = 1
 每次采样 raw，当前时刻 now：
-  如果 raw != candidate：
-    candidate = raw
-    since = now
-  如果 candidate != stable 且 now - since &gt;= threshold：
+  若 raw != candidate：candidate = raw；since = now
+  若 candidate != stable 且 now - since &gt;= threshold：
     stable = candidate
-    如果 stable == 0：发出一次按下事件</code></pre><p>人工示例阈值 5 ms：候选 0 在 2、4 ms 开始后又被打断；6 ms 再开始，11 ms 才被接受。原始下降沿是 2、4、6 ms，共 3 个；稳定下降沿只有 11 ms 的 1 个。</p><p>拓展示例：24/25/26 ms 依次变为 1/0/1，34/35/36 ms 依次变为 0/1/0。阈值 5 ms 时，31 ms 接受释放，41 ms 确认第二次按下，总计 2 次；阈值 12 ms 时，释放候选保持不足阈值，第二次按下不会成为新的事件。这演示了延迟与遗漏短状态的取舍。</p></details>
-<details id="common-mistakes"><summary>三个误区与一个故障练习</summary><ul><li>“按钮按下就是 1”：先沿线路确定电平，再定义业务上的按下。</li><li>“装了上拉就不用消抖”：上拉提供默认电平，触点仍可能反复通断。</li><li>“悬空一定会随机跳”：悬空只表示无法保证有效值；恰好读到某个值不证明设计可靠。</li></ul><p>故障练习：一次按下被计了三次。先核对计数是否直接绑定原始下降沿；再用本页人工数据重现，改为稳定值变化触发事件。上板时检查真实原始波形、采样周期和过滤阈值，不能只凭“看起来好了”确认根因。</p></details>
-<details id="validation"><summary>如何验收与上板验证</summary><p>离线验收：解释有上拉松开、按下接地、无上拉松开的三个状态；数出 3 个原始下降沿；说明默认 11 ms 确认一次并持续不重复；加入释放与第二次按下确认 2 次，改变阈值解释延迟。</p><p>上板前查实际板卡原理图、完整芯片型号、GPIO 输入门限和允许电压，再确定引脚与上下拉。不要把未知 5V 信号接入 GPIO。本文是通用输入教学，型号与版本要以实际芯片数据手册、参考手册和所用库版本为准。</p><p>测量松开与按下的电压；用逻辑分析仪或示波器观察短暂抖动，万用表不能证明短暂抖动不存在。记录采样周期、过滤参数、原始波形、稳定状态与事件计数，并加入释放、短按、第二次按下的测试。此页尚未完成这些硬件实测。</p></details>
-<details id="recall-questions"><summary>合上解释，再试三个问题</summary><ol><li>拿掉上拉，按钮松开且没有别的驱动，为什么不能保证原始值？</li><li>把电路改成下拉、按钮接允许的 I/O 电源：松开与按下各读什么？业务上的按下事件应识别哪一个稳定边沿？</li><li>同一人工输入将阈值改成 10 ms，第一次何时确认？阈值更大要付出什么代价？</li></ol><details id="recall-answers"><summary>核对推理</summary><p>1. 输入没有确定的高或低驱动，读数不受设计保证。2. 松开 0、按下 1；稳定值 0→1 作为按下事件。3. 最后一次变为 0 在 6 ms，满 10 ms 是 16 ms；响应更晚，短状态可能被忽略。</p></details><p>稍后再不看答案解释一次，或换一个电路推理。哪里说不清，可以继续向助手追问，并指出你卡在“电路、电平、采样还是事件”的哪一步。</p></details></section>
-<section class="content-section" id="sources"><div class="section-head"><span class="num" aria-hidden="true">05 /</span><h2>从原理资料继续查</h2></div><ul class="source-list"><li id="source-st"><a href="https://www.st.com.cn/resource/en/application_note/an4899-guidelines-for-gpio-hardware-settings-and-lowpower-consumption-on-stm32-mcus-stmicroelectronics.pdf" target="_blank" rel="noopener noreferrer">ST AN4899：GPIO 硬件设置与低功耗</a><br>STM32 实现案例参考：输入模式、上拉下拉、电气限制；不能把其寄存器配置套用到其他 MCU，具体门限仍需查所选芯片数据手册。</li><li id="source-ti"><a href="https://www.ti.com/document-viewer/lit/html/scea094" target="_blank" rel="noopener noreferrer">TI：Debounce a Switch</a><br>机械开关抖动与消抖思路；本页人工数据和 5 ms 参数用于教学，不冒充测量结果。</li><li id="source-teach"><a href="https://github.com/mattpocock/skills/blob/main/skills/productivity/teach/SKILL.md?plain=1" target="_blank" rel="noopener noreferrer">Matt Pocock teach：互动教学方法</a><br>采用一个成果一节课、必要知识先行、立即反馈、回忆与迁移练习，并配独立打印速查。内容为本站原创。</li></ul></section>
-<section class="content-section" id="next-lesson"><h2>带着一个能解释的结果离开</h2><p>完成标准是能从线路推到电平，再用采样规则解释一次按下事件。下一节“GPIO 输出与 LED 限流”建设中；现在可以返回主线或打印速查，稍后做一次回忆练习。</p><div class="next-links"><a href="gpio-button-reference.html">打开可打印速查</a><a href="../learn/engineering-map.html#stage-01">返回学习地图 · 第 01 阶段</a></div></section></main><footer>原创小课 · GPIO 按键 · 2026-10-17<br>离线交互模型，不连接设备；硬件效果仍需按具体型号验证。</footer></div>
+    若 stable 是按下电平：发出一次按下事件
+</code></pre>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>教材时刻</th>
+<th>raw / candidate</th>
+<th>since</th>
+<th>已观察时长</th>
+<th>stable / 结果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0—1 ms</td>
+<td>1 / 1</td>
+<td>−5（预热起点）</td>
+<td>已观察 5—6 ms</td>
+<td>1，不发事件</td>
+</tr>
+<tr>
+<td>2 ms</td>
+<td>0 / 0</td>
+<td>2</td>
+<td>0 ms</td>
+<td>1，等待</td>
+</tr>
+<tr>
+<td>3 ms</td>
+<td>1 / 1</td>
+<td>3</td>
+<td>0 ms</td>
+<td>1，候选改变</td>
+</tr>
+<tr>
+<td>4 ms</td>
+<td>0 / 0</td>
+<td>4</td>
+<td>0 ms</td>
+<td>1，重新计时</td>
+</tr>
+<tr>
+<td>5 ms</td>
+<td>1 / 1</td>
+<td>5</td>
+<td>0 ms</td>
+<td>1，再次改变</td>
+</tr>
+<tr>
+<td>6 ms</td>
+<td>0 / 0</td>
+<td>6</td>
+<td>0 ms</td>
+<td>1，新的候选</td>
+</tr>
+<tr>
+<td>10 ms</td>
+<td>0 / 0</td>
+<td>6</td>
+<td>4 ms</td>
+<td>1，尚不足 5 ms</td>
+</tr>
+<tr>
+<td>11 ms</td>
+<td>0 / 0</td>
+<td>6</td>
+<td>5 ms</td>
+<td>0，发一次按下</td>
+</tr>
+<tr>
+<td>12—20 ms</td>
+<td>0 / 0</td>
+<td>6</td>
+<td>继续增加</td>
+<td>0，保持不重复</td>
+</tr>
+</tbody>
+</table></div>
+<p>表中 since 用教材相对时间；默认预热起点为 −5 ms，显示 t=0 时已经观察 5 ms。阈值为 T 时可将预热起点记为 −T，负数不是时钟倒退。</p>
+<p>6、7、8、9、10、11 是六个采样时刻，6 到 11 才经过五毫秒。不能把“五个样点”当成“五毫秒”。阈值换成 10 ms 时，最后的候选从 6 ms 起算，16 ms 才接受。</p>
+<p>扩展输入在 24/25/26 ms 是 1/0/1，在 34/35/36 ms 是 0/1/0。默认 5 ms 阈值：26+5=31 ms 接受释放，36+5=41 ms 接受第二次按下。阈值为 10 ms（或交互中的 12 ms）时，释放候选从 26 到 34 只维持 8 ms，未成为 stable，所以没有第二次按下。这体现延迟与短状态遗漏的取舍，不是计数器失灵。</p>
+</details>
+<div id="sampling-limits"><h3>先预测边界，再看理由</h3><p>“稳定”在软件里只指<strong>观察到的采样未变</strong>，不能证明两次采样之间所有电气时刻都没变化。以下四例全部是人工数据，不是实测波形。先口头预测，再展开理由；代码进阶层说明本实现如何处理它们。</p>
+<article class="card scenario-card" id="scenario-boot"><h3>启动就按住：会立即报一次按下吗？</h3><p>输入：上拉低电平有效；从初始化起 raw 一直为 0，每 1 ms 采样，阈值 5 ms。之后先释放并确认，再按下并确认。</p>
+<form class="reasoning-form" id="scenario-boot-form"><label class="field">先预测结果<select id="scenario-boot-prediction" required><option value="">选择后再看推理</option><option value="at-5">启动 5 ms 后发一次按下</option><option value="every-sample">启动按住时每次采样都发按下</option><option value="after-release">初始按住不发；确认释放后，新按下才发</option></select></label><button class="btn primary" type="submit" id="scenario-boot-submit" disabled>提交案例预测</button><p class="feedback" id="scenario-boot-feedback" aria-live="polite">尚未揭晓；先按输入与本章策略推理。</p></form>
+<details id="scenario-boot-answer" class="scenario-answer exercise-answer"><summary>展开推理</summary>
+<p>本章策略不为初始按住产生 PRESSED。初始状态要先确认，且只有确认过释放才允许下一次按下。若在 21 ms 首次读到释放，26 ms 接受释放；27 ms 再次读到按下，32 ms 才发按下。启动策略是产品选择，并非所有按钮都应如此。原 11 ms 示例的 t=0 前已确认释放，不能将它当作开机后 11 ms 的承诺。</p>
+</details>
+</article>
+<article class="card scenario-card" id="scenario-short-release"><h3>短释放：阈值越大一定越好吗？</h3><p>输入：先按原波形确认一次按下；26 ms 开始的释放候选在 34 ms 被下一次按下打断，只有 8 ms。比较阈值 5 ms 与 10 ms。</p>
+<form class="reasoning-form" id="scenario-short-release-form"><label class="field">先预测结果<select id="scenario-short-release-prediction" required><option value="">选择后再看推理</option><option value="both">两个阈值都在 41 ms 得到第二次按下</option><option value="filtered">5 ms 可接受释放；10 ms 吞掉短释放</option><option value="more-events">阈值越大，第二次按下越容易触发</option></select></label><button class="btn primary" type="submit" id="scenario-short-release-submit" disabled>提交案例预测</button><p class="feedback" id="scenario-short-release-feedback" aria-live="polite">尚未揭晓；先按输入与本章策略推理。</p></form>
+<details id="scenario-short-release-answer" class="scenario-answer exercise-answer"><summary>展开推理</summary>
+<p>5 ms 阈值在 31 ms 接受释放、41 ms 接受第二次按下。10 ms 阈值没有接受这次释放，稳定状态一直是按住，因此不会为后来同一按下电平再发第二个按下。阈值增大可抑制更长的短状态，也会漏掉本来希望识别的快速操作。</p>
+</details>
+</article>
+<article class="card scenario-card" id="scenario-gap"><h3>长间隔：6 ms 之后到 100 ms 才再采样</h3><p>输入：已确认释放；6 ms 采到按下，100 ms 才再调用且仍按下。阈值 5 ms，允许最大调用间隔 maxGapMs=1。之后恢复每 1 ms 调用。</p>
+<form class="reasoning-form" id="scenario-gap-form"><label class="field">先预测结果<select id="scenario-gap-prediction" required><option value="">选择后再看推理</option><option value="100">100 ms：已经过去 94 ms</option><option value="105">105 ms：100 ms 重计，之后按约定采样</option><option value="never">以后任何按下都无法识别</option></select></label><button class="btn primary" type="submit" id="scenario-gap-submit" disabled>提交案例预测</button><p class="feedback" id="scenario-gap-feedback" aria-live="polite">尚未揭晓；先按输入与本章策略推理。</p></form>
+<details id="scenario-gap-answer" class="scenario-answer exercise-answer"><summary>展开推理</summary>
+<p>不能说观察到了 94 ms 连续稳定。中间没有采样，本实现记录 gapSeen，并从 100 ms 重新累计候选；之后调用满足契约，最早 105 ms 才接受按下。漏掉的完整按压无法恢复；增加阈值也补不回观测。</p>
+</details>
+</article>
+<article class="card scenario-card" id="scenario-glitch"><h3>采样间毛刺：两个点相同，期间一定没变化吗？</h3><p>输入：每 1 ms 采样，0 ms 与 1 ms 都读到 1；人工设定在 0.3—0.5 ms 曾出现一个低脉冲。</p>
+<form class="reasoning-form" id="scenario-glitch-form"><label class="field">先预测结果<select id="scenario-glitch-prediction" required><option value="">选择后再看推理</option><option value="always-detect">每 1 ms 采样一定会发现它</option><option value="may-miss">它可能完全落在采样间，软件没有看见</option><option value="threshold">只把消抖阈值调小，就一定能发现</option></select></label><button class="btn primary" type="submit" id="scenario-glitch-submit" disabled>提交案例预测</button><p class="feedback" id="scenario-glitch-feedback" aria-live="polite">尚未揭晓；先按输入与本章策略推理。</p></form>
+<details id="scenario-glitch-answer" class="scenario-answer exercise-answer"><summary>展开推理</summary>
+<p>两个观测值都为 1，软件可能完全没看见这段 0.2 ms 脉冲。缩短消抖阈值不保证发现未采到的输入。若需求必须捕获这种脉冲，要重新设计采样或硬件捕获；这也不是过压保护或安全停机电路的替代方案。</p>
+</details>
+</article>
+</div>
+<details id="common-mistakes"><summary>误区与故障：按一次却计三次</summary>
+<p>三个常见误区：<strong>“按下就是 1”</strong>混淆动作与电平；<strong>“上拉等于消抖”</strong>混淆偏置与时间过滤；<strong>“悬空必定随机跳”</strong>把无法保证误当成某种固定表现。</p>
+<p>故障：一次按下被计三次。先保存原始输入、stable、事件和业务计数，不先盲目增大延时。依次问：原始波形是否多次跳变？stable 是否也多次变化？业务计数是否与一个 PRESSED 一一对应？采样是否按约定进行？节点是否有可靠偏置？</p>
+<p>若 raw 抖动、stable 只变一次但业务加三次，要查重复消费事件；若 stable 也反复变，查阈值、采样与真实抖动；若节点悬空或电压落在未保证区，先修电路与配置。修复后重放同一输入，再加入保持、释放、短按和第二次按下回归。没有真实波形时只能提出排查假设，不能宣布硬件根因已经确认。</p>
+</details>
+<div id="recall-questions"><div class="notes-toolbar"><button class="btn primary" type="button" id="print-exercises">只打印十道练习（不含答案）</button></div><p class="print-hint">平时可逐题展开解析；此按钮只改变本次打印，取消或完成后恢复。关闭 JavaScript 时，先逐项展开解析，再用浏览器打印完整章节。</p><h3>十个独立练习：先写答案，再展开解析</h3><p>不要只说对错；写出节点、门限、候选时间或事件的理由。第 7—8 题可在 C 进阶层之后再做。</p><div class="card worksheet-input" id="exercise-input-record"><h4>第 5—6 题共用的原始采样输入</h4><p>t=0 前已经确认释放，预热时长至少等于所选阈值；t=0 的原始值 raw=1。每 1 ms 采样，按该时刻输入更新。</p><p>原输入：2/3/4/5/6 ms 的 raw 依次为 0/1/0/1/0。扩展输入还加入 24/25/26 ms 的 1/0/1，以及 34/35/36 ms 的 0/1/0。未列出的时刻保持前值，最后保持到 50 ms；阈值按各题给定。</p></div><div id="recall-answers">
+<article class="card exercise" id="exercise-1"><h3>1. 输入一直读到 1，能证明上拉已经正确接入吗？</h3><details id="exercise-answer-1" class="exercise-answer"><summary>解析与错误原因</summary>
+<p>不能。高阻悬空也可能暂时保持高。应核对电路、输入配置与电压；一次或多次相同读数都不能代替确定偏置。错在把现象当作设计保证。</p>
+</details>
+</article>
+<article class="card exercise" id="exercise-2"><h3>2. 假设门限为 0.8 V / 2.0 V，允许范围 0—3.3 V，测到 1.4 V，可以定义为“半按下”吗？</h3><details id="exercise-answer-2" class="exercise-answer"><summary>解析与错误原因</summary>
+<p>不能。1.4 V 在该假设规格的数字输入未保证区，不是第三种可靠按键状态；应排查电路与电气条件。该门限不是真实器件规格。</p>
+</details>
+</article>
+<article class="card exercise" id="exercise-3"><h3>3. VIO=3.3 V、R=4.7 kΩ，忽略按钮电阻，按下电流约多少？把 R 换成导线是否更可靠？</h3><details id="exercise-answer-3" class="exercise-answer"><summary>解析与错误原因</summary>
+<p>I≈3.3/4700 A≈0.70 mA。换成导线会在按下时把电源直接接地，有短路风险。算出电流只完成一个条件，仍须核对门限、漏电、功耗及器件允许值。</p>
+</details>
+</article>
+<article class="card exercise" id="exercise-4"><h3>4. 上拉换成下拉，按钮改接合适 VIO，应对哪种稳定变化计一次按下？</h3><details id="exercise-answer-4" class="exercise-answer"><summary>解析与错误原因</summary>
+<p>从稳定释放到稳定按下，即 0→1。过滤规则不变，只改变有效电平映射；原始上升沿也可能抖动，不能直接当按下事件。</p>
+</details>
+</article>
+<article class="card exercise" id="exercise-5"><h3>5. 原人工输入阈值为 10 ms，第一次何时确认？6 到 10 ms 有五个采样点，是否已满 5 ms？</h3><details id="exercise-answer-5" class="exercise-answer"><summary>解析与错误原因</summary>
+<p>第一次在 16 ms（6+10）。6、7、8、9、10 五个时刻之间只有四毫秒，阈值看经过时长，不数样点。前提为 t=0 前已确认释放，且按每 1 ms 时刻调用。</p>
+</details>
+</article>
+<article class="card exercise" id="exercise-6"><h3>6. 扩展输入的释放候选从 26 到 34 ms。5 ms 与 10 ms 阈值分别会发生什么？</h3><details id="exercise-answer-6" class="exercise-answer"><summary>解析与错误原因</summary>
+<p>5 ms：31 ms 接受释放，41 ms 第二次按下，总两次。10 ms：8 ms 释放不够阈值，stable 未离开按住，没有第二次按下。不能只说“大阈值更可靠”，必须结合希望识别的最短操作。</p>
+</details>
+</article>
+<article class="card exercise" id="exercise-7"><h3>7. 已确认释放，6 ms 读到按下，100 ms 才再调用且仍按下。thresholdMs=5、maxGapMs=1，是否应在 100 ms 立即接受？</h3><details id="exercise-answer-7" class="exercise-answer"><summary>解析与错误原因</summary>
+<p>不应。本实现记 gapSeen，并从 100 ms 重计；若后续每 1 ms 调用，105 ms 才接受。中间未观测不等于已经稳定，漏掉的完整动作不能重建。</p>
+</details>
+</article>
+<article class="card exercise" id="exercise-8"><h3>8. 上电已按住，5 ms 后会自动发一次按下吗？怎样才能发第一次？</h3><details id="exercise-answer-8" class="exercise-answer"><summary>解析与错误原因</summary>
+<p>本章策略不会为这次初始按住发按下。先确认初始状态，再确认一次释放，之后的新按下满阈值才发 PRESSED；不能把预确认释放的 11 ms 示范套到刚开机。</p>
+</details>
+</article>
+<article class="card exercise" id="exercise-9"><h3>9. 代码写成 if (raw == 0) count++，持续按住会怎样？应把计数接到哪里？</h3><details id="exercise-answer-9" class="exercise-answer"><summary>解析与错误原因</summary>
+<p>每次采样都会加一，即使电压完全不抖。过滤器只在稳定状态从释放转为按下时返回一次 PRESSED；业务层消费这个事件再加一，而不是把“当前按住”当“刚刚按下”。</p>
+</details>
+</article>
+<article class="card exercise" id="exercise-10"><h3>10. 每 1 ms 采样，两个采样点间有 0.2 ms 低脉冲，是否一定能发现？</h3><details id="exercise-answer-10" class="exercise-answer"><summary>解析与错误原因</summary>
+<p>不能，脉冲可能完全在观测间隙。减少过滤阈值不会补回未采到的信息；需要根据需求设计采样率或硬件捕获。这里的结论来自采样模型，不是对某块板的测量。</p>
+</details>
+</article>
+</div><p>隔一段时间后换个上下拉条件重做，看看是否还能自己推导。点击“展开”不代表已经掌握。</p></div></section>
+<section class="content-section" id="c-advanced"><h2>4. C 代码进阶：可以稍后回来</h2><p>原理层只需理解电路与采样。下面增加语法、启动和调用契约；它们服务于可运行程序，不要求第一次阅读就记住全部字段。</p><details id="c-syntax" open><summary>语法桥梁与阅读顺序</summary>
+<p>先手算上面的状态表，再读这座 C 语法桥梁。它足以帮助理解本例，不等于一页学完 C：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>写法</th>
+<th>在本例中的意思</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>bool、true、false</td>
+<td>一个真/假值；rawHigh=true 表示采样为高，不自动表示按下</td>
+</tr>
+<tr>
+<td>uint32_t</td>
+<td>实现须提供的 32 位无符号整数，本例用它表示毫秒计数；单位写进名字和契约</td>
+</tr>
+<tr>
+<td>typedef struct {...} Button</td>
+<td>将一个按键跨调用保存的状态放在一起；每个按键要有自己的对象</td>
+</tr>
+<tr>
+<td>Button *button、&amp;button</td>
+<td>指针参数让函数修改调用者保存的对象；&amp; 取对象地址，-&gt; 访问指针所指对象的成员</td>
+</tr>
+<tr>
+<td>enum、ButtonEvent</td>
+<td>用名字表示有限种返回结果，比散落 0/1 更清楚</td>
+</tr>
+<tr>
+<td>if、!=、==、&gt;=</td>
+<td>分别是条件判断、不等、相等、大于等于；= 是赋值，不是相等比较</td>
+</tr>
+<tr>
+<td>return</td>
+<td>结束本次调用并返回结果；本例不会在函数里等待时间走完</td>
+</tr>
+</tbody>
+</table></div>
+<p>继续读源码时：! 表示逻辑取反，|| 表示任一条件成立；NULL 是空指针，{0} 将对象成员初始化为零；.字段=按字段名给初值，UINT32_C 构造适合的无符号整数常量，#ifdef 选择是否编译测试分支。注释说明意图，不参与执行。遇到尚不熟悉的声明，可先对照变量表追踪一个样点，再补后续 C 基础；不要求靠猜补齐整门语言。</p>
+<p>先跟踪 candidate（新候选）、sinceMs（候选起点）、stable（确认后的状态）这三个核心量。再看 ready：初始状态是否已满阈值；armed：是否已确认释放、允许下一次按下；gapSeen：是否曾丢失约定的采样间隔。刚初始化时 stable 只是初始采样的占位，ready=false 时不能当作已确认结果。initialized 用于拒绝未初始化或已失效的对象，不是第四种按键电平。</p>
+<p><strong>读一次状态迁移：</strong>候选变化会改 candidate 与 sinceMs；时长不足立即返回 NONE；达到阈值才考虑接受。第一次达到阈值只建立初始 stable，不发按下；若它是释放则 armed=true。之后接受释放会置 armed 并返回 RELEASED；接受按下且 armed=true 才返回 PRESSED，并清除 armed，因而保持按住不连发。</p>
+</details>
+<details id="c-contract" open><summary>先声明策略，再调用接口</summary>
+<p>调用者负责采样，状态机只接收电平和时间：</p>
+<ul>
+<li><strong>初始化：</strong>先提供一个可写的 Button 对象。button_init 返回 bool，空指针或非法参数返回 false；非空对象在失败后保持明确的未初始化状态。必须检查结果。不能把未初始化的任意内存交给 update；零初始化对象可以被安全拒绝。</li>
+<li><strong>输入映射：</strong>rawHigh=true 为电气高，activeHigh=true 表示高有效；上拉按钮接地用 activeHigh=false，下拉按钮接 VIO 用 true。每个对象只由一个执行上下文读写；中断与任务共享须另做同步，volatile 不能替代它。</li>
+<li><strong>启动：</strong>先确认初始状态，不发初始按下。启动已按住时，须先确认释放再允许后来的按下。按下和释放都过滤，长按保持不连发；长按、双击由后续业务层定义。</li>
+<li><strong>调用间隔：</strong>相邻调用间隔超过 maxGapMs，设置 gapSeen，候选从当前采样重新计时，返回 NONE；等于 maxGapMs 仍允许。gapSeen 是历史标志，重新初始化才清除。它不会恢复漏掉的完整按压。</li>
+<li><strong>时间：</strong>单位为毫秒；thresholdMs 与 maxGapMs 都必须大于 0 且小于 2^31 ms，相邻有效调用的真实间隔也必须小于 2^31 ms。使用 uint32_t 计数的模回绕，以无符号差计算经过时长。本实现检测到差值不小于 2^31 时返回 INVALID 并使对象失效，但不能检测完全漏掉一整个计数周期；调用者仍要守约。计数任意倒退、复位或休眠改变计时语义后，须重新初始化。<a href="#source-c11">C11 委员会草案的无符号运算规则</a>只说明算术，不证明真实时间或采样满足条件。</li>
+<li><strong>返回值：</strong>BUTTON_INVALID=-1，BUTTON_NONE=0，BUTTON_PRESSED=1，BUTTON_RELEASED=2。调用者应处理 INVALID；只在 PRESSED 时给业务计数加一。每次 update 只做有限次判断并返回，没有忙等、延时或芯片驱动。</li>
+</ul>
+<p>下方是可下载源文件的核心，完整文件还包含 BUTTON_TEST 条件编译的主机测试。</p>
+</details>
+<details id="c-source"><summary>查看完整 C 核心（可下载文件另含主机测试）</summary><pre><code id="button-c-source">/******************************************************************************
+ * @file button.c
+ * @brief Original, vendor-independent teaching example for embedded-notes.
+ * @version V1.0 2026-10-17
+ *
+ * Host build: cc -std=c11 -Wall -Wextra -Werror -pedantic -DBUTTON_TEST
+ *               button.c -o button-test
+ * Run: ./button-test
+ * Define BUTTON_TEST only for the host executable; omit it for a module object.
+ *
+ * Interface contract:
+ * - Supply a uint32_t-capable C11 implementation and sampled bool input levels.
+ * - Initialize before use. A zeroed object can be rejected safely, but reading an
+ *   arbitrary uninitialized automatic object is undefined behavior in C.
+ * - One execution context owns an object. Do not modify its fields externally.
+ * - ready means the initial observed level qualified; armed means a release was
+ *   qualified. Initial held input never creates PRESSED: release, then press.
+ * - thresholdMs and maxGapMs are both in [1, 2^31 - 1] ms. The caller guarantees
+ *   the REAL interval between calls is less than 2^31 ms. Unsigned subtraction
+ *   handles modulo wrap, not an unobserved full counter cycle or clock reset.
+ * - A detected delta &gt;=2^31 invalidates the object; reinitialize. A smaller gap
+ *   &gt;maxGapMs sets gapSeen and restarts evidence without inventing missed input.
+ * - A filtered transition to release emits RELEASED, including the first release
+ *   after boot-held qualification. gapSeen stays true until reinitialization.
+ * - Repeated observations at one timestamp do not advance elapsed time. Software
+ *   only observes call times, not every electrical change between them.
+ * No GPIO driver, target firmware, electrical measurement or hardware validation.
+ *****************************************************************************/
+
+#include &lt;stdbool.h&gt;
+#include &lt;stddef.h&gt;
+#include &lt;stdint.h&gt;
+
+#ifdef BUTTON_TEST
+#include &lt;stdio.h&gt;
+#endif
+
+#define BUTTON_TIME_LIMIT UINT32_C(0x80000000)
+
+typedef enum {
+    BUTTON_INVALID = -1,
+    BUTTON_NONE,
+    BUTTON_PRESSED,
+    BUTTON_RELEASED
+} ButtonEvent;
+
+typedef struct {
+    bool initialized;
+    bool activeHigh;
+    bool candidate;
+    bool stable;
+    bool ready;
+    bool armed;
+    bool gapSeen;
+    uint32_t sinceMs;
+    uint32_t lastMs;
+    uint32_t thresholdMs;
+    uint32_t maxGapMs;
+} Button;
+
+/**
+ * @brief Start qualification without emitting an initial pressed event.
+ * @param[in,out] button Valid writable object; invalid settings clear this object.
+ * @param[in] rawHigh Sampled electrical high (true) or low (false).
+ * @param[in] activeHigh Whether high means physically pressed.
+ * @param[in] nowMs Unsigned 32-bit monotonic millisecond counter, modulo wrap.
+ * @param[in] thresholdMs Positive qualification duration, less than 2^31 ms.
+ * @param[in] maxGapMs Positive permitted call interval, less than 2^31 ms.
+ * @return true on success; false for null or invalid settings.
+ */
+bool button_init(Button *button, bool rawHigh, bool activeHigh, uint32_t nowMs,
+                 uint32_t thresholdMs, uint32_t maxGapMs)
+{
+    /** Failure leaves a nonnull object safely uninitialized. **/
+    if (button == NULL) {
+        return false;
+    }
+    *button = (Button){0};
+    if (thresholdMs == 0 || thresholdMs &gt;= BUTTON_TIME_LIMIT ||
+        maxGapMs == 0 || maxGapMs &gt;= BUTTON_TIME_LIMIT) {
+        return false;
+    }
+    *button = (Button){
+        .initialized = true,
+        .activeHigh = activeHigh,
+        .candidate = rawHigh,
+        .stable = rawHigh,
+        .sinceMs = nowMs,
+        .lastMs = nowMs,
+        .thresholdMs = thresholdMs,
+        .maxGapMs = maxGapMs
+    };
+    return true;
+}
+
+/**
+ * @brief Consume one observation and return at most one transition event.
+ * @param[in,out] button Previously initialized or zero-initialized object.
+ * @param[in] rawHigh Sampled electrical high or low.
+ * @param[in] nowMs Counter with the initialization time semantics.
+ * @return NONE/PRESSED/RELEASED, or INVALID if the interface contract fails.
+ */
+ButtonEvent button_update(Button *button, bool rawHigh, uint32_t nowMs)
+{
+    uint32_t gapMs;
+    /** Reject a zero-initialized object; arbitrary indeterminate storage is invalid C usage. **/
+    if (button == NULL || !button-&gt;initialized) {
+        return BUTTON_INVALID;
+    }
+    gapMs = (uint32_t)(nowMs - button-&gt;lastMs);
+    /** Modulo arithmetic cannot detect an entirely missed counter cycle. **/
+    if (gapMs &gt;= BUTTON_TIME_LIMIT) {
+        button-&gt;initialized = false;
+        return BUTTON_INVALID;
+    }
+    button-&gt;lastMs = nowMs;
+    if (gapMs &gt; button-&gt;maxGapMs) {
+        button-&gt;gapSeen = true;
+        button-&gt;candidate = rawHigh;
+        button-&gt;sinceMs = nowMs;
+        return BUTTON_NONE;
+    }
+    if (rawHigh != button-&gt;candidate) {
+        button-&gt;candidate = rawHigh;
+        button-&gt;sinceMs = nowMs;
+    }
+    if ((uint32_t)(nowMs - button-&gt;sinceMs) &lt; button-&gt;thresholdMs) {
+        return BUTTON_NONE;
+    }
+    if (!button-&gt;ready) {
+        button-&gt;ready = true;
+        button-&gt;stable = button-&gt;candidate;
+        button-&gt;armed = button-&gt;stable != button-&gt;activeHigh;
+        return BUTTON_NONE;
+    }
+    if (button-&gt;stable == button-&gt;candidate) {
+        return BUTTON_NONE;
+    }
+    button-&gt;stable = button-&gt;candidate;
+    if (button-&gt;stable != button-&gt;activeHigh) {
+        button-&gt;armed = true;
+        return BUTTON_RELEASED;
+    }
+    if (button-&gt;armed) {
+        button-&gt;armed = false;
+        return BUTTON_PRESSED;
+    }
+    return BUTTON_NONE;
+}</code></pre></details><details id="c-host-lab" open><summary>主机运行、预热与一次故意改错</summary>
+<p>下载 <a href="../examples/gpio-button/button.c" download>button.c</a>，使用已有且支持 C11、提供 uint32_t 的编译器。无需下载厂商库，也没有 GPIO 驱动需要猜补：</p>
+<pre><code>cc -std=c11 -Wall -Wextra -Werror -pedantic -DBUTTON_TEST button.c -o button-test
+./button-test
+</code></pre>
+<p>若编译器命令名为 gcc，将 cc 换成 gcc；Windows 可输出 button-test.exe，再运行 .\button-test.exe。本章不要求安装编译器，未配置时先完成原理层。</p>
+<p>BUTTON_TEST 会启用同一个文件中的 main 和测试；不加这个定义时只得到可供调用的状态机模块。检查进程退出状态：0 表示这次列出的检查通过；非 0 须看失败项。实际编译器版本、测试输出与源文件哈希应随验证记录保存，不能把复制的“PASS”当作证据。</p>
+<p>要复现主时间轴，先用释放电平运行至少所选阈值的确认时间，再把这一时刻标成教材 t=0。默认阈值 5 ms，测试先运行 5 ms 释放预热，再输入教材波形；阈值改成 10 ms 时，预热也至少 10 ms。预热不产生按下事件，不藏在“刚上电立刻按下”的假设里。</p>
+<p>本次维护在已有 <strong>GCC 13.1.0</strong> 上，以以上严格 C11 选项编译并运行通过；定义 NDEBUG 的版本和不含测试的模块编译也通过。实际测试输出如下，范围仅限这些主机路径：</p>
+<pre><code>PASS: waveform, boot-held, startup-bounce, active-high, wrap, gap, gap-boundary, short-pulse, short-release, thresholds, parameters, invalid-time</code></pre>
+<p>覆盖固定波形与精确边界、启动按住/初始抖动、有效高、无符号回绕、超长与恰好允许的间隔、短脉冲/释放、不同阈值、无效参数与时间错误。维护者还在隔离副本中将接受条件故意改成“时长严格大于阈值”：它能编译，但行为测试失败；恢复原源码后重新通过。这不是穷尽证明，也没有做硬件验证。完整源码内的测试及同目录 README.txt 可供复现。</p>
+<p>进阶实验：先运行原程序；再只把接受条件误改为“时长严格大于阈值”，预测 11 ms 检查为何失败，保存失败输出后恢复原文件并重跑。测试要检验行为边界，不以动画看起来平顺为通过条件。主机测试不覆盖电气门限、驱动采样开销或真实中断调度。</p>
+</details>
+</section>
+<section class="content-section" id="validation"><h2>5. 验收：证据分层，未测项明示</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>层级</th>
+<th>输入或任务</th>
+<th>通过条件</th>
+<th>证据边界</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>概念</td>
+<td>不看答案说明上拉松开、按下、悬空；画按下电流路径</td>
+<td>区分电压、逻辑、动作、事件；解释高阻与门限；能计算示例电流</td>
+<td>自述与练习，不是硬件测量</td>
+</tr>
+<tr>
+<td>人工模型</td>
+<td>每 1 ms、5 ms 阈值、先确认释放，输入原/扩展波形</td>
+<td>手算 11/31/41 ms；原始多边沿只形成相应稳定事件；保持不重复</td>
+<td>本页人工数据，不是示波器记录</td>
+</tr>
+<tr>
+<td>算法边界</td>
+<td>10 ms 阈值、启动按住、短脉冲、丢采样、有效高与回绕</td>
+<td>解释 8 ms 释放被吞、启动不发按下、100 ms 重新计时；清楚未观测盲区</td>
+<td>按已声明输入契约判断</td>
+</tr>
+<tr>
+<td>C 主机</td>
+<td>实际可下载源、编译器、命令、退出码、输出；故意改错再恢复</td>
+<td>已列主机测试全部通过，边界改错能被测试检出</td>
+<td>只证明对应程序/输入/编译器的结果，不声称穷尽</td>
+</tr>
+<tr>
+<td>目标硬件（可选）</td>
+<td>完整料号、原理图、模式、供电、上下拉、工具/库版本</td>
+<td>静态电压合规，真实输入、采样间隔、稳定迁移与事件可对应；多次操作/约定干扰下无未解释多计漏计</td>
+<td><strong>本章未做硬件验证</strong>，需另立记录</td>
+</tr>
+</tbody>
+</table></div>
+<p>上板前先核对实际芯片门限与允许电压，不将未知 5 V 信号接入输入。用万用表查静态电压；用合适的示波器或逻辑分析仪观察短时输入，万用表不能证明抖动不存在。记录测量带宽、采样周期、阈值与原始波形，区分仪器自身的观测能力和程序的采样能力。</p>
+<p>完成原理层的标准是能不看答案推导，完成代码层的标准是能解释和复现实验。点击过控件不等于掌握；本站不记录个人掌握百分比。若卡住，可向助手指出你不清楚的是节点、电平、时间、事件还是代码。隔一段时间再换上下拉条件重做一题，检验迁移而非只背答案。</p>
+</section>
+<section class="content-section" id="sources"><h2>6. 已核对的来源与适用范围</h2><p>核对日期：<strong>2026-10-17</strong>。以下列出实际阅读的版本与范围；电气资料不替本站自编算法或 5 ms 参数背书。</p>
+<div class="table-wrap"><table><caption>资料版本、位置、论点与适用范围；核对于 2026-10-17</caption>
+<thead>
+<tr>
+<th>来源</th>
+<th>已核对位置</th>
+<th>支撑论点与范围</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><span id="source-st"></span><a href="https://www.st.com/resource/en/application_note/an4899-stm32-microcontroller-gpio-hardware-settings-and-lowpower-consumption-stmicroelectronics.pdf" target="_blank" rel="noreferrer">ST AN4899：Guidelines for GPIO hardware settings and low-power consumption on STM32 MCUs</a>，May 2026 / Rev 4，33 页</td>
+<td>§2.1（p7）；§4.2—4.3.1（p11—13）；§5.1、§5.1.1（p15）；图 4 与 §5.1.4（p17）；§5.1.5（p18—19）；§6.1（p25）；§6.3（p26）</td>
+<td>输入/输出缓冲、上下拉、门限术语、漏电与允许条件；<strong>仅 STM32 情形</strong>。§5.1.5 是开漏/外部接收器与 I²C 计算背景，不是通用按钮电阻表</td>
+</tr>
+<tr>
+<td><span id="source-ti"></span><a href="https://www.ti.com/document-viewer/lit/html/scea094" target="_blank" rel="noreferrer">TI SCEA094：Debounce a Switch</a>，October 2020，2 页，未见修订字母</td>
+<td>p1 Product Overview、Design Considerations；<a href="https://www.ti.com/lit/ab/scea094/scea094.pdf" target="_blank" rel="noreferrer">官方 PDF</a></td>
+<td>触点抖动、误触发与 RC 硬件消抖，漏电压降和电阻/功耗取舍；<strong>不验证本站软件算法或阈值</strong></td>
+</tr>
+<tr>
+<td><span id="source-logic"></span><a href="https://www.ti.com/lit/an/szza036c/szza036c.pdf" target="_blank" rel="noreferrer">TI SZZA036C：Understanding and Interpreting Standard-Logic Data Sheets</a>，December 2002 / revised June 2016，Rev C，60 页</td>
+<td>§3.5（p8）、§4.5.5—4.5.6（p28—29）、§4.6.1—4.6.3（p35—36）</td>
+<td>保证的输入电压范围、CMOS 输入条件与施密特滞回的区别；是逻辑器件手册阅读指南，<strong>不是某个 MCU 的电气规格</strong></td>
+</tr>
+<tr>
+<td><span id="source-c11"></span><a href="https://www.open-std.org/jtc1/sc22/wg14/www/docs/n1570.pdf" target="_blank" rel="noreferrer">WG14 N1570 C11 Committee Draft</a>，2011-04-12</td>
+<td>§6.2.5 第 9 段、§7.20.1.1</td>
+<td>无符号模运算与精确宽度整数类型；公开委员会草案，不是付费最终标准。精确宽度类型可能不由某实现提供，本程序要求 uint32_t；不能由算术规则推出硬件计时正确</td>
+</tr>
+<tr>
+<td><span id="source-teach"></span><a href="https://github.com/mattpocock/skills/blob/main/skills/productivity/teach/SKILL.md?plain=1" target="_blank" rel="noreferrer">Matt Pocock teach</a></td>
+<td>单一成果、知识先行、反馈、回忆迁移与打印参考的方法</td>
+<td>仅教学组织方法，<strong>不提供电气或软件正确性证据</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>假设门限、示例阻值、人工采样数据、解释和习题均独立编写，不从资料中的某个器件偷换成通用参数。实物应用仍要查选定完整料号和板级设计。</p>
+</section>
+<section class="content-section" id="next-lesson"><h2>带着能解释的结果回到主线</h2>
+<p>先完成一个可解释的结果：沿节点连接推到电压范围，再从观测序列推到一次事件。原理层完成后可先休息；C 进阶层可在补基础后回来练。下一章“GPIO 输出与 LED 限流”仍在建设中，不要求提前购买或选定开发板。</p>
+<p><a href="gpio-button-reference.html">打开可打印速查</a> · <a href="../learn/engineering-map.html#stage-01">返回学习地图第 01 阶段</a></p>
+</section>
+</main><footer>原创教材首章 · GPIO 按键 · 2026-10-17<br>人工模型与 C 主机实验；未做目标硬件验证。</footer></div>
 <script id="gpio-controller">
 const GpioModel = Object.freeze({
   circuit(mode, resistor, pressed) {
@@ -161,7 +728,7 @@ const GpioModel = Object.freeze({
   samples(threshold, extended=false) {
     if(!Number.isInteger(threshold)||threshold<1||threshold>12) throw new RangeError('Threshold must be an integer from 1 to 12');
     const changes=extended?[[2,0],[3,1],[4,0],[5,1],[6,0],[24,1],[25,0],[26,1],[34,0],[35,1],[36,0]]:[[2,0],[3,1],[4,0],[5,1],[6,0]];
-    let raw=1,previousRaw=1,stable=1,candidate=1,since=0,falls=0,presses=0;
+    let raw=1,previousRaw=1,stable=1,candidate=1,since=-threshold,falls=0,presses=0;
     const samples=[];
     for(let t=0;t<=(extended?50:20);t++) {
       const change=changes.find(([time])=>time===t);if(change) raw=change[1];
@@ -199,10 +766,10 @@ function renderTimeline(){const frame=samples[cursor],end=samples.at(-1).t,x=65+
   const ticks=(end===20?[0,2,4,6,11,15,20]:[0,6,11,20,26,31,36,41,50]).map(t=>{const tx=65+t/end*385;return `<path d="M${tx} 30V195" stroke="#dce3d7"/><text x="${tx}" y="218" text-anchor="middle">${t}</text>`;}).join('');
   $('wave-content').innerHTML=`${ticks}<text x="10" y="27">raw</text><text x="10" y="117">stable</text><text x="44" y="48">1</text><text x="44" y="98">0</text><text x="44" y="138">1</text><text x="44" y="188">0</text><path d="${wavePath('raw',44,94)}" fill="none" stroke="#92611e" stroke-width="3"/><path d="${wavePath('stable',134,184)}" fill="none" stroke="#22664f" stroke-width="3"/><path d="M${x} 24V197" stroke="#193e33" stroke-width="1.5" stroke-dasharray="4 4"/><text x="465" y="218">ms</text>`;
   $('sample-time').textContent=String(frame.t);$('sample-values').textContent=frame.raw+' / '+frame.stable;$('fall-count').textContent=String(frame.falls);$('press-count').textContent=String(frame.presses);$('timeline-step').disabled=cursor===samples.length-1;
-  $('timeline-feedback').textContent=`${frame.t} ms：原始值 ${frame.raw}；候选值 ${frame.candidate} 从 ${frame.since} ms 开始，已连续 ${frame.age} ms；稳定值 ${frame.stable}。`+(frame.event==='pressed'?'此刻确认一次按下。':frame.event==='released'?'此刻确认释放，允许之后识别下一次按下。':frame.candidate!==frame.stable?'等待候选满阈值。':'稳定值未改变，不增加按下计数。');
+  $('timeline-feedback').textContent=`${frame.t} ms：原始值 ${frame.raw}；候选值 ${frame.candidate} 从 ${frame.since} ms${frame.since<0?"（显示前预热的相对时刻）":""} 开始，采样记录未变已满 ${frame.age} ms；稳定值 ${frame.stable}。`+(frame.event==='pressed'?'此刻确认一次按下。':frame.event==='released'?'此刻确认释放，允许之后识别下一次按下。':frame.candidate!==frame.stable?'等待候选满阈值。':'稳定值未改变，不增加按下计数。')+' 采样间可能有未看见的毛刺；长调用间隔须按代码契约重计。';
   const events=samples.slice(0,cursor+1).filter(s=>s.event);$('event-log').innerHTML=events.length?events.map(s=>`<li>${s.t} ms：${s.event==='pressed'?'稳定值 1→0，确认第 '+s.presses+' 次按下。':'稳定值 0→1，确认释放。'}</li>`).join(''):'<li>尚无稳定值变化。</li>';
 }
-function resetTimeline(){stopPlayback();const value=Number($('threshold').value);if($('threshold').value===''||!Number.isInteger(value)||value<1||value>12){$('timeline-feedback').textContent='请输入 1 到 12 的整数毫秒阈值；图中保留上一次有效示例。';$('timeline-step').disabled=true;$('timeline-play').disabled=true;$('timeline-finish').disabled=true;return;}samples=GpioModel.samples(value,$('extended').checked);cursor=0;['timeline-step','timeline-play','timeline-finish'].forEach(id=>$(id).disabled=false);$('timeline-rule').textContent=`每 1 ms 采样；候选值连续不变满 ${value} ms 才更新稳定值。任何原始值改变都重新计时。`;renderTimeline();}
+function resetTimeline(){stopPlayback();const value=Number($('threshold').value);if($('threshold').value===''||!Number.isInteger(value)||value<1||value>12){$('timeline-feedback').textContent='请输入 1 到 12 的整数毫秒阈值；图中保留上一次有效示例。';$('timeline-step').disabled=true;$('timeline-play').disabled=true;$('timeline-finish').disabled=true;return;}samples=GpioModel.samples(value,$('extended').checked);cursor=0;['timeline-step','timeline-play','timeline-finish'].forEach(id=>$(id).disabled=false);$('timeline-rule').textContent=`每 1 ms 采样；显示前已完成 ${value} ms 释放确认；观测到候选未变满 ${value} ms 才更新稳定值。采样值改变就重新计时；未采到的间隔不是电气连续稳定证据。`;renderTimeline();}
 $('timeline-step').onclick=()=>{stopPlayback();cursor=Math.min(samples.length-1,cursor+1);renderTimeline();};
 $('timeline-play').onclick=()=>{if(playback!==null){stopPlayback();return;}if(cursor===samples.length-1)cursor=0;renderTimeline();$('timeline-play').textContent='暂停回放';playback=setInterval(()=>{cursor=Math.min(samples.length-1,cursor+1);renderTimeline();if(cursor===samples.length-1)stopPlayback();},160);};
 $('timeline-finish').onclick=()=>{stopPlayback();cursor=samples.length-1;renderTimeline();};
@@ -232,6 +799,67 @@ renderCircuit();renderTimeline();
     previous.forEach(([panel])=>{panel.open=true;});
   });
   window.addEventListener('afterprint',()=>{previous?.forEach(([panel,open])=>{panel.open=open;});previous=undefined;});
+})();
+</script>
+<script id="gpio-exercises">
+(() => {
+  const el = id => document.getElementById(id);
+  const voltageOptions = ['low','high','unknown','outside'];
+  function voltageValue() {
+    const text = el('voltage-input').value.trim();
+    return text !== '' && Number.isFinite(Number(text)) ? Number(text) : null;
+  }
+  function voltagePending() {
+    el('voltage-prediction').value = '';
+    el('voltage-submit').disabled = true;
+    el('voltage-exercise-answer').open = false;
+    el('voltage-feedback').textContent = '电压已改，尚未揭晓；请重新预测。先判断允许范围，再比较保证门限。';
+  }
+  el('voltage-input').addEventListener('input', voltagePending);
+  el('voltage-prediction').addEventListener('change', () => {
+    el('voltage-submit').disabled = voltageValue() === null || !voltageOptions.includes(el('voltage-prediction').value);
+  });
+  el('voltage-prediction-form').addEventListener('submit', event => {
+    event.preventDefault();
+    const voltage = voltageValue(), guess = el('voltage-prediction').value;
+    if (voltage === null || !voltageOptions.includes(guess)) return;
+    const answer = voltage < 0 || voltage > 3.3 ? 'outside' : voltage <= 0.8 ? 'low' : voltage >= 2 ? 'high' : 'unknown';
+    const reason = answer === 'outside' ? '超出本题 0—3.3 V 的允许范围，不能用 VIL/VIH 判定为可接线电压。先满足允许范围；门限不许可任意负压或过压。' : answer === 'low' ? '在本题允许范围内，且不高于 VIL(max)=0.8 V，因此保证为低（0），边界 0.8 V 也包含在内。' : answer === 'high' ? '在本题允许范围内，且不低于 VIH(min)=2.0 V，因此保证为高（1），边界 2.0 V 也包含在内。' : '在允许范围内，却高于 0.8 V、低于 2.0 V；此区间不能保证读到 0 或 1，也不是“半按下”。';
+    el('voltage-feedback').textContent = (guess === answer ? '预测正确。' : '再检查区间。') + ' 输入 ' + voltage + ' V：' + reason + ' 这些是虚构规格，不能用于实物接线。';
+    el('voltage-answer-heading').textContent = '上次提交的输入 ' + voltage + ' V 的门限推理';
+    el('voltage-answer-text').textContent = '输入 ' + voltage + ' V：' + reason + ' 这些是虚构规格，不能用于实物接线。';
+    el('voltage-exercise-answer').open = true;
+    el('voltage-prediction').value = '';
+    el('voltage-submit').disabled = true;
+  });
+  const cases = [
+    ['scenario-boot','after-release',['at-5','every-sample','after-release'],'本章先确认初始状态，不为初始按住发送 PRESSED。确认一次释放后，再次按下满阈值才发送；11 ms 示例的前提是显示前已确认释放。'],
+    ['scenario-short-release','filtered',['both','filtered','more-events'],'释放候选从 26 到 34 ms 只有 8 ms。阈值 5 ms 在 31 ms 接受释放、41 ms 接受第二次按下；阈值 10 ms 未接受释放，所以没有第二次按下。'],
+    ['scenario-gap','105',['100','105','never'],'6 到 100 ms 没有观测。调用差值大于 maxGapMs=1，代码记录 gapSeen 并从 100 ms 重计；之后每 1 ms 调用，最早 105 ms 才接受。漏掉的完整动作无法恢复。'],
+    ['scenario-glitch','may-miss',['always-detect','may-miss','threshold'],'0.3—0.5 ms 的低脉冲可完全位于 0 与 1 ms 两个采样点之间，两次读取仍都是 1。缩小消抖阈值不能补出没有采到的数据；必须捕获时需重设计观测。']
+  ];
+  for (const [id, answer, options, reason] of cases) {
+    const prediction = el(id + '-prediction'), submit = el(id + '-submit');
+    prediction.addEventListener('change', () => {
+      submit.disabled = !options.includes(prediction.value);
+      el(id + '-answer').open = false;
+      el(id + '-feedback').textContent = '预测尚未提交；先沿输入与策略推理，再揭晓。';
+    });
+    el(id + '-form').addEventListener('submit', event => {
+      event.preventDefault();
+      if (!options.includes(prediction.value)) return;
+      el(id + '-feedback').textContent = (prediction.value === answer ? '预测正确。' : '再按契约推一次。') + reason;
+      el(id + '-answer').open = true;
+      prediction.value = '';
+      submit.disabled = true;
+    });
+  }
+  el('print-exercises').onclick = () => {
+    document.body.classList.add('exercise-print');
+    try { window.print(); }
+    catch (error) { document.body.classList.remove('exercise-print'); throw error; }
+  };
+  window.addEventListener('afterprint', () => document.body.classList.remove('exercise-print'));
 })();
 </script>
 <script id="gpio-reader">(()=>{document.getElementById('expand-notes').onclick=()=>document.querySelectorAll('details').forEach(panel=>{panel.open=true;});document.getElementById('collapse-notes').onclick=()=>document.querySelectorAll('details').forEach(panel=>{panel.open=false;});})();</script>
