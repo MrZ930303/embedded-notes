@@ -250,6 +250,30 @@ for (const [id, answer, wrong, reason] of [
 }
 console.log('PASS GPIO reasoning controllers: threshold boundaries/allowed range, finite-number validation, pending isolation, four predictions and reasoned right/wrong feedback through actual page scripts.')
 
+// Guard the reviewed teaching order and avoid answer-length/position cues.
+const answerPositions = new Set()
+for (const [id, answer] of [['scenario-boot','after-release'], ['scenario-short-release','filtered'], ['scenario-gap','105'], ['scenario-glitch','may-miss']]) {
+  const select = staticHtml.match(new RegExp('<select id="' + id + '-prediction"[^>]*>([\\s\\S]*?)<\\/select>'))[1]
+  const options = [...select.matchAll(/<option value="([^"]+)">([^<]+)<\/option>/g)]
+  assert.equal(options.length, 3)
+  const lengths = options.map(option => [...option[2]].length)
+  assert.ok(Math.max(...lengths) - Math.min(...lengths) <= 1, id + ': comparable option lengths must not reveal the answer')
+  answerPositions.add(options.findIndex(option => option[1] === answer))
+}
+assert.equal(answerPositions.size, 3, 'Boundary answers should vary across all three positions')
+const primer = staticHtml.match(/<div class="callout" id="timeline-primer">([\s\S]*?)<\/div>/)?.[1]
+assert.ok(primer, 'Timeline needs a short explanation and independent worked sample')
+assert.ok(staticHtml.indexOf('id="timeline-primer"') < staticHtml.indexOf('id="threshold"'), 'Explain candidate/stable before operating the timeline')
+for (const term of ['raw', 'candidate', 'stable', 'event', '60 ms', '62 ms', '63 ms']) assert.ok(primer.includes(term), 'Primer missing ' + term)
+assert.doesNotMatch(primer, /\b(?:11|31|41|100|105)\s*ms/, 'Independent introduction must not disclose pending case answers')
+const searchText = await read('docs/learn/gpio-button.md')
+for (const [, paragraph] of primer.matchAll(/<p>([^<]+)<\/p>/g)) assert.ok(searchText.includes(paragraph), 'Search text must retain each introductory explanation')
+const selfCheck = staticHtml.match(/<details\b[^>]*id="entry-self-check-answer"[^>]*>/)?.[0]
+assert.ok(selfCheck, 'Self-check answers use a native disclosure')
+assert.doesNotMatch(selfCheck, /\bopen(?:\s|=|>)/, 'Self-check answers start hidden')
+assert.ok(staticHtml.indexOf('id="entry-self-check"') < staticHtml.indexOf('id="entry-self-check-answer"'), 'Self-check questions precede answers')
+console.log('PASS GPIO teach refinements: comparable choices with balanced positions, explanation before controls, independent sample, synchronized search prose and initially closed native self-check.')
+
 vm.runInNewContext(html.match(/<script id="note-print">([\s\S]*?)<\/script>/)[1], context, { timeout: 1000 })
 const panels = context.document.querySelectorAll('details')
 panels.forEach((panel,index) => { panel.open = index % 3 === 0 })
@@ -279,7 +303,7 @@ assert.doesNotMatch(worksheetRecord, /\b(?:11|31|41)\s*ms|PRESSED|解析|答案/
 assert.doesNotMatch(worksheetRecord, /<details\b|<script\b/, 'Input record must remain readable without JavaScript and without opening an answer')
 const chapterStyles = html.match(/<style>\s*\/\* GPIO chapter controls only;[\s\S]*?<\/style>/)[0]
 const scrollRule = chapterStyles.match(/@media screen\{([^{}]+)\{scroll-margin-top:124px\}\}/)[1]
-for (const selector of ['#voltage-exercise', '#sampling-limits', '.scenario-card', '#c-syntax', '#c-contract', '#c-source', '#c-host-lab', '#recall-questions', '#recall-answers', '.exercise', '.exercise-answer']) {
+for (const selector of ['#entry-self-check', '#entry-self-check-answer', '#timeline-primer', '#voltage-exercise', '#sampling-limits', '.scenario-card', '#c-syntax', '#c-contract', '#c-source', '#c-host-lab', '#recall-questions', '#recall-answers', '.exercise', '.exercise-answer']) {
   assert.ok(scrollRule.split(',').includes('.notes-article ' + selector), 'New nested chapter anchor needs a screen-only sticky-header offset: ' + selector)
 }
 console.log('PASS GPIO print controller: exercise-only mode, shared answer expansion/state restoration, afterprint cancellation cleanup and ordinary subsequent print.')
