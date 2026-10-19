@@ -1987,6 +1987,6 @@ TimeStatus time_service(TimeState *state, uint32_t now, TimeReport *report);
 ## 带着有界数据流继续采集终端 {#uart-next-title}
 
 
-<p>本章新增的是字节→帧→命令的受限流程，不是实物通信验收。先返回10复核真实观察间隔和有限服务，再用本章速查定位拒绝原因。下一批12 I2C/SPI、13 ADC误差、14驱动故障仍待实现，研究不代表已交付，阶段03未完成。</p>
+<p>本章新增的是字节→帧→命令的受限流程，不是实物通信验收。先返回10复核真实观察间隔和有限服务，再用本章速查定位拒绝原因。接着进入12 I2C/SPI事务，再到13 ADC与14驱动恢复的本地候选；发布与硬件另验，阶段03未完成。</p>
 <p>如果卡住，可直接问助手：“A5为什么此时只是数据”“20ms到底观察了谁”“FULL之后哪一层清队列”或“XOR正确为什么不可信”，带上具体字节、phase和now，继续推导。</p>
-<div class="next-links"><a href="../learn/timer-pwm.html">上一章10：定时器与期限</a><a href="../learn/uart-framing-reference.html">本章可打印速查</a><a href="../learn/bounded-fifo.html">复习05 FIFO</a><a href="../learn/engineering-map.html#stage-03">下一批与阶段地图</a></div>
+<div class="next-links"><a href="../learn/timer-pwm.html">上一章10：定时器与期限</a><a href="../learn/uart-framing-reference.html">本章可打印速查</a><a href="../learn/bounded-fifo.html">复习05 FIFO</a><a href="../learn/bus-transactions.html">下一章12：I2C / SPI事务</a><a href="../learn/bus-transactions-reference.html">12可打印速查</a><a href="../learn/engineering-map.html#stage-03">阶段地图</a></div>

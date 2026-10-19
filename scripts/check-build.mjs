@@ -51,11 +51,11 @@ const html=await readFile(path.join(root,'index.html'),'utf8')
 assert.ok(html.includes('嵌入式技术笔记'))
 assert.ok(html.includes(base+'c-memory/heap-stack.html'))
 assert.ok(html.includes('data-no-router'))
-assert.ok(html.includes('32 篇') && html.includes('5 个主题'), 'Home must describe thirty-two entries across five active categories')
-assert.equal(interactiveNotes.length, 32, 'Exactly thirty-two complete standalone readers must be registered')
+assert.ok(html.includes('38 篇') && html.includes('5 个主题'), 'Home must describe thirty-eight entries across five active categories')
+assert.equal(interactiveNotes.length, 38, 'Exactly thirty-eight complete standalone readers must be registered')
 const learningCategory = await readFile(path.join(root, 'learn/index.html'), 'utf8')
 const learningReaders = interactiveNotes.filter(note => note.path.startsWith('learn/'))
-assert.equal(learningReaders.length, 23, 'The learning center contains twenty-three complete readers')
+assert.equal(learningReaders.length, 29, 'The learning center contains twenty-nine complete readers')
 for (const note of learningReaders) assert.ok(learningCategory.includes(base + note.path), 'Learning center must reach each actual reader: ' + note.path)
 const debugCategory = await readFile(path.join(root, 'debug/index.html'), 'utf8')
 assert.ok(debugCategory.includes(base + 'debug/easylogger.html'), 'Debug category must link to the full EasyLogger reader')
@@ -368,3 +368,62 @@ const timeSerialEvidenceDirectory = path.resolve(import.meta.dirname, '../.scrat
 await mkdir(timeSerialEvidenceDirectory, { recursive: true })
 await writeFile(path.join(timeSerialEvidenceDirectory, 'browser-search-cases.json'), JSON.stringify(timeSerialSearchCases, null, 2) + '\n')
 console.log('PASS: four time/serial readers have' + timeSerialSearchCases.length + ' exact generated search targets and' + timeSerialUniqueDownloads.size + ' unique byte-identical native source/dependency/instruction downloads; FIFO header is included in prior lab checks.')
+
+const protocolAcquisitionSearchCases = [
+  ['bus-transactions', '0x18', 'bus-address-title'],
+  ['bus-transactions', 'NACK', 'bus-i2c-title'],
+  ['bus-transactions', 'CPOL', 'bus-spi-title'],
+  ['bus-transactions', 'ARLO', 'bus-ownership-title'],
+  ['bus-transactions', '20ms', 'bus-bounded-title'],
+  ['bus-transactions-reference', 'address7', 'bus-ref-scope-title'],
+  ['bus-transactions-reference', 'dummy', 'bus-ref-wire-title'],
+  ['bus-transactions-reference', 'ARLO', 'bus-ref-failure-title'],
+  ['bus-transactions-reference', '20ms', 'bus-ref-time-title'],
+  ['adc-sampling', '21MHz', 'adc-clock-title'],
+  ['adc-sampling', '4096', 'adc-bins-title'],
+  ['adc-sampling', '4095', 'adc-reconstruction-title'],
+  ['adc-sampling', 'TUE', 'adc-errors-title'],
+  ['adc-sampling', '90.1091', 'adc-settling-title'],
+  ['adc-sampling', '600', 'adc-alias-title'],
+  ['adc-sampling', 'adc_cancel', 'adc-fake-title'],
+  ['adc-sampling-reference', 'VREF', 'adc-ref-clock-title'],
+  ['adc-sampling-reference', '4095', 'adc-ref-bins-title'],
+  ['adc-sampling-reference', '混叠', 'adc-ref-errors-title'],
+  ['adc-sampling-reference', 'READY', 'adc-ref-lifecycle-title'],
+  ['driver-recovery', 'cause', 'recovery-diagnostics-title'],
+  ['driver-recovery', '100', 'recovery-deadlines-title'],
+  ['driver-recovery', 'cleanup', 'recovery-cleanup-title'],
+  ['driver-recovery', 'counter1', 'recovery-replay-title'],
+  ['driver-recovery', 'token', 'recovery-tokens-title'],
+  ['driver-recovery', 'UART', 'recovery-terminal-title'],
+  ['driver-recovery-reference', 'cause', 'recovery-diagnostics-title'],
+  ['driver-recovery-reference', '100', 'recovery-deadlines-title'],
+  ['driver-recovery-reference', '隔离', 'recovery-cleanup-title'],
+  ['driver-recovery-reference', 'token', 'recovery-tokens-title'],
+  ['driver-recovery-reference', 'UART', 'recovery-terminal-title']
+].map(([name, query, anchor]) => ({ name, query, anchor }))
+for (const { name, query, anchor } of protocolAcquisitionSearchCases) {
+  assert.ok(search.search(query).some(result => result.id === base + 'learn/' + name + '.html#' + anchor),
+    'Protocol/acquisition generated search must reach the actual substantial section: ' + name + '/' + query + '/' + anchor)
+}
+const protocolAcquisitionDownloads = new Map()
+for (const name of ['bus-transactions', 'adc-sampling', 'driver-recovery']) {
+  for (const suffix of ['', '-reference']) {
+    const reader = await readFile(path.join(root, 'learn', name + suffix + '.html'), 'utf8')
+    const links = [...reader.matchAll(/href="\.\.\/examples\/([^"]+)" download/g)].map(match => match[1])
+    assert.ok(links.length >= 5, 'Every reader exposes its actual complete native dependency downloads')
+    for (const relative of links) {
+      const original = await readFile(path.resolve(import.meta.dirname, '../docs/public/examples', relative))
+      const built = await readFile(path.join(root, 'examples', relative))
+      assert.deepEqual(built, original, 'Native download bytes differ: ' + relative)
+      protocolAcquisitionDownloads.set(relative, original.length)
+    }
+  }
+  assert.ok(!files.some(file => path.relative(root, file).replaceAll('\\', '/').startsWith('examples/' + name + '/') && file.endsWith('.html')),
+    'Native examples must not create additional documentation readers: ' + name)
+}
+const protocolAcquisitionDirectory = path.resolve(import.meta.dirname, '../.scratch/protocol-acquisition/integration')
+await mkdir(protocolAcquisitionDirectory, { recursive: true })
+await writeFile(path.join(protocolAcquisitionDirectory, 'browser-search-cases.json'), JSON.stringify(protocolAcquisitionSearchCases, null, 2) + '\n')
+console.log('PASS: six protocol/acquisition readers have' + protocolAcquisitionSearchCases.length +
+  ' exact generated substantial search targets and' + protocolAcquisitionDownloads.size + ' unique byte-identical native dependency/instruction downloads.')

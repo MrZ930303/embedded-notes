@@ -43,4 +43,4 @@
 
 ## 返回完整推导与十题 {#uart-ref-next-title}
 
-<p>下一批12–14仍待实现，阶段03未完成；研究与本地检查不等于正式发布、硬件或实体纸张验证。</p><div class="next-links"><a href="../learn/uart-framing.html">完整章节、实验与十题</a><a href="../learn/timer-pwm.html">上一章10</a><a href="../learn/bounded-fifo.html">复习05 FIFO</a><a href="../learn/engineering-map.html#stage-03">下一批与阶段地图</a></div>
+<p>12–14正文与速查已成为本地候选，阶段03未完成；研究与本地检查不等于正式发布、硬件或实体纸张验证。</p><div class="next-links"><a href="../learn/uart-framing.html">完整章节、实验与十题</a><a href="../learn/timer-pwm.html">上一章10</a><a href="../learn/bounded-fifo.html">复习05 FIFO</a><a href="../learn/bus-transactions.html">下一章12：I2C / SPI事务</a><a href="../learn/bus-transactions-reference.html">12可打印速查</a><a href="../learn/engineering-map.html#stage-03">阶段地图</a></div>

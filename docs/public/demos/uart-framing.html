@@ -1886,9 +1886,9 @@ TimeStatus time_service(TimeState *state, uint32_t now, TimeReport *report);
 <li><a href="https://github.com/STMicroelectronics/stm32f4xx-hal-driver/blob/b6f0ed3829f3829eb358a2e7417d80bba1a42db7/Inc/stm32f4xx_hal_uart.h">同提交UART头文件</a>：实际读标志与清除宏/别名/注释。它不能替代历史手册PE额外RXNE条件，更不能变成新系列ICR通用写法。</li>
 <li><a href="https://www.open-std.org/jtc1/sc22/wg14/www/docs/n1570.pdf">WG14 N1570，2011-04-12委员会草案</a>：实际重读§6.2.5p9、§6.3.1.1/6.3.1.3、§7.20.1.1，支持无符号模运算、提升与可选精确宽度类型；不冒充购买的最终ISO标准，不提供真实时间间隔保证。</li></ul>
 <p><strong>资料缺口：</strong>本轮当前官方RM请求有界失败、0字节；当前对应条款未读，仍用明确历史版本。DS8626 Rev12部分文字已核查而相关表像素未核；特定硅版本完整勘误/电气条件未审计。本章未把未读链接装饰成已验证依据。主机行为与硬件、真实线缆时间、吞吐和实体纸张检查分别报告。</p></div><div class="content-section" id="uart-next" role="region" aria-labelledby="uart-next-title"><h2 id="uart-next-title">带着有界数据流继续采集终端</h2>
-<p>本章新增的是字节→帧→命令的受限流程，不是实物通信验收。先返回10复核真实观察间隔和有限服务，再用本章速查定位拒绝原因。下一批12 I2C/SPI、13 ADC误差、14驱动故障仍待实现，研究不代表已交付，阶段03未完成。</p>
+<p>本章新增的是字节→帧→命令的受限流程，不是实物通信验收。先返回10复核真实观察间隔和有限服务，再用本章速查定位拒绝原因。接着进入12 I2C/SPI事务，再到13 ADC与14驱动恢复的本地候选；发布与硬件另验，阶段03未完成。</p>
 <p>如果卡住，可直接问助手：“A5为什么此时只是数据”“20ms到底观察了谁”“FULL之后哪一层清队列”或“XOR正确为什么不可信”，带上具体字节、phase和now，继续推导。</p>
-<div class="next-links"><a href="../learn/timer-pwm.html">上一章10：定时器与期限</a><a href="../learn/uart-framing-reference.html">本章可打印速查</a><a href="../learn/bounded-fifo.html">复习05 FIFO</a><a href="../learn/engineering-map.html#stage-03">下一批与阶段地图</a></div></div></main><footer class="wrap">原创教学 · 公开课程覆盖，非个人学习记录 · 硬件未验证</footer></div><script id="uart-model">const UartModel=(()=>{
+<div class="next-links"><a href="../learn/timer-pwm.html">上一章10：定时器与期限</a><a href="../learn/uart-framing-reference.html">本章可打印速查</a><a href="../learn/bounded-fifo.html">复习05 FIFO</a><a href="../learn/bus-transactions.html">下一章12：I2C / SPI事务</a><a href="../learn/bus-transactions-reference.html">12可打印速查</a><a href="../learn/engineering-map.html#stage-03">阶段地图</a></div></div></main><footer class="wrap">原创教学 · 公开课程覆盖，非个人学习记录 · 硬件未验证</footer></div><script id="uart-model">const UartModel=(()=>{
   const copy=x=>JSON.parse(JSON.stringify(x));
   const u32=x=>Number.isInteger(x)&&x>=0&&x<=4294967295;
   const increment=(s,key)=>{if(s.diagnostics[key]===4294967295)s.diagnostics.saturated=true;else s.diagnostics[key]++;};

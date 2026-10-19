@@ -1,0 +1,152 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="../favicon.svg" type="image/svg+xml"><title>I2C / SPI 事务速查 · 嵌入式技术笔记</title><style>
+:root{--paper:#fafbf8;--ink:#21382e;--muted:#526359;--line:#dce3d7;--green:#22664f;--pale:#eef2e9;--lime:#d5e7b3;--dark:#193e33;--mono:Consolas,monospace}*{box-sizing:border-box}html{scroll-padding-top:120px}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.9 system-ui,"Microsoft YaHei",sans-serif}a{color:var(--green);text-underline-offset:4px}p{margin:0 0 16px}.wrap{width:min(1120px,calc(100% - 64px));margin:auto}.skip{position:absolute;top:-100px;z-index:20;background:white;padding:10px}.skip:focus{top:5px}.topbar{position:sticky;top:0;border-bottom:1px solid var(--line)}.brand{text-decoration:none}.hero{display:grid;grid-template-columns:1.12fr 1fr;gap:48px;padding:48px 0 40px;border-bottom:1px solid var(--line)}h1{font-size:40px;line-height:1.35}h2{font-size:28px;line-height:1.5;margin:0 0 18px}h3{font-size:21px;line-height:1.5;margin:28px 0 12px}.tag,.small{color:var(--muted);font-size:13px}.hero-card,.lab,.callout{border:1px solid var(--line);border-radius:12px;padding:24px;background:var(--pale)}.hero-card strong{font-size:26px}.content-section{padding:48px 0;border-bottom:1px solid var(--line)}.section-nav,.controls,.notes-toolbar,.next-links{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.field{display:grid;gap:6px;min-width:0}.field.full{grid-column:1/-1}button,input,select{font:inherit;color:inherit}input,select{width:100%;min-width:0;min-height:44px;padding:8px;border:1px solid #aabaad;border-radius:6px;background:white}.btn{min-height:44px;min-width:44px;padding:9px 14px;background:white;border:1px solid #aabaad;border-radius:6px;cursor:pointer}.btn.primary{background:var(--dark);color:white}.btn:disabled{opacity:.55;cursor:default}.feedback,.applied-result{padding:16px;border:1px solid var(--line);border-radius:8px;background:#fffefb;margin:16px 0;overflow-wrap:anywhere}.pending{color:#7c581d}.lab{background:#fffefb}.lab>p{max-width:44rem}details{margin:16px 0;padding:16px;border:1px solid var(--line);border-radius:8px;background:#fffefb}summary{min-height:44px;cursor:pointer;font-weight:650}details p{margin-top:12px}.table-wrap{max-width:100%;overflow:auto}table{border-collapse:collapse;width:100%;font-size:14px;text-align:left}th,td{padding:10px;border-bottom:1px solid var(--line);vertical-align:top;white-space:nowrap}th{background:var(--pale)}figure{margin:20px 0;border:1px solid var(--line);border-radius:10px;padding:14px;background:white}svg{display:block;width:100%;height:auto}svg text{font:18px system-ui,"Microsoft YaHei",sans-serif;fill:#21382e}figcaption{font-size:13px;color:var(--muted);margin-top:12px}pre{max-width:100%;overflow:auto;padding:18px;background:var(--pale);font:14px/1.7 var(--mono);border-radius:8px}code{font-family:var(--mono)}li{margin-bottom:8px}.source-list a{overflow-wrap:anywhere}footer{padding:28px 0;font-size:13px;color:var(--muted)}:focus-visible{outline:3px solid #ad751d;outline-offset:4px}.exercise{padding:14px 0;border-bottom:1px solid var(--line)}.exercise h3{margin-top:14px}.exercise-answer{margin-bottom:20px}
+@media(max-width:760px){.hero,.fields{grid-template-columns:1fr}.hero{gap:24px}.field.full{grid-column:auto}.wrap{width:calc(100% - 40px)}.lab{padding:16px}}@media(max-width:370px){.lab{padding:12px}.btn{padding-inline:10px}svg text{font-size:20px}}
+@media print{body{background:white;color:#15251b;font-size:11pt}.wrap{width:100%;max-width:none}.topbar,.skip,.section-nav,.controls,.fields,.notes-toolbar,.next-links{display:none!important}.hero{display:block;padding:0 0 14px}.hero-card{display:none}.content-section{padding:18px 0}h1{font-size:25pt}h2{font-size:17pt}h3{font-size:13pt}.lab{padding:12px}pre{white-space:pre-wrap;overflow:visible;font-size:9pt}table{font-size:10pt}.table-wrap{overflow:visible}th,td{white-space:normal;padding:6px}a{color:inherit}details{break-inside:auto}.exercise{break-inside:avoid}body.exercise-print main>.hero,body.exercise-print main>.section-nav,body.exercise-print main>.content-section:not(#bus-practice),body.exercise-print .practice-intro,body.exercise-print footer{display:none!important}body.exercise-print .exercise-answer{display:none!important}body.exercise-print .applied-result,body.exercise-print .feedback{display:none!important}body.exercise-print #bus-practice{border:0;padding:0}}
+</style><style>
+/* Shared reading layer: keep this block identical in all standalone notes. */
+@media screen {
+:root{--paper:#fafbf8;--ink:#21382e;--muted:#526359;--line:#dce3d7;--green:#22664f;--pale:#eef2e9;--lime:#d5e7b3;--dark:#193e33}
+.notes-article{font-size:16px;line-height:1.9}
+.notes-article .wrap{width:min(1120px,calc(100% - 64px));max-width:none;padding-inline:0;margin-inline:auto}
+.notes-article .topbar{background:#fafbf8f5;z-index:10}
+.notes-article .topbar-inner{height:auto;min-height:68px;display:flex;align-items:center;justify-content:space-between;gap:24px;padding-block:0}
+.notes-article .brand{display:inline-flex;align-items:center;gap:10px;min-height:44px;margin:0;font-size:15px;font-weight:700;letter-spacing:0;color:var(--ink)}
+.notes-article .brandmark{display:grid;place-items:center;width:30px;height:30px;margin:0;border-radius:6px;background:var(--dark);color:#e0edcb;font:19px/1 var(--mono)}
+.notes-article .topbar nav{display:flex;align-items:center;gap:18px;margin:0;padding:0;width:auto;flex-wrap:nowrap}
+.notes-article .topbar nav a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:4px 3px;font-size:14px;font-weight:500;color:var(--muted);text-decoration:none;border-radius:4px}
+.notes-article .topbar nav a:hover,.notes-article .topbar nav a[aria-current="location"]{color:var(--green);background:var(--pale)}
+.notes-article .topbar nav a[aria-current="location"]{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:6px}
+.notes-article .hero{padding-block:48px 40px;gap:48px;grid-template-columns:1.12fr 1fr}
+.notes-article .hero h1{font-size:clamp(32px,3.6vw,44px);line-height:1.35;letter-spacing:-.035em;text-wrap:balance}
+.notes-article .hero h1 span{font-size:.78em;line-height:1.5;margin-top:8px}
+.notes-article .hero-intro{font-size:17px;line-height:1.9;max-width:32rem;margin-block:20px}
+.notes-article .hero>.hero-card,.notes-article .hero-flow,.notes-article .intro-map{box-shadow:none;border-radius:12px}
+.notes-article .hero .tag{font-size:12px;border-radius:4px;padding:4px 9px;margin:0 0 16px;line-height:1.7}
+.notes-article .hero>.hero-figure .map{transform:none;box-shadow:none}
+.notes-article .hero>div>.eyebrow{display:none}
+.notes-article .hero>.hero-card>.eyebrow,.notes-article .hero>.hero-flow>.eyebrow{display:block;font-size:12px;line-height:1.7}
+.notes-article .hero-links{gap:12px 22px;margin-top:24px}
+.notes-article .hero .text-link{display:inline-flex;align-items:center;min-height:44px;font-size:14px}
+.notes-article .hero figcaption,.notes-article .hero-figure figcaption,.notes-article .date-note{font-size:13px;line-height:1.8}
+.notes-article .hero-card p:last-child,.notes-article .hero-flow .small,.notes-article .intro-map>p:last-child{font-size:14px;line-height:1.85}
+.notes-article .hero-numbers span,.notes-article .hero-step small{font-size:13px}
+.notes-article h2{font-size:28px;line-height:1.5;text-wrap:balance}
+.notes-article .section-head p{font-size:15px;line-height:1.85}
+.notes-article .content-section,.notes-article .article-section{padding-block:52px}
+.notes-article .content-section+.content-section{padding-top:48px}
+.notes-article .note-section{scroll-margin-top:100px}
+.notes-article .note-section>summary{min-height:56px;font-size:18px;line-height:1.6}
+.notes-article .note-section>summary h2{font-size:20px;line-height:1.6}
+.notes-article .note-body{max-width:none;font-size:16px;line-height:1.95}
+.notes-article .note-body p,.notes-article .note-body li{font-size:16px;line-height:1.95}
+.notes-article .note-body>p,.notes-article .note-body>ul,.notes-article .note-body>ol,.notes-article .article-section>p,.notes-article .article-section>ul,.notes-article .article-section>ol{max-width:44rem;font-size:16px;line-height:1.95}
+.notes-article .note-body h3{font-size:21px;margin-block:28px 12px;scroll-margin-top:100px}
+.notes-article .note-body pre,.notes-article pre{font-size:14px;line-height:1.8}
+.notes-article .note-body table,.notes-article table{font-size:14px;line-height:1.8}
+.notes-article .note-body th,.notes-article .note-body td{font-size:14px;line-height:1.8}
+.notes-article .article-section>h2{font-size:28px}
+.notes-article .concept p,.notes-article .subnote p,.notes-article .risk p,.notes-article .monitor-step p,.notes-article .monitor-step ul,.notes-article .step-card p{font-size:15px;line-height:1.85}
+.notes-article .callout,.notes-article .model-scope,.notes-article .demo-disclaimer,.notes-article .version-card,.notes-article .version-card p{font-size:14px;line-height:1.85}
+.notes-article .source-list a,.notes-article .source-list span,.notes-article #plane-references~ul{font-size:14px;line-height:1.85}
+.notes-article #plane-overview~ul{max-width:none}
+.notes-article #plane-overview~ul li{font-size:15px;line-height:1.85}
+.notes-article .note-body .source-list{max-width:none}
+.notes-article .small,.notes-article .lab-note,.notes-article .lab-foot,.notes-article .lab-footer,.notes-article .clock-lab-foot,.notes-article .print-hint{font-size:13px;line-height:1.85}
+.notes-article .principle,.notes-article .principles span{font-size:13px;line-height:1.8}
+.notes-article .principles strong{font-size:15px}
+.notes-article .memory-motto,.notes-article .motto{background:var(--pale);color:var(--ink);border-radius:8px;text-align:left;padding:24px;margin-top:30px}
+.notes-article .memory-motto span,.notes-article .motto small{color:var(--muted);font-size:14px}
+.notes-article button,.notes-article .btn,.notes-article .notes-toolbar button{min-height:44px;min-width:44px;font-size:14px}
+.notes-article button,.notes-article .btn,.notes-article .topbar a,.notes-article summary,.notes-article .section-nav a,.notes-article .toc a{transition:background .18s,color .18s,border-color .18s,transform .18s}
+.notes-article button:enabled:hover{filter:brightness(1.06)}
+.notes-article button:enabled:active,.notes-article .btn:active{transform:translateY(1px)}
+.notes-article button:disabled{opacity:.58}
+.notes-article .graph-node:disabled,.notes-article .work-card:disabled{opacity:1}
+.notes-article :focus-visible{outline:3px solid #ad751d;outline-offset:4px}
+.notes-article .lab :focus-visible,.notes-article .clock-lab :focus-visible{outline-color:#f0cc80}
+.notes-article .toc a,.notes-article .section-nav a{display:inline-flex;align-items:center;min-height:44px;border-radius:5px;font-size:14px;padding:8px 12px}
+.notes-article .checklist label,.notes-article .clock-check{min-height:44px;font-size:14px;line-height:1.8}
+.notes-article .clock-field label,.notes-article .clock-controls small,.notes-article .clock-node small,.notes-article .clock-node span{font-size:13px;line-height:1.6}
+.notes-article .clock-current p,.notes-article .clock-candidate,.notes-article .clock-warnings{font-size:14px;line-height:1.8}
+.notes-article .clock-node strong,.notes-article .hero-numbers strong,.notes-article .metric strong{font-variant-numeric:tabular-nums}
+.notes-article .task-option strong,.notes-article .work-card strong{font-size:14px;line-height:1.65}
+.notes-article .task-option span,.notes-article .scope-buttons small,.notes-article .card-id,.notes-article .card-project,.notes-article .card-status,.notes-article .card-tags>span,.notes-article .lane-en{font-size:12px;line-height:1.6}
+.notes-article .scope-explanation,.notes-article .detail-copy>p,.notes-article .detail .acceptance,.notes-article .state-controls>p,.notes-article .board-heading p{font-size:14px;line-height:1.8}
+.notes-article .lane h4{font-size:14px;line-height:1.5;flex-wrap:wrap}
+.notes-article .lane-count{font-size:12px}
+.notes-article .lab .task-option{min-height:96px}
+.notes-article .skills-step-card dd,.notes-article .route-pane p,.notes-article .chooser-intro,.notes-article .permissions-pane>p{font-size:14px;line-height:1.85}
+.notes-article .skills-step-card dt,.notes-article .step-counter,.notes-article .permissions-pane small,.notes-article .permission-list span,.notes-article .graph-legend,.notes-article .graph-arrow-note{font-size:13px;line-height:1.8}
+.notes-article .ui-arrow{width:18px;height:18px;display:inline-block;vertical-align:middle;flex-shrink:0}
+.notes-article .selection-jump,.notes-article .choice-result{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;padding:10px 12px;border-radius:5px;font-size:13px;font-weight:600;line-height:1.6;text-decoration:none}
+.notes-article .selection-jump{background:#22664f;color:#fff}
+.notes-article .choice-result{color:#e2efca;border:1px solid #829873;background:#173e33;margin-top:7px}
+.notes-article .task-choice{min-width:0}
+.notes-article .task-choice .task-option{width:100%}
+.notes-article .task-option[aria-pressed="false"]+.choice-result{display:none}
+.notes-article #selected-skill,.notes-article #plane-selected-title{scroll-margin-top:128px}
+.notes-article footer,.notes-article .footer{font-size:13px;line-height:1.8}
+.notes-article footer a,.notes-article .footer a{display:inline-flex;align-items:center;min-height:44px}
+.notes-article .note-body p,.notes-article .hero-intro,.notes-article .article-section>p{text-wrap:pretty}
+@media(max-width:760px){
+.notes-article .wrap{width:calc(100% - 40px)}
+.notes-article .topbar-inner{flex-wrap:wrap;gap:0;padding-top:6px}
+.notes-article .brand{min-height:44px;font-size:15px}
+.notes-article .topbar nav{width:100%;gap:12px;overflow-x:auto;flex-wrap:nowrap;padding:0 0 4px;scrollbar-width:thin}
+.notes-article .topbar nav a{font-size:13px;flex-shrink:0;padding-inline:2px}
+.notes-article .hero{grid-template-columns:1fr;gap:28px;padding-block:32px}
+.notes-article .hero h1{font-size:32px;line-height:1.4}
+.notes-article .hero-intro{font-size:16px;max-width:none;margin-block:16px}
+.notes-article .hero-figure{max-width:500px}
+.notes-article .hero .tag{margin-bottom:12px}
+.notes-article .content-section,.notes-article .article-section{padding-block:36px}
+.notes-article .content-section+.content-section{padding-top:36px}
+.notes-article h2,.notes-article .article-section>h2{font-size:24px}
+.notes-article .section-head p{font-size:15px}
+.notes-article .note-section>summary{font-size:17px}
+.notes-article .note-section>summary h2{font-size:18px}
+.notes-article .note-body p,.notes-article .note-body li{font-size:16px}
+.notes-article .note-body pre,.notes-article pre{font-size:13px}
+.notes-article .note-body th,.notes-article .note-body td{font-size:14px}
+.notes-article .principles{grid-template-columns:1fr;gap:14px}
+.notes-article .principles strong{display:inline;margin-right:8px}
+.notes-article .principles span{display:inline}
+.notes-article .task-options{grid-template-columns:1fr 1fr;align-items:start}.notes-article .lab .task-option{min-height:76px;padding:12px}
+.notes-article .board{grid-template-columns:1fr 1fr}
+.notes-article .lane:last-child .lane-cards{display:flex}
+.notes-article .lane-cards{min-height:0}
+.notes-article .lane{padding:14px}
+.notes-article .lane-en{margin-bottom:10px}
+.notes-article .work-card{padding:14px}
+.notes-article .card-tags{gap:6px}
+.notes-article .lab-top{flex-wrap:wrap}
+.notes-article .lab-top .tag{white-space:normal}
+.notes-article .note-section,.notes-article .note-body h3,.notes-article .article-section,.notes-article .article-section>h3{scroll-margin-top:124px}
+}
+@media(max-width:370px){.notes-article .task-options,.notes-article .board{grid-template-columns:1fr}.notes-article .hero h1{font-size:30px}.notes-article .topbar nav{gap:8px}}
+}
+@media(prefers-reduced-motion:reduce){.notes-article *,.notes-article *::before,.notes-article *::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+</style><style>.diagram-scroll,.code-wrap,.table-wrap{max-width:100%;overflow:auto}.diagram-scroll svg{min-width:760px}.diagram-scroll svg text{font-size:17px}.code-wrap pre{min-width:max-content;margin:0}.content-section,main,.lab{min-width:0}.notes-article p,.notes-article li{overflow-wrap:anywhere}button,input,select{min-height:44px}.notes-article .lab :focus-visible{outline:3px solid #795214;outline-offset:3px}[hidden]{display:none!important}.state-table{min-width:680px}.feedback{border-left:4px solid #795214;padding:12px}.applied-result{border:1px solid #6a8062;padding:14px}.source-fold>summary{font-size:18px}.tag{line-height:1.7}@media print{.diagram-scroll,.code-wrap{overflow:visible}.diagram-scroll svg{min-width:0}.code-wrap pre{min-width:0;white-space:pre-wrap}body.exercise-print main>.content-section:not(#bus-practice){display:none!important}body.exercise-print #bus-practice>p,body.exercise-print #bus-practice>.controls,body.exercise-print .exercise-answer{display:none!important}body.exercise-print .applied-result,body.exercise-print .feedback{display:none!important}}</style></head><body class="notes-article"><a class="skip" href="#main">跳至正文</a><div class="notes-article"><header class="topbar"><div class="wrap topbar-inner"><a class="brand" href="../"><span class="brandmark" aria-hidden="true">E</span>嵌入式技术笔记</a><nav aria-label="文章导航"><a href="../learn/">返回分类</a><a href="bus-transactions.html#bus-bounded">交互实验</a><a href="bus-transactions.html#bus-overview">完整笔记</a><a href="../?search=1">搜索笔记</a></nav></div></header><main id="main" class="wrap"><div class="hero"><div><span class="tag">阶段03 · 单元12 · 主机读本</span><h1 id="bus-transactions-reference">I2C / SPI 事务速查</h1><p class="hero-intro">选定器件、整项操作、所有权和期限一起保留，简短才不会失去前提。</p></div><div class="hero-card"><strong>一项事务，一个提交边界</strong><p>先预测下一阶段，再区分候选、所有权与旧结果。真实线状态仍需独立证据。</p></div></div><nav class="section-nav" aria-label="本页目录"><a href="#bus-ref-scope">先核对选定对象与四层含义</a><a href="#bus-ref-wire">先画整项事务，再判断某一帧</a><a href="#bus-ref-failure">按phase、cause与所有权诊断</a><a href="#bus-ref-time">20ms总期限与旧结果合同</a><a href="#bus-ref-c">公共接口、常量资源与下载</a><a href="#bus-ref-sources">查原文时保留版本与空缺</a></nav><div class="notes-toolbar"><button class="btn" id="print-all" type="button">普通打印完整内容</button></div><div class="content-section" id="bus-ref-scope" role="region" aria-labelledby="bus-ref-scope-title"><h2 id="bus-ref-scope-title">先核对选定对象与四层含义</h2><p>固定LIS3DH，假设CS高/SA0低用于I2C；未核验板接线。address7=18，写地址字节30，读地址字节31，寄存器SUB=0F，身份期望DATA=33。通用7位数值30合法，本夹具仅判目标不匹配；绝不自动unshift。所钉HAL三个函数另要求先左移，是API特定约定。</p><p>SPI采用4线、8位MSB-first，单读命令80|0F=8F。由传感器高空闲/下降发送/上升采样与历史MCU定义推导CPOL1/CPHA1=mode3，只限本例，不替代速率/CS/电气条件核验。</p><a href="bus-transactions.html#bus-address">回到完整地址推导</a></div><div class="content-section" id="bus-ref-wire" role="region" aria-labelledby="bus-ref-wire-title"><h2 id="bus-ref-wire-title">先画整项事务，再判断某一帧</h2><figure><div class="diagram-scroll" role="region" tabindex="0" aria-label="ACK的接收者决定意义，可横向滚动"><svg viewBox="0 0 760 174" role="img" aria-labelledby="bus-ref-i2c-caption"><rect x="12" y="16" width="736" height="52" rx="7" fill="#eef2e9"/><text x="28" y="48">S 30 A(target) 0F A(target) Sr 31 A(target) 33 N(controller) P</text><rect x="12" y="82" width="736" height="52" rx="7" fill="#d5e7b3"/><text x="28" y="114">Sr保持busy；最后N正常结束；目标拒绝地址/SUB另报故障</text></svg></div><figcaption id="bus-ref-i2c-caption">ACK的接收者决定意义。原创逻辑图；采用Tables19/20一个8位SUB，正文两SUB矛盾未被消除。</figcaption></figure><figure><div class="diagram-scroll" role="region" tabindex="0" aria-label="同一个CS区间覆盖命令与数据，可横向滚动"><svg viewBox="0 0 760 174" role="img" aria-labelledby="bus-ref-spi-caption"><rect x="12" y="16" width="736" height="52" rx="7" fill="#eef2e9"/><text x="28" y="48">SELECT低 → TX8F/RX7E丢弃 → TX00(dummy)/RX33候选 → DESELECT高</text><rect x="12" y="82" width="736" height="52" rx="7" fill="#d5e7b3"/><text x="28" y="114">TXE仅缓冲移交；8位帧结束不等于完整寄存器事务完成</text></svg></div><figcaption id="bus-ref-spi-caption">同一个CS区间覆盖命令与数据。原创逻辑图；CS取消完成才提交候选，协议完成仍需另比较预期33。</figcaption></figure><a href="bus-transactions.html#bus-spi">回到命令、边沿与收尾解释</a></div><div class="content-section" id="bus-ref-failure" role="region" aria-labelledby="bus-ref-failure-title"><h2 id="bus-ref-failure-title">按phase、cause与所有权诊断</h2><p>目标地址/SUB NACK：仍OWNED→ERROR_STOP，下一poll有限逻辑STOP→FAILED/RELEASED，保留ADDRESS_NACK/DATA_NACK与原failurePhase。若先到20ms，policyCause=TIMEOUT，原cause/phase保留，UNKNOWN且无STOP。ARLO：FAILED/LOST，无STOP；新显式I2C请求仍先WAIT_FREE。ERROR/STUCK/timeout：UNKNOWN，拒绝新start，不可init/reset清掉未决资源。</p><p>busy可能正常占用/Sr/可选拉伸/卡线/本地状态，不足以授权九脉冲、reset或电源恢复。必须先查实际线状态、其他controller、所有权及板级权限。逻辑RELEASED不证明物理线路恢复；本接口无retry/cancel/physical recovery。</p><a href="bus-transactions.html#bus-ownership">回到所有权因果链与勘误适用条件</a></div><div class="content-section" id="bus-ref-time" role="region" aria-labelledby="bus-ref-time-title"><h2 id="bus-ref-time-title">20ms总期限与旧结果合同</h2><p>start100→poll119可PENDING；poll120等号先超时，不接受同刻READY。每poll最多一阶段，WAIT/期限/终态零动作。时间依赖真实前进观察和调度，1tick=1ms，true gap&lt;2^31由调用者承诺；观测delta≥2^31拒绝且全状态/报告保持。跨零4294967290→4是10，等tick不增年龄，整圈漏观察不能检测。</p><p>I2C ticks0..8九阶段，tick6只有候选，tick8STOP才newResult；SPI ticks0..3四阶段，COMMAND丢7E，数据33到DESELECT才提交。PENDING、准入拒绝、无效时间和所有失败保留旧已提交值。resultPresent可能指旧结果，只有newResult授权消费本轮新值；返回非33可READY但identityMatches=false。</p><a href="bus-transactions.html#bus-bounded">回到固定逐阶段例子</a></div><div class="content-section" id="bus-ref-c" role="region" aria-labelledby="bus-ref-c-title"><h2 id="bus-ref-c-title">公共接口、常量资源与下载</h2><p>bus_init(BusState*)只用于真正fresh storage；bus_start(state,request,now)复制protocol/address7/reg；bus_poll(state,now,event,report)一事件/一阶段，没有回调或忙等。BusCallStatus=OK/INVALID_ARGUMENT/BAD_STATE/BUS_BUSY/TIME_REJECTED，报告另有IDLE/PENDING/READY/FAILED，phase/nextPhase/cause/policyCause/failurePhase/resource。</p><p>存储恒定：一请求、一候选、一已提交字节；一输入事件/一输出报告，无队列/历史或会溢出的计数器，elapsed饱和20；UI固定路径≤9行。独占单上下文、不可重入，state与其他实参不重叠，真实存活类型/容量/生命周期由调用者保证。NULL检查不是指针有效性证明。UNKNOWN不可复用，LOST允许显式新请求但不证明物理free。</p><p>分别编译bus.c/time.c，独立调用者重复包含头，normal和NDEBUG检查都实际生效。AgentHub所有实际C操作使用mcu-build validate→dry-run→build，失败不跑旧产物；保留profile/tool/header/log/rawstatus/fresh artifact SHA。主机.su/栈启发式不等于目标最大栈。</p><p><a href="../examples/bus-transactions/bus.c" download>下载bus.c</a></p><p><a href="../examples/bus-transactions/bus.h" download>下载bus.h</a></p><p><a href="../examples/bus-transactions/README.txt" download>下载README.txt</a></p><p><a href="../examples/timer-pwm/time.c" download>下载time.c</a></p><p><a href="../examples/timer-pwm/time.h" download>下载time.h</a></p><a href="bus-transactions.html#bus-c">回到五份完整原始文本与复现说明</a></div><div class="content-section" id="bus-ref-sources" role="region" aria-labelledby="bus-ref-sources-title"><h2 id="bus-ref-sources-title">查原文时保留版本与空缺</h2><p>首选阅读[N]的START/ACK/地址与仲裁条款，再对照[L] Tables16/19/20和§8.5逐字节手推。下列版本与范围来自实际研究者有限阅读；本章作者进一步读了本地NXP与历史RM选页文字，不把研究者看过的像素声称自己全部复核。所有例子、图和有限软件策略均为本项目原创，没有复制收费课程。</p><ul><li>[N] <a href="https://www.nxp.com/docs/en/user-guide/UM10204.pdf">NXP UM10204 Rev7.0，2021-10-01</a>：§3.1.4–.6、.8–.10、.16，pp9–13/19；本地原文已提取，研究者实际看过pp9/11/19图。用来区分规范角色与bus-clear前提。</li><li>[L] <a href="https://www.st.com/resource/en/datasheet/lis3dh.pdf">ST LIS3DH DocID17530 Rev2，December2016</a>：§6 pp24–29、§8.5 p34及选定表文字。官方返回的该修订，不声称其后没有新版。单SUB表与两SUB句矛盾保留；时序/表像素未确认，不能输出板级速率验收。</li><li>[M] <a href="https://www.keil.com/dd/docs/datashts/st/stm32f4xx/dm00031020.pdf">ST RM0090历史Rev5，September2013，Keil托管</a>：§27.3 pp827–829、§28.3 pp855–859/861/867的实际文本；研究者看过828/857/858图。不是最新RM，最新官方RM仍未读，不声称寄存器驱动已验证。</li><li>[H] <a href="https://github.com/STMicroelectronics/stm32f4xx-hal-driver/blob/b6f0ed3829f3829eb358a2e7417d80bba1a42db7/Src/stm32f4xx_hal_i2c.c#L969">ST HAL I2C固定commit b6f0ed3829f3829eb358a2e7417d80bba1a42db7</a>：只用实际读过Master_Transmit/Master_Receive/Mem_Read参数说明，不推广其他API。状态返回与错误字段也不能混成物理总线恢复证据。</li><li>[E] <a href="https://www.st.com/resource/en/errata_sheet/es0182-stm32f405407xx-and-stm32f415417xx-device-errata-stmicroelectronics.pdf">ST ES0182 Rev19，July2026</a>：45页，Table3 pp2–4及§2.10/2.11.1/2.12文字，适用A与N按原表含义；表/电气像素未完成核验。slave BSY与USART IDLE的N不能误引。</li></ul><p>未验证：最新RM版本/全寄存器条款、传感器/errata部分表像素、实际芯片硅修订、引脚/供电/CS/SA0/上拉/电容与波形、硬件期限/吞吐、真实身份健康与物理打印纸张。已有有界下载失败已记录，不反复下载装饰来源，也不修改代理/TLS或安装工具来掩盖缺口。主机C/JavaScript、源码阅读、页面验证、发布、硬件与个人掌握是各自不同状态。</p><p>检索勘误先核device/revision/mode与Table3：A适用，N不适用；slave-only BSY不能当master规则，USART IDLE行全N不应说成当前适用缺陷。</p><div class="next-links"><a href="bus-transactions.html#bus-practice">回到十题独立回忆</a><a href="bus-transactions.html">返回完整读本</a><a href="adc-sampling.html">继续单元13</a></div></div></main><footer class="wrap">原创逻辑教学 · 主机证据不替代硬件验收 · 可向Agent追问具体阶段</footer></div><script id="bus-ordinary-print">(()=>{let previous,bodyClass;const restore=()=>{if(!previous)return;previous.forEach(([p,o])=>{p.open=o;});if(bodyClass===null)document.body.removeAttribute('class');else document.body.setAttribute('class',bodyClass);previous=undefined;};window.addEventListener('afterprint',restore);document.getElementById('print-all').addEventListener('click',()=>{if(previous)return;previous=[...document.querySelectorAll('details')].map(p=>[p,p.open]);bodyClass=document.body.getAttribute('class');document.body.classList.remove('exercise-print');try{window.print();}catch{window.dispatchEvent(new Event('afterprint'));restore();}});})();</script><script id="note-deep-links">
+(() => {
+  const reveal = () => {
+    let id;try{id=decodeURIComponent(window.location.hash.slice(1));}catch{return;}
+    if(!id) return;
+    const target=document.getElementById(id);if(!target) return;
+    let panel=target.closest('details');
+    while(panel) {panel.open=true;panel=panel.parentElement?.closest?.('details')||null;}
+    target.closest('section')?.querySelectorAll?.('details').forEach(detail=>{detail.open=true;});
+    requestAnimationFrame(()=>target.scrollIntoView({block:'start'}));
+  };
+  window.addEventListener('hashchange',reveal);window.addEventListener('pageshow',reveal);reveal();
+})();
+</script><script id="note-print">
+(() => {
+  let previous;
+  window.addEventListener('beforeprint',()=>{
+    if(previous) return;
+    previous=[...document.querySelectorAll('details')].map(panel=>[panel,panel.open]);
+    previous.forEach(([panel])=>{panel.open=true;});
+  });
+  window.addEventListener('afterprint',()=>{previous?.forEach(([panel,open])=>{panel.open=open;});previous=undefined;});
+})();
+</script></body></html>

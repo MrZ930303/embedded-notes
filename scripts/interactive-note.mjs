@@ -34,7 +34,13 @@ export const interactiveNotes = [
   { path: notePaths[28], source: 'timer-pwm.html' },
   { path: notePaths[29], source: 'timer-pwm-reference.html' },
   { path: notePaths[30], source: 'uart-framing.html' },
-  { path: notePaths[31], source: 'uart-framing-reference.html' }
+  { path: notePaths[31], source: 'uart-framing-reference.html' },
+  { path: notePaths[32], source: 'bus-transactions.html' },
+  { path: notePaths[33], source: 'bus-transactions-reference.html' },
+  { path: notePaths[34], source: 'adc-sampling.html' },
+  { path: notePaths[35], source: 'adc-sampling-reference.html' },
+  { path: notePaths[36], source: 'driver-recovery.html' },
+  { path: notePaths[37], source: 'driver-recovery-reference.html' }
 ]
 
 export function readInteractiveNote(path = notePath) {

@@ -41,7 +41,13 @@ assert.deepEqual(interactiveNotes.slice(originalNotes.length), [
   { path: 'learn/timer-pwm.html', source: 'timer-pwm.html' },
   { path: 'learn/timer-pwm-reference.html', source: 'timer-pwm-reference.html' },
   { path: 'learn/uart-framing.html', source: 'uart-framing.html' },
-  { path: 'learn/uart-framing-reference.html', source: 'uart-framing-reference.html' }
+  { path: 'learn/uart-framing-reference.html', source: 'uart-framing-reference.html' },
+  { path: 'learn/bus-transactions.html', source: 'bus-transactions.html' },
+  { path: 'learn/bus-transactions-reference.html', source: 'bus-transactions-reference.html' },
+  { path: 'learn/adc-sampling.html', source: 'adc-sampling.html' },
+  { path: 'learn/adc-sampling-reference.html', source: 'adc-sampling-reference.html' },
+  { path: 'learn/driver-recovery.html', source: 'driver-recovery.html' },
+  { path: 'learn/driver-recovery-reference.html', source: 'driver-recovery-reference.html' }
 ], 'New interactive readers must append after the stable original routes')
 
 for (const base of ['/', '/embedded-notes/']) {
@@ -243,6 +249,9 @@ await import('./test-memory-budget.mjs')
 await import('./test-clock-timebase.mjs')
 await import('./test-timer-pwm.mjs')
 await import('./test-uart-framing.mjs')
+await import('./test-bus-transactions.mjs')
+await import('./test-adc-sampling.mjs')
+await import('./test-driver-recovery.mjs')
 for (const path of ['learn/gpio-button.html', 'learn/gpio-button-reference.html']) {
   const article = await readInteractiveNote(path)
   assert.ok(article.includes('href="gpio-led.html"'), 'Previous chapter must link to the real LED reader: ' + path)
@@ -251,15 +260,14 @@ for (const path of ['learn/gpio-button.html', 'learn/gpio-button-reference.html'
 }
 console.log('PASS: previous GPIO chapter and reference lead to the registered LED chapter and printable reference.')
 
-for (const [name, next] of [['gpio-led', 'c-bits-registers'], ['c-bits-registers', 'c-objects-bounds'], ['c-objects-bounds', 'bounded-fifo'], ['bounded-fifo', 'build-link-identity'], ['build-link-identity', 'reset-runtime'], ['reset-runtime', 'memory-budget'], ['memory-budget', 'clock-timebase'], ['clock-timebase', 'timer-pwm'], ['timer-pwm', 'uart-framing']]) {
+for (const [name, next] of [['gpio-led', 'c-bits-registers'], ['c-bits-registers', 'c-objects-bounds'], ['c-objects-bounds', 'bounded-fifo'], ['bounded-fifo', 'build-link-identity'], ['build-link-identity', 'reset-runtime'], ['reset-runtime', 'memory-budget'], ['memory-budget', 'clock-timebase'], ['clock-timebase', 'timer-pwm'], ['timer-pwm', 'uart-framing'], ['uart-framing', 'bus-transactions'], ['bus-transactions', 'adc-sampling'], ['adc-sampling', 'driver-recovery']]) {
   for (const suffix of ['', '-reference']) {
     const article = await readInteractiveNote('learn/' + name + suffix + '.html')
     assert.ok(article.includes(next + '.html'), 'Course sequence must reach the real next chapter: ' + name + suffix + ' -> ' + next)
   }
 }
 for (const suffix of ['', '-reference']) {
-  const article = await readInteractiveNote('learn/uart-framing' + suffix + '.html')
-  const nextSection = article.match(/id="uart-(?:ref-)?next"[\s\S]*?<\/main>/)?.[0] || ''
-  assert.ok(nextSection.includes('engineering-map.html#stage-03') && /12(?:[—–]14| I2C\/SPI、13 ADC误差、14驱动故障).*待实现/.test(nextSection), 'Unit11 must point to the honest pending stage03 continuation')
+  const article = await readInteractiveNote('learn/driver-recovery' + suffix + '.html')
+  assert.ok(article.includes('engineering-map.html#stage-04'), 'Unit14 must lead honestly to pending unit15 in stage04')
 }
-console.log('PASS: course links connect unit02 through11 with pending12–14 while all twenty-eight prior canonical readers remain in order.')
+console.log('PASS: unchanged32 canonical prefix and real11→12→13→14 sequence, with pending15 through stage04.')

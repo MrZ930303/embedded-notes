@@ -2,7 +2,7 @@
 
 使用 VitePress 1.6.4 稳定版构建的中文技术笔记站。依赖版本由 package-lock.json 锁定，适合部署到 GitHub Pages。
 
-当前内容：九篇技术交互笔记（MCU 堆栈、Beads、Plane、Matt Pocock Skills、MCU 晶振与主频、Cortex-M CPU 核心寄存器、HardFault 栈回溯分析、EasyLogger、MCU OTA），另有学习地图与三路资料对照、GPIO、C 基础、构建启动、时间与串口十一章及各自速查，共二十三份学习中心资料，以及一条 MCU 内存学习路线。首页按五个正式主题帮助你找到笔记，进入笔记后直接操作模型、阅读图解并展开完整正文。FreeRTOS 独立分类仍为规划中。
+当前内容：九篇技术交互笔记（MCU 堆栈、Beads、Plane、Matt Pocock Skills、MCU 晶振与主频、Cortex-M CPU 核心寄存器、HardFault 栈回溯分析、EasyLogger、MCU OTA），另有学习地图与三路资料对照、GPIO、C 基础、构建启动、时间与串口、协议与采集恢复十四章及各自速查，共二十九份学习中心资料，以及一条 MCU 内存学习路线。首页按五个正式主题帮助你找到笔记，进入笔记后直接操作模型、阅读图解并展开完整正文。FreeRTOS 独立分类仍为规划中。
 
 ## 本地预览（Windows / macOS / Linux）
 
@@ -68,7 +68,7 @@ node scripts/test-build-startup-c.mjs --compiler cc --router /path/to/build_rout
 5. 运行 npm run check，然后在浏览器检查文章、搜索、移动端布局与交互。
 6. 审阅改动后提交并推送；main 分支的推送会触发自动发布。
 
-重要：docs/public/demos/ 下的三十二份 HTML 是主阅读体验的完整源码。scripts/interactive-note.mjs 注册源码和主路径；VitePress 的 transformHtml 构建钩子原样输出到 c-memory/heap-stack.html、tools/、mcu/ 与 debug/easylogger.html 等主阅读路径，开发服务提供相同 HTML。demos/ 路径保留兼容访问。docs/c-memory/heap-stack.md、docs/tools/、docs/mcu/、docs/learn/ 与 docs/debug/easylogger.md 只提供全文搜索输入，不作为公开文档式阅读页。修改正文、代码或限定条件后必须同步 HTML 与搜索输入；新增搜索标题还需为 HTML 中对应章节添加相同 id。构建测试会核对搜索结果锚点。
+重要：docs/public/demos/ 下的三十八份 HTML 是主阅读体验的完整源码。scripts/interactive-note.mjs 注册源码和主路径；VitePress 的 transformHtml 构建钩子原样输出到 c-memory/heap-stack.html、tools/、mcu/ 与 debug/easylogger.html 等主阅读路径，开发服务提供相同 HTML。demos/ 路径保留兼容访问。docs/c-memory/heap-stack.md、docs/tools/、docs/mcu/、docs/learn/ 与 docs/debug/easylogger.md 只提供全文搜索输入，不作为公开文档式阅读页。修改正文、代码或限定条件后必须同步 HTML 与搜索输入；新增搜索标题还需为 HTML 中对应章节添加相同 id。构建测试会核对搜索结果锚点。
 
 文章内链接到另一篇文章时，使用相对 Markdown 路径，如 ./heap-stack.md。主题组件中的站内链接使用 VitePress 的 withBase()。主交互笔记使用 data-no-router 和主题路由守卫进行浏览器原生导航，搜索及后退/前进也不会恢复成文档版。交互页中的搜索入口返回知识库并打开本地搜索。
 
@@ -114,12 +114,12 @@ SITE_BASE=/ npm run docs:preview
 - docs/.vitepress/theme/：首页组件与主题样式
 - docs/c-memory/：分类索引，以及交互笔记的全文搜索输入
 - docs/tools/：Beads、Plane、Matt Pocock Skills 分类与全文搜索输入
-- docs/learn/：学习地图、GPIO、C 基础与构建启动、时间与串口十一章、打印速查的分类与全文搜索输入
+- docs/learn/：学习地图、GPIO、C 基础与构建启动、时间与串口、协议与采集恢复十四章、打印速查的分类与全文搜索输入
 - docs/guide/：学习路线
 - docs/mcu/：时钟、寄存器、HardFault 与 OTA 文章的分类和全文搜索输入
 - docs/debug/：调试与实战分类、EasyLogger 全文搜索输入
 - docs/freertos/：规划中分类
-- docs/public/demos/：三十二份完整 HTML 阅读页源码，样式、模型与正文完整内嵌；demos/ 保留兼容访问
+- docs/public/demos/：三十八份完整 HTML 阅读页源码，样式、模型与正文完整内嵌；demos/ 保留兼容访问
 - docs/public/examples/：按键、三个 C 基础实验、构建启动四章及时间串口两章的可下载 C11 源码、生成器、人工链接布局与复现说明
 - scripts/test-c-foundations-c.mjs：独立主机 C 门禁，使用已有 mcu-build custom profile 路由
 - scripts/test-build-startup-c.mjs：构建启动四章的可选统一 C/产物证据门禁，编译、链接和二进制转换均经同一路由
@@ -143,7 +143,7 @@ EasyLogger 笔记的过滤、RTT、ISR 优先级和 UART 带宽均为页面内�
 
 MCU OTA 笔记比较六类典型更新路径。双槽不等于可回滚，外部暂存不等于保留旧版，双 Bank 不等于 A/B；单槽必须保留独立救援入口。容量计算和失败模拟只说明架构条件，不执行设备操作，也不代表硬件断电测试。
 
-学习中心现有八阶段地图（含三路资料范围对照）、01—11 十一章与各自速查，和九篇专题笔记合计三十二份完整阅读页，仍为五个正式主题。03—05 的主机 C 与 JavaScript 检查分开；单上下文 FIFO 不可共享给任务、ISR 或 DMA。03—05 已有基线78723d5与CI/Pages39058801087及父任务线上核验，06—09 已有4ac57c4与CI/Pages39068664322及父任务八读本/二十下载线上核验。10—11时间与串口为本地候选，12—14仍待建设；32 单元与八阶段的完整状态见 curriculum/coverage.md。本地检查、审查、发布和硬件分别记录，不推定整个阶段或课程完成。按键电路与抖动时间轴是人工教学模型，5 ms 不是通用参数，也没有经过硬件验证。站点不保存个人作答或学习记录。
+学习中心现有八阶段地图（含三路资料范围对照）、01—14 十四章与各自速查，和九篇专题笔记合计三十八份完整阅读页，仍为五个正式主题。03—05 的主机 C 与 JavaScript 检查分开；单上下文 FIFO 不可共享给任务、ISR 或 DMA。03—05 已有基线78723d5与CI/Pages39058801087及父任务线上核验，06—09 已有4ac57c4与CI/Pages39068664322及父任务八读本/二十下载线上核验。10—11已有f215343/CI39073047054及父任务四读本、十一下载与线上交互发布证据；12—14协议、ADC与驱动恢复为本地候选，15—32仍待建设；32 单元与八阶段的完整状态见 curriculum/coverage.md。本地检查、审查、发布和硬件分别记录，不推定整个阶段或课程完成。按键电路与抖动时间轴是人工教学模型，5 ms 不是通用参数，也没有经过硬件验证。站点不保存个人作答或学习记录。
 
 ## 依赖与维护
 
@@ -182,3 +182,15 @@ node scripts/test-time-serial-c.mjs --compiler cc --router /path/to/build_router
 也支持 CC、MCU_BUILD_ROUTER、PYTHON；`--output` 只接受本工作区 `.scratch/` 下的私有目录，默认 `.scratch/time-serial/integration/c-evidence/run-*`。每次运行创建新目录，分别保留严格普通/NDEBUG测试、四个独立模块、重复包含公共头的独立调用者编译及链接、实际执行摘要。每次编译和链接均走 validate → dry-run → build，记录工具/profile/源与头前后哈希、原始状态、诊断和新鲜产物；失败后不执行旧产物。缺少工具明确失败，不安装软件，也不改变可移植的 `npm run check`。
 
 UART下载须保留 examples/ 下 bounded-fifo、timer-pwm、uart-framing 同级目录，链接原 fifo.c/time.c/uart.c；不包含实现文本。20ms是无到达时间戳条件下的服务/解析观察期限；IDLE不是通用帧边界。TIM3限定16位edge-up PWM1，ARR0阻塞，ARR65535的普通比较不能编码100%；预装载事件和名义算术不证明硬件波形或无毛刺。当前官方RM未读、历史Rev5与N/VCO192教学POLICY、当前DS/PM表格像素及硬件/实体纸张缺口保留，详见各章来源与阶段证据。
+
+## 协议、采集与恢复 C 实验
+
+使用已有GCC兼容C11编译器、Python和mcu-build路由器：
+
+```sh
+node scripts/test-protocol-acquisition-c.mjs --compiler cc --router /path/to/build_router.py --python python
+```
+
+也支持CC、MCU_BUILD_ROUTER、PYTHON；--output仅接受本工作区.scratch下私有目录。严格普通/NDEBUG下分别编译实际FIFO/time/UART/bus/ADC/manager/backend/terminal八模块，独立重复包含八公共头的调用者真正链接并执行UART+ADC+manager纵向切片与独立总线事务。所有编译/链接均经validate→dry-run→build，保留源/全部借入头/工具/profile/原始状态/日志/新鲜产物和逐函数.su；失败不执行旧产物，不安装工具。三作者独立原生入口分别为test-bus-transactions.mjs --c、test-adc-sampling.mjs --native、test-driver-recovery.mjs --native；无原生开关的Node检查不编译C。
+
+12的逻辑释放不证明物理线状态；13的floor-bin、参考与虚构RC/混叠例有明确条件；14的取消接受、匹配清理和隔离保留所有权，重试资格仅属于声明的fake语义。真实UART状态命令与应用状态响应分开。主机组合不证明硬件、目标时延/最大栈、模拟精度、物理恢复、实体纸张或发布；当前RM与DS/PM/AN/传感器/勘误图表缺口保留。

@@ -1,0 +1,882 @@
+# I2C / SPI 事务与失败 {#bus-transactions}
+
+<p>把字节放回完整操作里：从地址到最终提交，每一步都有角色和条件。</p>
+
+<span id="bus-overview"></span>
+
+## 把一个寄存器读完，再交出结果 {#bus-overview-title}
+
+<p>采集终端已经能用单元10观察时间、用单元11接收有界串口命令。下一步是读传感器身份寄存器，同时让主循环继续服务命令。前置只需知道十六进制、位与字节、函数状态和“先验证再提交”；不要求会写I2C/SPI寄存器。</p><p>本章短路线：①用7位地址推导线上两个地址字节；②手推I2C与SPI各一整个事务；③预测一次推进一阶段及20ms期限；④离开活动独立完成十题。小成果是一张能解释每个字节、ACK接收者、所有权和提交边界的记录。</p><p>事务是完成一次选定操作所需的全部协议步骤及收尾。帧是硬件一次移位的数据宽度。候选值是尚未通过完整收尾的数据；已提交值是上一次完整成功接受的结果。只看到一个0x33、一次TXE或一个“成功”按钮，都还不能解释整个因果链。</p><p>本页的活动与C是原创、由调用者提供事件的主机模型，不接触MMIO、HAL或引脚。完整静态推导、图、下载与原生折叠答案在无脚本时仍可阅读。普通打印会展开解释并恢复原折叠；无脚本时请手动展开所需内容后打印。没有保存答案、分数或个人学习状态。</p>
+
+<span id="bus-address"></span>
+
+## 0x18、0x30、0x31与0x0F各属于哪一层 {#bus-address-title}
+
+<p>先固定对象：LIS3DH，假设CS为高以选I2C、SA0接低，尚未核验实际接线。手册Table16给7位地址0x18；WHO_AM_I寄存器地址0x0F，Table24期望返回0x33。这三种地址/值不是同一层的“地址”。[L] §6.1、§8.5。</p><p>把0x18写成7位0011000，再追加方向位：写方向0得到00110000=0x30，读方向1得到00110001=0x31。运算是(address7&lt;&lt;1)|R/W；方向位不是寄存器地址的一部分。0x0F由写阶段的SUB指定，之后读阶段才返回寄存器内容。SA0高则地址0x19，写/读字节0x32/0x33；那个读地址字节0x33与身份数据0x33只是数值碰巧相同。</p><figure><div class="diagram-scroll" role="region" tabindex="0" aria-label="七位地址、线上字节与API参数，可横向滚动"><svg viewBox="0 0 760 306" role="img" aria-labelledby="bus-address-figure-caption"><rect x="12" y="16" width="736" height="52" rx="7" fill="#eef2e9"/><text x="28" y="48">器件条件：CS高，SA0低 → address7=0x18 (0011000)</text><rect x="12" y="82" width="736" height="52" rx="7" fill="#d5e7b3"/><text x="28" y="114">线上写：0011000 + 0 → 00110000=0x30</text><rect x="12" y="148" width="736" height="52" rx="7" fill="#eef2e9"/><text x="28" y="180">线上读：0011000 + 1 → 00110001=0x31</text><rect x="12" y="214" width="736" height="52" rx="7" fill="#d5e7b3"/><text x="28" y="246">SUB=0x0F 选择WHO_AM_I；DATA=0x33 是寄存器内容</text></svg></div><figcaption id="bus-address-figure-caption">七位地址、线上字节与API参数。原创逻辑图；方向位扩成8位传输字节，不改变寄存器地址的意义。</figcaption></figure><p>本章C接口字段叫address7，固定夹具接收0x18。0x30=48仍在一般7位数值范围内，不能仅凭数值说“非法7位地址”，也不能偷偷右移猜用户本意；这里只因固定器件不匹配而拒绝。通用驱动若真有地址0x30的目标，就必须保留这个数值。</p><p>另一个层次是API约定：已钉住的ST HAL I2C实现commit b6f0ed…中Master_Transmit、Master_Receive与Mem_Read的参数说明要求先将手册7位地址左移；因此该API的DevAddress传0x30。线上R/W由调用方向处理。这个约定只属于这些已读函数，不能推广到所有库；移植时先读实际接口说明。[H]</p><p>交互活动在完整读者页运行；本镜像保留全部静态例子、因果推导与反馈检查。</p>
+
+<span id="bus-i2c"></span>
+
+## 手推S 30 A 0F A Sr 31 A 33 N P {#bus-i2c-title}
+
+<p>I2C在SCL高时用SDA下降表示START（S），用SDA上升表示STOP（P）。每个字节8位、最高位先行，第9个时钟由controller产生，但ACK电平由接收者决定：发送者释放SDA，接收者拉低为ACK（A），保持高为NACK（N）。因此“谁发时钟”与“谁发ACK”必须分开问。[N] §3.1.4–.6。</p><p>本例完整记号是 S 30 A 0F A Sr 31 A 33 N P。controller先写目标地址30，target ACK；写SUB=0F，target ACK；controller发重复START（Sr）并发读地址31，target ACK；target发数据33，controller作为接收者发最终NACK，然后controller发STOP。Sr没有释放busy；它保留组合事务而改变方向。STOP之后还要满足规范规定的空闲时间，模型不模拟该电气时序。[N][L]</p><figure><div class="diagram-scroll" role="region" tabindex="0" aria-label="组合读中每个字节和第九时钟的角色，可横向滚动"><svg viewBox="0 0 760 306" role="img" aria-labelledby="bus-i2c-figure-caption"><rect x="12" y="16" width="736" height="52" rx="7" fill="#eef2e9"/><text x="28" y="48">controller → S  30(write) ; target → A</text><rect x="12" y="82" width="736" height="52" rx="7" fill="#d5e7b3"/><text x="28" y="114">controller → 0F(SUB) ; target → A</text><rect x="12" y="148" width="736" height="52" rx="7" fill="#eef2e9"/><text x="28" y="180">controller → Sr  31(read) ; target → A</text><rect x="12" y="214" width="736" height="52" rx="7" fill="#d5e7b3"/><text x="28" y="246">target → 33(DATA) ; controller → N  P</text></svg></div><figcaption id="bus-i2c-figure-caption">组合读中每个字节和第九时钟的角色。原创逻辑图；最后N由controller正常结束读取，目标拒绝地址/SUB的N是另一类事件。</figcaption></figure><p>控制器接收者在最后一个字节之后发NACK，是“我不要下一字节”的正常结束信号；不能拿它当“传输失败”。目标在地址或SUB后NACK则可能无人应答、尚未就绪或不接受命令，诊断必须带发生阶段。本章选择分别报告ADDRESS_NACK与DATA_NACK，而不是一个不带位置的ERROR。[N] §3.1.6。</p><p>来源有一个不能藏掉的不一致：LIS3DH正文先定义SUB为8位，又有“两sub-address bytes”的句子；但Tables19/20两张读表都只出现一个SUB。本例明确采用这两张表的单个8位SUB，不声称原文完全无歧义。SUB的bit7还定义器件特定自增，当前单读取0；这不是所有I2C器件的通用寄存器规则。[L] pp25–26。</p><p>真正F407接收器的收尾比这张逻辑图更细：历史RM0090 Rev5 §27.3.3区分单字节、2字节与N&gt;2的ACK/POS/BTF/STOP顺序，单字节在清ADDR前关ACK，ADDR读清次序为SR1→SR2。本页没有把“等RXNE再统一STOP”写成寄存器驱动，也没有声称已审读最新RM。</p>
+
+<span id="bus-spi"></span>
+
+## 8F、dummy与同一CS：读出的第一个字节为何丢弃 {#bus-spi-title}
+
+<p>SPI没有I2C的7位目标地址与第9位ACK。先由CS选择器件，再按器件定义发送命令位。选定4线、8位帧、MSB-first：LIS3DH命令bit7=1表示读，bit6=0表示单字节，bit5:0为寄存器地址0x0F，所以0x80|0x00|0x0F=0x8F。不能把I2C地址0x18或0x31当SPI命令。[L] §6.2。</p><p>一个8位硬件帧不是一次完整寄存器读。CS拉低后先发8F，同时接收任意示例7E；该字节是命令阶段的同步输入，必须丢弃。随后仍需8个SCK时钟让目标输出寄存器数据，模型发送dummy=00来产生这8个时钟并接收33。收到候选33后保持CS选中，直到完整收尾取消CS，才提交。dummy的值是本例选择，不是向寄存器写00。</p><figure><div class="diagram-scroll" role="region" tabindex="0" aria-label="一项SPI读跨两个帧，只有一个CS选中区间，可横向滚动"><svg viewBox="0 0 760 306" role="img" aria-labelledby="bus-spi-figure-caption"><rect x="12" y="16" width="736" height="52" rx="7" fill="#eef2e9"/><text x="28" y="48">CS   高 ─→ 低 [命令8时钟] [数据8时钟] ─→ 高</text><rect x="12" y="82" width="736" height="52" rx="7" fill="#d5e7b3"/><text x="28" y="114">MOSI             8F               00(dummy)</text><rect x="12" y="148" width="736" height="52" rx="7" fill="#eef2e9"/><text x="28" y="180">MISO             7E(丢弃)         33(候选)</text><rect x="12" y="214" width="736" height="52" rx="7" fill="#d5e7b3"/><text x="28" y="246">软件      SELECT → COMMAND → SPI_DATA → DESELECT提交</text></svg></div><figcaption id="bus-spi-figure-caption">一项SPI读跨两个帧，只有一个CS选中区间。原创逻辑图；8F和dummy不能被中间一次抬CS拆成两项命令；7E不是身份结果。</figcaption></figure><p>模式也由条件推导。所读LIS3DH文字要求SPC空闲高、下降沿发送、上升沿采样；历史RM把CPOL1定义为空闲高，CPHA1定义为第二边沿采样。高空闲的第一边沿是下降，第二是上升，因此此选定示例对应CPOL1/CPHA1，通常称mode3。这是两份资料的对应推论，不是“所有ST传感器都用mode3”，也没有顺便核准mode0。[L][M] §28.3.1。</p><figure><div class="diagram-scroll" role="region" tabindex="0" aria-label="从高空闲判断第一、第二边沿，可横向滚动"><svg viewBox="0 0 760 306" role="img" aria-labelledby="bus-edge-figure-caption"><rect x="12" y="16" width="736" height="52" rx="7" fill="#eef2e9"/><text x="28" y="48">空闲SCK=高 → CPOL=1</text><rect x="12" y="82" width="736" height="52" rx="7" fill="#d5e7b3"/><text x="28" y="114">第一边沿：高→低（下降），器件驱动/改变数据</text><rect x="12" y="148" width="736" height="52" rx="7" fill="#eef2e9"/><text x="28" y="180">第二边沿：低→高（上升），器件采样 → CPHA=1</text><rect x="12" y="214" width="736" height="52" rx="7" fill="#d5e7b3"/><text x="28" y="246">先后顺序 + MSB-first + CS前后条件，共同构成此示例</text></svg></div><figcaption id="bus-edge-figure-caption">从高空闲判断第一、第二边沿。原创逻辑图；模式号不包含频率、CS建立保持、负载或供电合规。</figcaption></figure><p>TXE只表明发送缓冲已把数据交给移位寄存器；末位可能仍在移位。历史RM master transmit-only例明确先等TXE，再看BSY结束，并提醒BSY建立有短延迟。不能从一次TXE断言“最后一位已在线上完成”，也不能把一个模式的收尾顺序当全部双工/接收模式通用实现。[M] p861/p867。</p><p>本页不推荐一个可直接上板的SCK数值。即使算术低于手册某上限，仍需核对选定MCU分频/APB、供电、IO速度与负载、CS建立保持、板线和实际波形。传感器时序表像素没有完成复核；图示时钟是逻辑步骤，不是测量时序预算。</p><p>交互活动在完整读者页运行；本镜像保留全部静态例子、因果推导与反馈检查。</p>
+
+<span id="bus-ownership"></span>
+
+## 先解释所有权，再解释失败和恢复边界 {#bus-ownership-title}
+
+<p>busy只告诉你观察到不能开始，并不告诉你原因。可能另一个controller正在通信、Sr仍保留busy、某目标可选地拉低SCL等待，也可能线路卡住、器件失电或本地状态未完成。clock stretching是目标可选能力，不能假定每颗器件都能拉伸，也不能用一个软件期限反推规范规定了20ms的统一拉伸上限。[N] §3.1.8–.9。</p><p>仲裁丢失ARLO的含义是“本地已不拥有这项总线传输”。输家停止驱动，赢家继续；输家若自作主张补STOP会干扰另一个controller。历史F407描述ARLO时硬件释放线、回slave状态，这与收到NACK的AF处理不同。本模型ARLO直接终止为LOST，无STOP事件。LOST不等于“整条总线现在free”；显式新请求仍从WAIT_FREE检查开始。[N][M]。</p><p>本模型NACK发生时仍OWNED，所以保留原始cause/failurePhase，转入ERROR_STOP，等待下一次poll执行一个逻辑STOP；只有该有限事件完成才报告FAILED/RELEASED。若在此之前20ms到期，先终止为UNKNOWN，不执行STOP：原NACK位置不改，policyCause另记TIMEOUT。普通backend错误或STUCK也直接保留不确定性。这个逻辑release只证明fake资源合同，不证明物理SCL/SDA恢复。</p><figure><div class="diagram-scroll" role="region" tabindex="0" aria-label="错误路径取决于所有权，不取决于一个ERROR标签，可横向滚动"><svg viewBox="0 0 760 306" role="img" aria-labelledby="bus-ownership-figure-caption"><rect x="12" y="16" width="736" height="52" rx="7" fill="#eef2e9"/><text x="28" y="48">地址/SUB拒绝 + OWNED → ERROR_STOP → 下次OK → FAILED/RELEASED</text><rect x="12" y="82" width="736" height="52" rx="7" fill="#d5e7b3"/><text x="28" y="114">ERROR_STOP遇20ms → 原NACK保留 + policyTIMEOUT → UNKNOWN</text><rect x="12" y="148" width="736" height="52" rx="7" fill="#eef2e9"/><text x="28" y="180">ARLO → FAILED/LOST；不补STOP；新显式请求仍先WAIT_FREE</text><rect x="12" y="214" width="736" height="52" rx="7" fill="#d5e7b3"/><text x="28" y="246">STUCK/后台不明 → FAILED/UNKNOWN；拒绝新的bus_start</text></svg></div><figcaption id="bus-ownership-figure-caption">错误路径取决于所有权，不取决于一个ERROR标签。原创逻辑图；UNKNOWN不允许init/reset清除；外部确认恢复需要另一个明确合同。</figcaption></figure><p>NXP §3.1.16把SCL卡低与SDA卡低分开讨论：SCL卡低侧重硬件reset/电源复位；SDA卡低才谈九个时钟，仍不释放则另处理。这些是带实际线状态与器件条件的条款，绝不是“看到busy就打九脉冲”的授权。真实恢复前必须知道线状态、其他controller活动与本地所有权、电源/reset权限和板级条件。本页无GPIO脉冲、总线清除、外设复位或电源操作。</p><p>勘误也有适用条件。已读ES0182 Rev19（July2026）Table3中A表示适用且有workaround，N表示不适用。§2.10.1的controller虚报BERR可能发生于仍继续的事务，不能无条件中止；§2.10.4仅在指定Standard-mode 88–100kHz及SCL上升/拉伸条件讨论Sr setup。§2.12.5末尾BSY不可靠限定slave，不能取消master的完成判断。§2.11.1 USART IDLE在所列F407硅列均N，不应拿它说当前F407适用缺陷。[E]</p>
+
+<span id="bus-bounded"></span>
+
+## 一阶段一返回：20ms是总期限，不是忙等许可 {#bus-bounded-title}
+
+<p>主循环一轮做有限串口服务，再调用一次bus_poll。函数只观察一个事件、推进至多一个协议阶段并返回PENDING，绝不在内部while等标志。这让其他工作有机会运行；它不自动证明调度一定及时或串口不会丢字节。一个20ms参数若包住任意阻塞调用，仍不能建立系统界限。</p><p>本模型开始于start接受时刻；每次poll都先用借入time_elapsed校验无符号32位观察，再累计总年龄，饱和到20。1tick=1ms；调用者承诺真实向前观察间隔严格小于2^31；观察差≥2^31拒绝且不改任何接受字段/报告。then4294967290、now4给模差10；相同tick合法但不增加年龄。两个样本无法识别一整圈漏观察，所以停止的tick、长期不被调度都不能由期限数字补救。</p><p>start100，poll119可PENDING；poll120时即使传入“成功”，20ms等号已经过期，不能先接收或提交。期限是我们选定的服务观察策略，不是传感器转换时间或I2C规范的电气限制。每次调用有限与最终墙钟时间有限是两个不同命题。</p><figure><div class="diagram-scroll" role="region" tabindex="0" aria-label="候选字节与上一次已提交值分开，可横向滚动"><svg viewBox="0 0 760 306" role="img" aria-labelledby="bus-commit-figure-caption"><rect x="12" y="16" width="736" height="52" rx="7" fill="#eef2e9"/><text x="28" y="48">旧结果22 → start接受新请求 → 旧22仍可观察</text><rect x="12" y="82" width="736" height="52" rx="7" fill="#d5e7b3"/><text x="28" y="114">DATA收到33 → candidatePresent=1；result仍22</text><rect x="12" y="148" width="736" height="52" rx="7" fill="#eef2e9"/><text x="28" y="180">正常FINAL_NACK后STOP成功 → newResult=1；result变33</text><rect x="12" y="214" width="736" height="52" rx="7" fill="#d5e7b3"/><text x="28" y="246">PENDING/拒绝/NACK/ARLO/timeout → 旧result不因候选而改</text></svg></div><figcaption id="bus-commit-figure-caption">候选字节与上一次已提交值分开。原创逻辑图；resultPresent可能指旧结果，只有newResult授权把这一轮当新读数。</figcaption></figure><p>有限成功I2C重放在tick0..8依次执行WAIT_FREE、START、ADDRESS_WRITE、SUBADDRESS、RESTART、ADDRESS_READ、DATA、FINAL_NACK、STOP；tick6只有候选，tick8提交。SPI在0..3执行SELECT、COMMAND、SPI_DATA、DESELECT，命令RX7E被丢弃，数据RX33才可候选。活动提供这两条成功路径以及SUB NACK、ARLO、WAIT到超时的独立固定轨迹。它们的tick是协作重放，不是线上每字节1ms。</p><p>交互活动在完整读者页运行；本镜像保留全部静态例子、因果推导与反馈检查。</p><p>延迟回忆：先离开活动读完源码，回来把地址改为48、SPI低6位改为40，先写出哪个接口仍数值合法、单读命令应是什么，再核对。若你不明白某一步，请直接问“谁在这一阶段拥有总线/谁发第九位/候选何时提交”，带上阶段名即可继续讨论。</p>
+
+<span id="bus-c"></span>
+
+## 可复现公共C、借入时间依赖与生命周期合同 {#bus-c-title}
+
+<p>公共模块bus.h/bus.c以bus_init、bus_start、bus_poll暴露一个小接口；实际借入、分别编译的time.h/time.c负责已冻结的时间差。bus_init只用于真正fresh storage，不读未初始化成员；不提供cancel、reset或cleanup-complete API。单元14不能凭需要而假造一个bus取消适配器。</p><p>bus_start验证并复制protocol/address7/reg，不保留调用者请求指针。固定夹具只接受I2C/SPI、18、0F。活跃或OWNED/UNKNOWN返回BUS_BUSY；参数/时间拒绝保留完整状态。RELEASED/LOST终态允许显式新请求，I2C重新走WAIT_FREE，不能把清空host状态当物理恢复。UNKNOWN不接受重启/重新初始化来抹掉未决资源，外部恢复另立合同。</p><p>BusCallStatus区分OK、INVALID_ARGUMENT、BAD_STATE、BUS_BUSY、TIME_REJECTED。正常返回的BusReport另分IDLE/PENDING/READY/FAILED；phase是本次执行或发现故障阶段，nextPhase是之后状态，cause/failurePhase保留最初故障，policyCause单独报告TIMEOUT。action只有0或1。transmitted/tx标记模型发出的字节，discarded标记命令RX丢弃；resultPresent可能仍是旧结果，newResult只在本次完整成功为真，identityMatches另比较结果33。返回READY但字节不是33表示协议fake完成、预期身份不符，不是替传感器伪造33。</p><p>资源是常量：一份三字段请求、一候选字节、一已提交字节；每call一个输入事件与一个输出报告，不保留事件队列/历史。总elapsed饱和20，故没有会无界增长的诊断计数器或容量溢出假象。I2C成功至多9阶段、SPI4阶段，NACK后多一个明确ERROR_STOP；WAIT可由调用者多次供给，但每次立即返回，调度与前进时间决定何时观察到期限。浏览器最多9行的固定路径到终点即停。</p><p>所有非空指针都必须是真实、存活、类型正确、容量诚实的对象；state、request/event和report彼此不重叠。状态跨整个事务存活，外部对象只需在调用期间存活。独占单执行上下文、不可重入，无并发/IRQ保证。NULL与部分命名元数据检查不等于验证伪造指针、悬空地址、谎报容量或任意内存损坏。失败测试只使用真实初始化对象。</p><p>C11 normal与NDEBUG检查都使用实际返回值，不依靠assert；bus模块没有测试main，time默认也无main。独立调用者重复包含公共头，再链接各自对象。实际AgentHub构建须走mcu-build validate→dry-run→build，保存输入/头/工具/profile/日志/rawstatus与新鲜产物哈希，构建失败不执行旧程序。栈启发式、人工调用关系与主机.su只限定当前host/选项，不能证明目标最大栈或硬件时序。</p><details class="source-fold"><summary id="bus-source-bus-h">bus.h · 完整原始文本</summary><p><a href="../examples/bus-transactions/bus.h" download>下载bus.h</a></p>
+
+```text
+/******************************************************************************
+ * Original embedded-notes teaching code, 2026. No third-party ownership claimed.
+ * @file bus.h
+ * @author embedded-notes contributors
+ * @brief Bounded supplied-event LIS3DH host transaction, not an MMIO driver.
+ * @version V1.0 2026-10-17
+ *****************************************************************************/
+#ifndef EMBEDDED_NOTES_BUS_H
+#define EMBEDDED_NOTES_BUS_H
+#include <stdbool.h>
+#include <stdint.h>
+
+#define BUS_DEADLINE_MS UINT32_C(20)
+
+typedef enum { BUS_I2C = 0, BUS_SPI } BusProtocol;
+typedef enum {
+    BUS_OK = 0, BUS_INVALID_ARGUMENT, BUS_BAD_STATE, BUS_BUSY, BUS_TIME_REJECTED
+} BusCallStatus;
+typedef enum { BUS_IDLE = 0, BUS_PENDING, BUS_READY, BUS_FAILED } BusStatus;
+typedef enum {
+    BUS_WAIT_FREE = 0, BUS_START, BUS_ADDRESS_WRITE, BUS_SUBADDRESS, BUS_RESTART,
+    BUS_ADDRESS_READ, BUS_DATA, BUS_FINAL_NACK, BUS_STOP, BUS_SELECT, BUS_COMMAND,
+    BUS_SPI_DATA, BUS_DESELECT, BUS_ERROR_STOP, BUS_DONE
+} BusPhase;
+typedef enum {
+    BUS_CAUSE_NONE = 0, BUS_ADDRESS_NACK, BUS_DATA_NACK, BUS_ARLO,
+    BUS_TIMEOUT, BUS_BACKEND, BUS_STUCK
+} BusCause;
+typedef enum { BUS_RELEASED = 0, BUS_OWNED, BUS_LOST, BUS_UNKNOWN } BusResource;
+typedef enum { BUS_EVENT_OK = 0, BUS_EVENT_WAIT, BUS_EVENT_NACK,
+    BUS_EVENT_ARLO, BUS_EVENT_ERROR, BUS_EVENT_STUCK } BusEventKind;
+typedef struct { BusProtocol protocol; uint8_t address7; uint8_t reg; } BusRequest;
+typedef struct { BusEventKind kind; uint8_t received; } BusEvent;
+typedef struct {
+    BusStatus status;
+    BusPhase phase;
+    BusPhase nextPhase;
+    BusCause cause;
+    BusCause policyCause;
+    BusPhase failurePhase;
+    BusResource resource;
+    uint32_t elapsed;
+    bool action;
+    bool transmitted;
+    uint8_t tx;
+    bool discarded;
+    bool candidatePresent;
+    uint8_t candidate;
+    bool resultPresent;
+    uint8_t result;
+    bool newResult;
+    bool identityMatches;
+} BusReport;
+typedef struct {
+    uint32_t initialized;
+    BusRequest request;
+    BusStatus status;
+    BusPhase phase;
+    BusCause cause;
+    BusCause policyCause;
+    BusPhase failurePhase;
+    BusResource resource;
+    uint32_t lastObserved;
+    uint32_t elapsed;
+    bool candidatePresent;
+    uint8_t candidate;
+    bool resultPresent;
+    uint8_t result;
+} BusState;
+
+/* One exclusive, non-reentrant execution context; no IRQ/concurrency/heap/MMIO.
+ * All nonnull pointers name real live correctly typed objects of honest extent.
+ * State, request/event and report must be disjoint. init alone accepts fresh
+ * uninitialized storage; never call it to erase a live operation or uncertainty.
+ * Other calls require initialization and intact named metadata. Checked nulls
+ * do not validate dangling/forged pointers, aliasing or arbitrary corruption.
+ * One tick = 1ms; true forward inter-observation gap <2^31 is caller's promise.
+ * Observed delta >=2^31 rejects before ALL state/report changes. Equal samples
+ * are valid; unseen full wraps cannot be detected. Deadline equality expires.
+ * No callbacks/retry/cancel/reset/physical bus-clear API. Explicit start after
+ * terminal is allowed only for RELEASED/LOST local resources and is not retry
+ * policy or proof of free physical lines. UNKNOWN refuses resource reuse.
+ * Constant storage: one copied 3-field request, one candidate, one committed byte;
+ * one supplied event and one output report per call, no event queue/history.
+ */
+
+/**
+ * @brief Initialize genuinely fresh storage without reading old members.
+ * @param[out] state Writable fresh object with no live old resource.
+ * @return BUS_OK or BUS_INVALID_ARGUMENT; invalid preserves named fields.
+ */
+BusCallStatus bus_init(BusState *state);
+
+/**
+ * @brief Validate/copy selected WHO_AM_I request; no protocol action.
+ * @param[in,out] state Initialized state; previous result survives admission.
+ * @param[in] request I2C/SPI, address7=0x18, reg=0x0F; pointer not retained.
+ * @param[in] now Any tick for first admission, checked observation thereafter.
+ * @return BUS_OK, INVALID_ARGUMENT, BAD_STATE, BUS_BUSY or TIME_REJECTED.
+ */
+BusCallStatus bus_start(BusState *state, const BusRequest *request, uint32_t now);
+
+/**
+ * @brief Observe deadline first, then consume at most one supplied phase event.
+ * @param[in,out] state Initialized state; invalid call/time preserves all fields.
+ * @param[in] now Forward observation; equality20 expires before event acceptance.
+ * @param[in] event WAIT waits, OK advances; NACK only valid on I2C address/SUB;
+ * ARLO only on owned I2C; STUCK/ERROR on any active phase. Invalid event rejects.
+ * @param[out] report Disjoint writable object, unchanged on rejected call.
+ * phase is this call's executed/detected phase; nextPhase is resulting state.
+ * cause/failurePhase preserve the initiating fault across ERROR_STOP; policyCause
+ * records a later TIMEOUT without erasing it. action is at most
+ * one logical phase (WAIT/deadline/terminal calls have none). resultPresent may
+ * describe an older result; ONLY newResult authorizes a fresh successful value.
+ * @return BUS_OK for a report, otherwise named rejection with no mutation.
+ */
+BusCallStatus bus_poll(BusState *state, uint32_t now, const BusEvent *event, BusReport *report);
+#endif
+```
+
+</details><details class="source-fold"><summary id="bus-source-bus-c">bus.c · 完整原始文本</summary><p><a href="../examples/bus-transactions/bus.c" download>下载bus.c</a></p>
+
+```text
+/******************************************************************************
+ * Original embedded-notes teaching code, 2026. No third-party ownership claimed.
+ * @file bus.c
+ * @author embedded-notes contributors
+ * @brief Finite supplied-event transaction; reusable module has no test main.
+ * @version V1.0 2026-10-17
+ *****************************************************************************/
+#include "bus.h"
+#include "time.h"
+#include <stddef.h>
+
+/** @brief Check named initialized metadata. @param[in] state Live object. @return Validity. */
+static bool valid_state(const BusState *state)
+{
+    /** This is not arbitrary memory-corruption detection. **/
+    return state->initialized == UINT32_C(0x42555331) &&
+        state->status >= BUS_IDLE && state->status <= BUS_FAILED &&
+        state->phase >= BUS_WAIT_FREE && state->phase <= BUS_DONE &&
+        state->resource >= BUS_RELEASED && state->resource <= BUS_UNKNOWN &&
+        state->elapsed <= BUS_DEADLINE_MS;
+}
+
+/** @brief Copy a public observation. @param[in] state Accepted state.
+ * @param[in] phase Observed phase. @param[out] report Fresh report. @return None. */
+static void snapshot(const BusState *state, BusPhase phase, BusReport *report)
+{
+    /** No old output fields are read. **/
+    *report = (BusReport){0};
+    report->status = state->status;
+    report->phase = phase;
+    report->nextPhase = state->phase;
+    report->cause = state->cause;
+    report->policyCause = state->policyCause;
+    report->failurePhase = state->failurePhase;
+    report->resource = state->resource;
+    report->elapsed = state->elapsed;
+    report->candidatePresent = state->candidatePresent;
+    report->candidate = state->candidate;
+    report->resultPresent = state->resultPresent;
+    report->result = state->result;
+    report->identityMatches = state->resultPresent && state->result == 0x33U;
+}
+
+/** @brief Initialize fresh storage. @param[out] state Fresh object. @return Status. */
+BusCallStatus bus_init(BusState *state)
+{
+    /** Never inspect old storage. **/
+    if (state == NULL) {
+        return BUS_INVALID_ARGUMENT;
+    }
+    *state = (BusState){0};
+    state->initialized = UINT32_C(0x42555331);
+    state->status = BUS_IDLE;
+    state->phase = BUS_DONE;
+    return BUS_OK;
+}
+
+/** @brief Admit copied metadata. @param[in,out] state Initialized. @param[in] request Metadata.
+ * @param[in] now Tick. @return Status. */
+BusCallStatus bus_start(BusState *state, const BusRequest *request, uint32_t now)
+{
+    uint32_t delta;
+
+    /** Numeric 0x30 is a legal generic address, but not this fixed fixture. **/
+    if (state == NULL || request == NULL ||
+        (request->protocol != BUS_I2C && request->protocol != BUS_SPI) ||
+        request->address7 != 0x18U || request->reg != 0x0FU) {
+        return BUS_INVALID_ARGUMENT;
+    }
+    if (!valid_state(state)) {
+        return BUS_BAD_STATE;
+    }
+    if (state->status == BUS_PENDING || state->resource == BUS_UNKNOWN || state->resource == BUS_OWNED) {
+        return BUS_BUSY;
+    }
+    if (state->status != BUS_IDLE && time_elapsed(state->lastObserved, now, &delta) != TIME_OK) {
+        return BUS_TIME_REJECTED;
+    }
+    state->request = *request;
+    state->lastObserved = now;
+    state->elapsed = 0U;
+    state->status = BUS_PENDING;
+    state->phase = request->protocol == BUS_I2C ? BUS_WAIT_FREE : BUS_SELECT;
+    state->cause = BUS_CAUSE_NONE;
+    state->policyCause = BUS_CAUSE_NONE;
+    state->failurePhase = BUS_DONE;
+    state->resource = BUS_RELEASED;
+    state->candidatePresent = false;
+    state->candidate = 0U;
+    return BUS_OK;
+}
+
+/** @brief Execute one successful logical phase. @param[in,out] state Accepted.
+ * @param[in] event Event. @param[out] report Output. @return None. */
+static void advance_phase(BusState *state, const BusEvent *event, BusReport *report)
+{
+    /** The two finite paths have no loop, callback or hidden hardware wait. **/
+    switch (state->phase) {
+        case BUS_WAIT_FREE:
+            state->phase = BUS_START;
+            break;
+        case BUS_START:
+            state->resource = BUS_OWNED;
+            state->phase = BUS_ADDRESS_WRITE;
+            break;
+        case BUS_ADDRESS_WRITE:
+            report->transmitted = true;
+            report->tx = 0x30U;
+            state->phase = BUS_SUBADDRESS;
+            break;
+        case BUS_SUBADDRESS:
+            report->transmitted = true;
+            report->tx = 0x0FU;
+            state->phase = BUS_RESTART;
+            break;
+        case BUS_RESTART:
+            state->phase = BUS_ADDRESS_READ;
+            break;
+        case BUS_ADDRESS_READ:
+            report->transmitted = true;
+            report->tx = 0x31U;
+            state->phase = BUS_DATA;
+            break;
+        case BUS_DATA:
+            state->candidatePresent = true;
+            state->candidate = event->received;
+            state->phase = BUS_FINAL_NACK;
+            break;
+        case BUS_FINAL_NACK:
+            state->phase = BUS_STOP;
+            break;
+        case BUS_SELECT:
+            state->resource = BUS_OWNED;
+            state->phase = BUS_COMMAND;
+            break;
+        case BUS_COMMAND:
+            report->transmitted = true;
+            report->tx = 0x8FU;
+            report->discarded = true;
+            state->phase = BUS_SPI_DATA;
+            break;
+        case BUS_SPI_DATA:
+            report->transmitted = true;
+            report->tx = 0U;
+            state->candidatePresent = true;
+            state->candidate = event->received;
+            state->phase = BUS_DESELECT;
+            break;
+        case BUS_STOP:
+        case BUS_DESELECT:
+            state->result = state->candidate;
+            state->resultPresent = true;
+            state->resource = BUS_RELEASED;
+            state->status = BUS_READY;
+            state->phase = BUS_DONE;
+            report->newResult = true;
+            break;
+        case BUS_ERROR_STOP:
+            state->resource = BUS_RELEASED;
+            state->status = BUS_FAILED;
+            state->phase = BUS_DONE;
+            break;
+        default:
+            break;
+    }
+}
+
+/** @brief Poll one phase. @param[in,out] state Initialized. @param[in] now Tick.
+ * @param[in] event Event. @param[out] report Report. @return Status. */
+BusCallStatus bus_poll(BusState *state, uint32_t now, const BusEvent *event, BusReport *report)
+{
+    BusState next;
+    BusReport output;
+    BusPhase phase;
+    uint32_t delta;
+
+    /** All rejection checks precede accepted state and output writes. **/
+    if (state == NULL || event == NULL || report == NULL ||
+        event->kind < BUS_EVENT_OK || event->kind > BUS_EVENT_STUCK) {
+        return BUS_INVALID_ARGUMENT;
+    }
+    if (!valid_state(state)) {
+        return BUS_BAD_STATE;
+    }
+    if (time_elapsed(state->lastObserved, now, &delta) != TIME_OK) {
+        return BUS_TIME_REJECTED;
+    }
+    if (state->status == BUS_PENDING &&
+        ((event->kind == BUS_EVENT_NACK && (state->request.protocol != BUS_I2C ||
+          (state->phase != BUS_ADDRESS_WRITE && state->phase != BUS_ADDRESS_READ &&
+           state->phase != BUS_SUBADDRESS))) ||
+         (event->kind == BUS_EVENT_ARLO &&
+          (state->request.protocol != BUS_I2C || state->resource != BUS_OWNED)))) {
+        return BUS_INVALID_ARGUMENT;
+    }
+    next = *state;
+    phase = next.phase;
+    snapshot(&next, phase, &output);
+    if (next.status == BUS_PENDING) {
+        next.lastObserved = now;
+        next.elapsed = delta >= BUS_DEADLINE_MS - next.elapsed ? BUS_DEADLINE_MS : next.elapsed + delta;
+        if (next.elapsed >= BUS_DEADLINE_MS) {
+            next.policyCause = BUS_TIMEOUT;
+            if (next.cause == BUS_CAUSE_NONE) {
+                next.cause = BUS_TIMEOUT;
+                next.failurePhase = phase;
+            }
+            next.status = BUS_FAILED;
+            next.resource = BUS_UNKNOWN;
+            next.phase = BUS_DONE;
+        } else if (event->kind == BUS_EVENT_OK) {
+            advance_phase(&next, event, &output);
+            output.action = true;
+        } else if (event->kind != BUS_EVENT_WAIT) {
+            output.action = true;
+            if (next.cause == BUS_CAUSE_NONE) {
+                next.failurePhase = phase;
+            }
+            if (event->kind == BUS_EVENT_NACK) {
+                next.cause = phase == BUS_SUBADDRESS ? BUS_DATA_NACK : BUS_ADDRESS_NACK;
+                next.phase = BUS_ERROR_STOP;
+            } else {
+                if (next.cause == BUS_CAUSE_NONE) {
+                    next.cause = event->kind == BUS_EVENT_ARLO ? BUS_ARLO :
+                        event->kind == BUS_EVENT_STUCK ? BUS_STUCK : BUS_BACKEND;
+                }
+                next.resource = event->kind == BUS_EVENT_ARLO ? BUS_LOST : BUS_UNKNOWN;
+                next.status = BUS_FAILED;
+                next.phase = BUS_DONE;
+            }
+        }
+    }
+    {
+        BusReport fields;
+        snapshot(&next, phase, &fields);
+        fields.action = output.action;
+        fields.transmitted = output.transmitted;
+        fields.tx = output.tx;
+        fields.discarded = output.discarded;
+        fields.newResult = output.newResult;
+        *report = fields;
+    }
+    *state = next;
+    return BUS_OK;
+}
+```
+
+</details><details class="source-fold"><summary id="bus-source-README-txt">README.txt · 完整原始文本</summary><p><a href="../examples/bus-transactions/README.txt" download>下载README.txt</a></p>
+
+```text
+Unit12: original bounded host transaction, not a hardware driver
+
+Download bus.c, bus.h and this README.txt from this chapter. Also download the
+unchanged Unit10 timer-pwm/time.c and time.h. Put all five files in one folder.
+Use an already installed C11 compiler; do not install or update a toolchain just
+for this example. bus.c and time.c are separate translation units, with no main
+unless time.c is explicitly compiled with TIME_TEST (not used below).
+
+Example consumer.c:
+  #include "bus.h"
+  #include "bus.h"
+  #include <stdio.h>
+  int main(void) {
+      BusState state;
+      BusRequest request = {BUS_I2C, 0x18U, 0x0FU};
+      BusEvent event = {BUS_EVENT_OK, 0x33U};
+      BusReport report;
+      unsigned int tick;
+      if (bus_init(&state) != BUS_OK ||
+          bus_start(&state, &request, 0U) != BUS_OK) { return 1; }
+      for (tick = 0U; tick < 9U; tick++) {
+          if (bus_poll(&state, tick, &event, &report) != BUS_OK) { return 2; }
+      }
+      if (!report.newResult || report.result != 0x33U) { return 3; }
+      return puts("READY 33 at tick8") < 0 ? 4 : 0;
+  }
+
+Conventional commands for a human using an existing compiler:
+  cc -std=c11 -Wall -Wextra -Werror -pedantic -c bus.c -o bus.o
+  cc -std=c11 -Wall -Wextra -Werror -pedantic -c time.c -o time.o
+  cc -std=c11 -Wall -Wextra -Werror -pedantic -c consumer.c -o consumer.o
+  cc bus.o time.o consumer.o -o consumer
+  ./consumer
+Repeat with -DNDEBUG on each compile. Checks use returned statuses, not assert.
+On Windows the executable may be consumer.exe. A nonzero build must stop this
+sequence: never run an older executable as evidence of a failed build.
+
+AgentHub actual compile/preprocess/assemble/link actions must instead use the
+mcu-build build_router.py custom profile: validate -> build --dry-run -> build.
+Set command to the exact argument array for each action above, artifacts to the
+relative expected object/executable path, artifact_policy="all". Retain raw
+compiler status, diagnostics, profile/tool/input/header hashes and fresh output
+hashes. The repository test supports that routed path:
+  node scripts/test-bus-transactions.mjs --c --compiler <existing-cc>
+       --python <existing-python> --router <build_router.py>
+       --output .scratch/protocol-acquisition/reproduction
+
+Frozen public contract
+  bus_init: genuinely fresh storage only, no old member read. Never erase a live
+  operation or UNKNOWN state by initialization, copying or reset. No reset API.
+  bus_start: initialized state and disjoint real request; copy three fields,
+  retain no caller payload pointer; no backend action. Only I2C/SPI address7=18,
+  register=0F are this LIS3DH fixture. Numeric 30 remains a valid generic 7-bit
+  address but is a target mismatch here; no guessing or automatic unshift.
+  PENDING/OWNED/UNKNOWN admission returns BUS_BUSY, preserving every named field.
+  RELEASED/LOST terminal state may admit an explicit new operation; it checks new
+  time and starts again at WAIT_FREE (I2C) or SELECT (SPI). LOST says the local
+  controller lost ownership, not that real lines are now free. UNKNOWN refuses
+  reuse; external confirmed recovery needs a later separate contract.
+
+  bus_poll: at most one logical phase, no queue, callback, heap, loop or retry.
+  I2C nine phases: WAIT_FREE START ADDRESS_WRITE SUBADDRESS RESTART ADDRESS_READ
+  DATA FINAL_NACK STOP. OK at ticks0..8 commits33 only at8. START gains ownership;
+  repeated START retains it. Address30/SUB0F/read31 are reported transmitted.
+  Receiver final NACK is an ordinary phase, not a BUS_EVENT_NACK error.
+  SPI four phases: SELECT COMMAND SPI_DATA DESELECT. COMMAND sends8F and discards
+  received7E. SPI_DATA sends dummy00, receiving33; candidate commits on DESELECT.
+  CS stays selected through both frames. Any byte may complete; identityMatches
+  separately compares committed data with33. No physical presence/health proof.
+
+  Supplied WAIT makes no action; repeated calls return immediately. A NACK event
+  is valid only at I2C address or SUB, retaining ADDRESS_NACK/DATA_NACK plus its
+  failurePhase and moving to ERROR_STOP while OWNED. A later OK executes one
+  logical STOP and becomes FAILED/RELEASED without committing. ARLO is valid only
+  on owned I2C: FAILED/LOST immediately, no STOP. ERROR/STUCK terminate UNKNOWN.
+  A second cleanup fault retains the initiating cause/phase. Invalid event kind
+  or phase rejects without changes; reports are unchanged on all rejected calls.
+
+  Twenty milliseconds cover the entire accepted operation, not each phase.
+  Equality expires before another phase or accepting newly supplied data. No
+  STOP is issued by the timeout branch. policyCause=TIMEOUT; initiating cause
+  and failurePhase survive if a NACK had already occurred. Otherwise cause is
+  TIMEOUT and failurePhase is the detected phase. Resource becomes UNKNOWN even
+  when WAIT_FREE never acquired ownership: physical availability is unresolved.
+  elapsed saturates at20; no growing trace or diagnostic counter exists.
+
+  One tick=1ms. Uses the unchanged time_elapsed checked unsigned32 contract.
+  Caller promises true forward inter-observation gaps <2^31 ticks. Observed
+  delta>=2^31 rejects before state/report mutation; equal samples are valid.
+  Unseen whole wraps, stopped time and absent scheduling cannot be detected or
+  repaired by a deadline number. start after a terminal also checks observation.
+
+  phase reports the executed/detected phase; nextPhase is resulting state.
+  cause/failurePhase identify initiating fault; policyCause names deadline policy.
+  action is zero or one; WAIT/deadline/terminal calls have zero. resultPresent
+  may describe an old result. ONLY newResult authorizes a fresh value. PENDING,
+  admission/time rejection and every failure preserve the last committed result.
+  Terminal poll has no action or state advance, and newResult is false.
+
+  Resource limits: one copied request, one candidate byte, one committed byte,
+  one supplied event and one report per call; no event retention/history capacity
+  to exhaust. Finite browser fixtures have at most9 rows and stop at their end.
+  No recursion, sleep, retry, cancel or physical recovery. Exclusive single
+  context, non-reentrant; objects live for the call, state for the operation.
+  All pointers must name live correctly typed sufficiently sized objects. State,
+  request/event and output do not overlap. Null/selected metadata checks cannot
+  prove pointer validity, extents, concurrency or arbitrary corruption safety.
+
+Original diagrams/replays and software policy are teaching choices. No actual
+I2C/SPI/HAL/MMIO access, GPIO bus clear, target timing/electrical qualification,
+hardware identity/measurement or worst-case target stack is established. Current
+official RM0090 and some sensor/errata table pixels remain unread as described
+in the chapter. Host .su and heuristic checks are qualified local evidence only.
+```
+
+</details><details class="source-fold"><summary id="bus-source-time-h">time.h · 完整原始文本</summary><p><a href="../examples/timer-pwm/time.h" download>下载time.h</a></p>
+
+```text
+/******************************************************************************
+ * Original embedded-notes teaching code, 2026. No third-party ownership claimed.
+ * @file time.h
+ * @author embedded-notes contributors
+ * @brief Checked modulo32 observations and bounded periodic host policy.
+ * @version V1.0 2026-10-17
+ *****************************************************************************/
+#ifndef EMBEDDED_NOTES_TIME_H
+#define EMBEDDED_NOTES_TIME_H
+
+#include <stdbool.h>
+#include <stdint.h>
+
+#if !defined(UINT32_MAX) || !defined(UINT64_MAX)
+#error Exact-width uint32_t and uint64_t are required.
+#endif
+
+#define TIME_MAX_PERIOD UINT32_C(2147483647)
+#define TIME_HALF_RANGE UINT32_C(2147483648)
+
+typedef enum {
+    TIME_OK = 0,
+    TIME_INVALID_ARGUMENT,
+    TIME_BAD_STATE,
+    TIME_GAP_REJECTED
+} TimeStatus;
+
+typedef struct {
+    uint32_t period;
+    uint32_t lastObserved;
+    uint32_t remainder;
+} TimeState;
+
+typedef struct {
+    bool work;
+    uint32_t missed;
+    uint32_t releases;
+    uint32_t elapsed;
+    uint32_t remainder;
+} TimeReport;
+
+/*
+ * Unit fixture: one tick = one millisecond. The caller promises a true forward
+ * gap < 2^31 ticks between accepted observations. Equal samples cannot reveal
+ * unseen complete wraps. Rejection of observed delta >= 2^31 is not a detector
+ * of every violated real-gap promise. No signed-cast time ordering is used.
+ *
+ * All nonnull pointers must name real, live, correctly typed objects. Output
+ * objects must be writable and disjoint from all other objects in the call.
+ * init may receive fresh storage; other state calls require initialized fields.
+ * Nonnull checking cannot validate dangling/forged pointers or false extents.
+ * Single execution context, exclusive ownership, non-reentrant. No MMIO, heap,
+ * callbacks, recursion, sleeps, retry or catch-up loops. Every operation has
+ * constant work/storage. Failure preserves all named state and output fields.
+ */
+
+/**
+ * @brief Initialize fresh storage without reading its prior contents.
+ * @param[in,out] state Real writable object; no old initialization required.
+ * @param[in] period Period 1..TIME_MAX_PERIOD ticks.
+ * @param[in] now Initial observation, any uint32_t value.
+ * @return TIME_OK or TIME_INVALID_ARGUMENT; failure preserves named fields.
+ */
+TimeStatus time_init(TimeState *state, uint32_t period, uint32_t now);
+
+/**
+ * @brief Return checked modulo32 difference under the caller's true-gap promise.
+ * @param[in] then Last accepted observation.
+ * @param[in] now Next forward observation.
+ * @param[out] elapsed Real writable uint32_t; unchanged on failure.
+ * @return TIME_OK, TIME_INVALID_ARGUMENT or TIME_GAP_REJECTED.
+ */
+TimeStatus time_elapsed(uint32_t then, uint32_t now, uint32_t *elapsed);
+
+/**
+ * @brief Advance phase once; report at most one work item and exact missed count.
+ * @param[in,out] state Initialized period in range, remainder strictly < period.
+ * @param[in] now Next observation under the true-gap promise.
+ * @param[out] report Real writable object disjoint from state; no old read.
+ * @return TIME_OK, TIME_INVALID_ARGUMENT, TIME_BAD_STATE or TIME_GAP_REJECTED.
+ */
+TimeStatus time_service(TimeState *state, uint32_t now, TimeReport *report);
+
+#endif
+```
+
+</details><details class="source-fold"><summary id="bus-source-time-c">time.c · 完整原始文本</summary><p><a href="../examples/timer-pwm/time.c" download>下载time.c</a></p>
+
+```text
+/******************************************************************************
+ * Original embedded-notes teaching code, 2026. No third-party ownership claimed.
+ * @file time.c
+ * @author embedded-notes contributors
+ * @brief Constant-work periodic release policy; host model, no hardware access.
+ * @version V1.0 2026-10-17
+ *****************************************************************************/
+#include "time.h"
+#include <stddef.h>
+#ifdef TIME_TEST
+#include <stdio.h>
+#endif
+
+/**
+ * @brief Initialize a periodic phase at now without reading old storage.
+ * @param[in,out] state Writable object, possibly fresh.
+ * @param[in] period Positive period below the half range.
+ * @param[in] now Initial tick sample.
+ * @return Named status; failure leaves state unchanged.
+ */
+TimeStatus time_init(TimeState *state, uint32_t period, uint32_t now)
+{
+    /** Validate first; do not inspect indeterminate old contents. **/
+    if (state == NULL || period == 0U || period > TIME_MAX_PERIOD) {
+        return TIME_INVALID_ARGUMENT;
+    }
+    state->period = period;
+    state->lastObserved = now;
+    state->remainder = 0U;
+    return TIME_OK;
+}
+
+/**
+ * @brief Check the observed modulo difference, not the unseen true elapsed time.
+ * @param[in] then Last accepted sample.
+ * @param[in] now New forward sample under the documented real-gap promise.
+ * @param[out] elapsed Writable independent output, preserved on rejection.
+ * @return Named status; no side effects on failure.
+ */
+TimeStatus time_elapsed(uint32_t then, uint32_t now, uint32_t *elapsed)
+{
+    uint32_t delta;
+
+    /** The conversion also preserves modulo32 semantics after integer promotion. **/
+    if (elapsed == NULL) {
+        return TIME_INVALID_ARGUMENT;
+    }
+    delta = (uint32_t)(now - then);
+    if (delta >= TIME_HALF_RANGE) {
+        return TIME_GAP_REJECTED;
+    }
+    *elapsed = delta;
+    return TIME_OK;
+}
+
+/**
+ * @brief Cross any number of releases with a single finite arithmetic step.
+ * @param[in,out] state Initialized valid state; disjoint from report.
+ * @param[in] now Next tick sample under the caller's real-gap promise.
+ * @param[out] report Copy-by-value result; one work item at most.
+ * @return Named status; all state/report fields preserved on failure.
+ */
+TimeStatus time_service(TimeState *state, uint32_t now, TimeReport *report)
+{
+    uint32_t delta;
+    uint64_t total;
+    TimeReport next;
+    TimeStatus status;
+
+    /** Validate every checkable premise before committing accepted phase. **/
+    if (state == NULL || report == NULL) {
+        return TIME_INVALID_ARGUMENT;
+    }
+    if (state->period == 0U || state->period > TIME_MAX_PERIOD || state->remainder >= state->period) {
+        return TIME_BAD_STATE;
+    }
+    status = time_elapsed(state->lastObserved, now, &delta);
+    if (status != TIME_OK) {
+        return status;
+    }
+    total = (uint64_t)state->remainder + (uint64_t)delta;
+    /** total <= 4294967293; releases <= 2147483647 for every valid period. **/
+    next.releases = (uint32_t)(total / state->period);
+    next.remainder = (uint32_t)(total % state->period);
+    next.elapsed = delta;
+    next.work = next.releases != 0U;
+    next.missed = next.work ? next.releases - 1U : 0U;
+    state->lastObserved = now;
+    state->remainder = next.remainder;
+    *report = next;
+    return TIME_OK;
+}
+
+#ifdef TIME_TEST
+/**
+ * @brief Compare every named field instead of reading structure padding.
+ * @param[in] left Initialized state.
+ * @param[in] right Initialized state.
+ * @return True exactly when all named fields agree.
+ */
+static bool same_state(TimeState left, TimeState right)
+{
+    /** Padding bytes are not part of the state preservation contract. **/
+    return left.period == right.period && left.lastObserved == right.lastObserved &&
+        left.remainder == right.remainder;
+}
+
+/**
+ * @brief Compare all public report values without padding assumptions.
+ * @param[in] left Initialized report.
+ * @param[in] right Initialized report.
+ * @return True when every named report field agrees.
+ */
+static bool same_report(TimeReport left, TimeReport right)
+{
+    /** This check stays active when NDEBUG is defined. **/
+    return left.work == right.work && left.missed == right.missed && left.releases == right.releases &&
+        left.elapsed == right.elapsed && left.remainder == right.remainder;
+}
+
+/**
+ * @brief Execute literal normal/late/wrap fixtures through public calls.
+ * @param[in] None.
+ * @return True on all independently specified outcomes.
+ */
+static bool test_trace(void)
+{
+    TimeState state;
+    TimeReport report;
+    const uint32_t now[] = {109U, 110U, 145U, 145U};
+    const uint32_t missed[] = {0U, 0U, 2U, 0U};
+    const uint32_t remainder[] = {9U, 0U, 5U, 5U};
+    const bool work[] = {false, true, true, false};
+    size_t index;
+
+    /** Expected rows come from hand-counted period boundaries 110/120/130/140. **/
+    if (time_init(&state, 10U, 100U) != TIME_OK) {
+        return false;
+    }
+    for (index = 0U; index < 4U; index++) {
+        if (time_service(&state, now[index], &report) != TIME_OK || report.work != work[index] ||
+            report.missed != missed[index] || report.remainder != remainder[index]) {
+            return false;
+        }
+    }
+    return time_init(&state, 10U, UINT32_C(4294967290)) == TIME_OK &&
+        time_service(&state, 4U, &report) == TIME_OK && report.work && report.elapsed == 10U &&
+        report.releases == 1U && report.missed == 0U && report.remainder == 0U;
+}
+
+/**
+ * @brief Execute bounded maximum and half-range equality cases.
+ * @param[in] None.
+ * @return True on all fixed boundary outcomes.
+ */
+static bool test_bounds(void)
+{
+    TimeState state;
+    TimeReport report;
+    uint32_t elapsed = 77U;
+
+    /** The maximum total is 2147483646 + 2147483647, not uint32_t wrap. **/
+    if (time_init(&state, TIME_MAX_PERIOD, 0U) != TIME_OK ||
+        time_service(&state, UINT32_C(2147483646), &report) != TIME_OK || report.work ||
+        time_service(&state, UINT32_C(4294967293), &report) != TIME_OK || !report.work ||
+        report.missed != 0U || report.remainder != UINT32_C(2147483646)) {
+        return false;
+    }
+    if (time_init(&state, 1U, 0U) != TIME_OK ||
+        time_service(&state, TIME_MAX_PERIOD, &report) != TIME_OK || !report.work ||
+        report.missed != UINT32_C(2147483646) || report.remainder != 0U) {
+        return false;
+    }
+    return time_elapsed(0U, TIME_MAX_PERIOD, &elapsed) == TIME_OK && elapsed == TIME_MAX_PERIOD &&
+        time_elapsed(0U, TIME_HALF_RANGE, &elapsed) == TIME_GAP_REJECTED && elapsed == TIME_MAX_PERIOD;
+}
+
+/**
+ * @brief Exercise only initialized real objects on every checkable rejection.
+ * @param[in] None.
+ * @return True if failure preserves all named accepted state/report fields.
+ */
+static bool test_rejection(void)
+{
+    TimeState state = {10U, 100U, 5U};
+    TimeState before = state;
+    TimeReport report = {true, 17U, 18U, 19U, 20U};
+    TimeReport saved = report;
+    const uint32_t badPeriods[] = {0U, TIME_HALF_RANGE, UINT32_MAX};
+    size_t index;
+
+    /** Invalid initialized metadata is testable; forged pointers are not. **/
+    for (index = 0U; index < 3U; index++) {
+        if (time_init(&state, badPeriods[index], 0U) != TIME_INVALID_ARGUMENT || !same_state(state, before)) {
+            return false;
+        }
+    }
+    if (time_init(NULL, 10U, 0U) != TIME_INVALID_ARGUMENT ||
+        time_elapsed(0U, 1U, NULL) != TIME_INVALID_ARGUMENT ||
+        time_service(NULL, 0U, &report) != TIME_INVALID_ARGUMENT || !same_report(report, saved) ||
+        time_service(&state, 0U, NULL) != TIME_INVALID_ARGUMENT || !same_state(state, before) ||
+        time_service(&state, UINT32_C(2147483748), &report) != TIME_GAP_REJECTED ||
+        !same_state(state, before) || !same_report(report, saved)) {
+        return false;
+    }
+    state.remainder = state.period;
+    before = state;
+    if (time_service(&state, 110U, &report) != TIME_BAD_STATE || !same_state(state, before) ||
+        !same_report(report, saved)) {
+        return false;
+    }
+    state.period = 0U;
+    before = state;
+    return time_service(&state, 110U, &report) == TIME_BAD_STATE && same_state(state, before) &&
+        same_report(report, saved);
+}
+
+/**
+ * @brief Run active host checks and propagate output failure without assert.
+ * @param[in] None.
+ * @return Zero only when all checks and output complete successfully.
+ */
+int main(void)
+{
+    /** This optional main is excluded from reusable module compilation. **/
+    if (!test_trace() || !test_bounds() || !test_rejection()) {
+        return 1;
+    }
+    if (puts("PASS time: literal trace, wrap, bounds, rejection preservation") < 0 || fflush(stdout) != 0) {
+        return 1;
+    }
+    return 0;
+}
+#endif
+```
+
+</details>
+
+<span id="bus-practice"></span>
+
+## 独立十题：基础、故障与迁移 {#bus-practice-title}
+
+<p>以下十题各自带完整前提，不依赖当前活动状态。先遮住解析，写出角色、阶段、值和条件，再展开检查。可稍后更换输入再做一次。</p><article class="exercise" id="bus-exercise-01"><h3>第1题</h3><p class="question-stem">固定LIS3DH CS高/SA0低，手册地址0x18、寄存器0x0F。线上写/读字节为何是0x30/0x31？一般7位地址0x30可否直接判非法？HAL参数又是哪层？</p><details class="exercise-answer" id="bus-answer-01"><summary>展开完整解析</summary><p>18的7位0011000后追加写0得到30、读1得到31；0F是SUB，不是目标地址。30是十进制48，仍可作为一般7位数值，固定夹具只是目标不匹配，不能猜着右移。所钉HAL三个函数另约定先左移，所以DevAddress用30；换库必须查其实际约定。下一步在纸上分别给四类数字加标签。</p></details></article><article class="exercise" id="bus-exercise-02"><h3>第2题</h3><p class="question-stem">完整单读S 30 A 0F A Sr 31 A 33 N P（字节均为十六进制）中，三个A和最后N各由谁产生？最后N为何不应报告失败？</p><details class="exercise-answer" id="bus-answer-02"><summary>展开完整解析</summary><p>地址30、SUB0F、读地址31后三个ACK均由target接收者拉低产生；每个第九时钟仍由controller产生。33由target发送，controller接收后保持第九位高发N，表示不要下一字节，再发STOP正常收尾。与目标拒绝地址/SUB的NACK比较，先问阶段与接收者。</p></details></article><article class="exercise" id="bus-exercise-03"><h3>第3题</h3><p class="question-stem">所读LIS3DH正文出现“两sub-address bytes”，而Tables19/20只画一个8位SUB。本章采用什么？能否改称源文无歧义？</p><details class="exercise-answer" id="bus-answer-03"><summary>展开完整解析</summary><p>本章明确选择两张读表的单个8位SUB=0F。正文矛盾仍保留，不能添加第二字节又把本例称原表序列，也不能改称来源毫无歧义。实际新器件实现前需原厂澄清或充分器件证据；当前主机模型不解决原文冲突。</p></details></article><article class="exercise" id="bus-exercise-04"><h3>第4题</h3><p class="question-stem">4线单读寄存器0x0F，命令阶段RX0x7E，后续RX0x33。命令如何得0x8F？为什么需要dummy？两个RX哪个可候选？</p><details class="exercise-answer" id="bus-answer-04"><summary>展开完整解析</summary><p>读bit7=80、自增bit6=0、低6位0F，合成8F。SPI全双工命令阶段仍接收7E，但无本例数据语义，必须丢弃。再送dummy00产生8时钟，第二个RX33才可候选；CS取消成功才newResult。下一步把两个8时钟块画在同一CS低区间。</p></details></article><article class="exercise" id="bus-exercise-05"><h3>第5题</h3><p class="question-stem">已读器件要求时钟空闲高、下降发送、上升采样，历史MCU定义CPHA1第二边沿采样。推导本例模式，并说明8位帧结束或TXE为何不足以抬CS。</p><details class="exercise-answer" id="bus-answer-05"><summary>展开完整解析</summary><p>空闲高给CPOL1，第一边沿下降、第二上升，所以CPHA1，对应mode3；这是选定器件/资料推论，不能推广所有传感器。命令与数据各一个8位帧，CS需贯穿整项操作；TXE只是缓冲移交移位寄存器，不证明末位已完成。还要查当前目标的模式/收尾/电气条件。</p></details></article><article class="exercise" id="bus-exercise-06"><h3>第6题</h3><p class="question-stem">多controller I2C在地址阶段ARLO。旧结果0x22，本模型该发STOP吗？之后显式新请求如何开始？</p><details class="exercise-answer" id="bus-answer-06"><summary>展开完整解析</summary><p>不发STOP。ARLO失去本地所有权，赢家可能还在传输；随意STOP会干扰它。结果仍22，FAILED/LOST，终态poll无动作。LOST不证明线路free，允许的显式新请求仍从WAIT_FREE检查，绝非自动重试或清总线。</p></details></article><article class="exercise" id="bus-exercise-07"><h3>第7题</h3><p class="question-stem">旧已提交0x22，SUB被目标NACK，随后ERROR_STOP尚未完成。正常清理和清理到20ms分别怎样？</p><details class="exercise-answer" id="bus-answer-07"><summary>展开完整解析</summary><p>立即保留DATA_NACK及failurePhase=SUBADDRESS，仍OWNED/PENDING等待下次一个逻辑STOP。下次OK在期限前可FAILED/RELEASED，旧22不改。若总年龄到20，先policyCause=TIMEOUT，仍保留原NACK/原阶段，UNKNOWN且不再STOP，不允许新start或init抹掉资源。两条路径均不授权物理恢复。</p></details></article><article class="exercise" id="bus-exercise-08"><h3>第8题</h3><p class="question-stem">请求start100，poll119给WAIT，poll120给OK且假设该事件本可完成操作。两个报告是什么？若tick完全不前进又如何？</p><details class="exercise-answer" id="bus-answer-08"><summary>展开完整解析</summary><p>119年龄19可PENDING，结果保持。120年龄20到等号，期限先于事件，FAILED/TIMEOUT，action0，无新提交；若先有故障则其cause/phase另保留。时间不前进就无法靠观察年龄到期，但每call仍有限返回。下一步检查时间源和调度前提，不能把20ms参数当无条件墙钟界限。</p></details></article><article class="exercise" id="bus-exercise-09"><h3>第9题</h3><p class="question-stem">只看到busy，是否可发送九个SCL脉冲或reset？请分开正常占用、拉伸与卡线，并说明缺什么证据。</p><details class="exercise-answer" id="bus-answer-09"><summary>展开完整解析</summary><p>busy可来自其他controller、Sr保持、可选拉伸、卡线或本地软件状态。NXP分别讨论SCL低与SDA低，九脉冲并非所有busy的通方。先需实际SCL/SDA、其他controller排除、所有权、供电/reset权限及板条件。本页主机事件不能替代这些证据，不执行物理恢复。</p></details></article><article class="exercise" id="bus-exercise-10"><h3>第10题</h3><p class="question-stem">将本模块接到有UART命令的终端：每轮最多一次bus_poll。能声称每轮读完一个传感器或保证串口不丢吗？状态/存储/结果应如何处理？</p><details class="exercise-answer" id="bus-answer-10"><summary>展开完整解析</summary><p>不能。一次poll至多一阶段，PENDING立即返回；同轮可安排有限UART服务，但吞吐、延迟和不丢还依赖实际调度/到达率。只保留一份请求、候选和已提交值，不堆积无界事件；只在newResult时消费新值，失败仍标明旧值。若要取消/重试，先建立独立cleanup/副作用合同，本接口没有cancel。</p></details></article>
+
+<span id="bus-sources"></span>
+
+## 原文版本、读过的范围与仍未验证的条件 {#bus-sources-title}
+
+<p>首选阅读[N]的START/ACK/地址与仲裁条款，再对照[L] Tables16/19/20和§8.5逐字节手推。下列版本与范围来自实际研究者有限阅读；本章作者进一步读了本地NXP与历史RM选页文字，不把研究者看过的像素声称自己全部复核。所有例子、图和有限软件策略均为本项目原创，没有复制收费课程。</p><ul><li>[N] <a href="https://www.nxp.com/docs/en/user-guide/UM10204.pdf">NXP UM10204 Rev7.0，2021-10-01</a>：§3.1.4–.6、.8–.10、.16，pp9–13/19；本地原文已提取，研究者实际看过pp9/11/19图。用来区分规范角色与bus-clear前提。</li><li>[L] <a href="https://www.st.com/resource/en/datasheet/lis3dh.pdf">ST LIS3DH DocID17530 Rev2，December2016</a>：§6 pp24–29、§8.5 p34及选定表文字。官方返回的该修订，不声称其后没有新版。单SUB表与两SUB句矛盾保留；时序/表像素未确认，不能输出板级速率验收。</li><li>[M] <a href="https://www.keil.com/dd/docs/datashts/st/stm32f4xx/dm00031020.pdf">ST RM0090历史Rev5，September2013，Keil托管</a>：§27.3 pp827–829、§28.3 pp855–859/861/867的实际文本；研究者看过828/857/858图。不是最新RM，最新官方RM仍未读，不声称寄存器驱动已验证。</li><li>[H] <a href="https://github.com/STMicroelectronics/stm32f4xx-hal-driver/blob/b6f0ed3829f3829eb358a2e7417d80bba1a42db7/Src/stm32f4xx_hal_i2c.c#L969">ST HAL I2C固定commit b6f0ed3829f3829eb358a2e7417d80bba1a42db7</a>：只用实际读过Master_Transmit/Master_Receive/Mem_Read参数说明，不推广其他API。状态返回与错误字段也不能混成物理总线恢复证据。</li><li>[E] <a href="https://www.st.com/resource/en/errata_sheet/es0182-stm32f405407xx-and-stm32f415417xx-device-errata-stmicroelectronics.pdf">ST ES0182 Rev19，July2026</a>：45页，Table3 pp2–4及§2.10/2.11.1/2.12文字，适用A与N按原表含义；表/电气像素未完成核验。slave BSY与USART IDLE的N不能误引。</li></ul><p>未验证：最新RM版本/全寄存器条款、传感器/errata部分表像素、实际芯片硅修订、引脚/供电/CS/SA0/上拉/电容与波形、硬件期限/吞吐、真实身份健康与物理打印纸张。已有有界下载失败已记录，不反复下载装饰来源，也不修改代理/TLS或安装工具来掩盖缺口。主机C/JavaScript、源码阅读、页面验证、发布、硬件与个人掌握是各自不同状态。</p>
+
+<span id="bus-next"></span>
+
+## 从原始字节走向有条件的测量 {#bus-next-title}
+
+<p>WHO_AM_I只是一字节身份寄存器示例；事务完成不等于采样有效或板子健康。接下来的ADC读数还需要参考电压、采样时间、输入网络与误差前提；驱动超时与恢复则需要副作用、取消完成和资源隔离的合同。</p><div class="next-links"><a href="uart-framing.html">← 11 UART帧与接收期限</a><a href="bus-transactions-reference.html">本章可打印速查</a><a href="adc-sampling.html">13 ADC参考、采样与输入条件 →</a><a href="../learn/engineering-map.html">学习地图与待完成范围</a></div>
