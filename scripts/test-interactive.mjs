@@ -47,7 +47,13 @@ assert.deepEqual(interactiveNotes.slice(originalNotes.length), [
   { path: 'learn/adc-sampling.html', source: 'adc-sampling.html' },
   { path: 'learn/adc-sampling-reference.html', source: 'adc-sampling-reference.html' },
   { path: 'learn/driver-recovery.html', source: 'driver-recovery.html' },
-  { path: 'learn/driver-recovery-reference.html', source: 'driver-recovery-reference.html' }
+  { path: 'learn/driver-recovery-reference.html', source: 'driver-recovery-reference.html' },
+  { path: 'learn/interrupt-shared-data.html', source: 'interrupt-shared-data.html' },
+  { path: 'learn/interrupt-shared-data-reference.html', source: 'interrupt-shared-data-reference.html' },
+  { path: 'learn/dma-ownership.html', source: 'dma-ownership.html' },
+  { path: 'learn/dma-ownership-reference.html', source: 'dma-ownership-reference.html' },
+  { path: 'learn/throughput-overload.html', source: 'throughput-overload.html' },
+  { path: 'learn/throughput-overload-reference.html', source: 'throughput-overload-reference.html' }
 ], 'New interactive readers must append after the stable original routes')
 
 for (const base of ['/', '/embedded-notes/']) {
@@ -154,7 +160,7 @@ for (const note of interactiveNotes.slice(1)) {
     window.location.hash = '#%ZZ'; assert.doesNotThrow(events.pageshow)
   }
   const categoryHref = note.path.startsWith('mcu/') ? '../mcu/' : note.path.startsWith('debug/') ? '../debug/' : note.path.startsWith('learn/') ? '../learn/' : '../tools/'
-  for (const href of ['../', categoryHref, '../?search=1']) assert.ok(article.includes('href="' + href + '"'), 'Missing hub link: ' + href)
+  for (const href of ['../', categoryHref, '../?search=1']) assert.ok(article.includes('href="' + href + '"'), 'Missing hub link: ' + note.path + '/' + href)
   assert.ok(!/<(?:script|iframe)[^>]+src=/i.test(article), 'Self-contained article must not load scripts or integrations')
   assert.ok(!/\b(?:fetch|XMLHttpRequest|WebSocket|localStorage|sessionStorage)\b/.test([...article.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)].map(match => match[1]).join('')), 'Teaching state stays in page memory')
 }
@@ -252,6 +258,9 @@ await import('./test-uart-framing.mjs')
 await import('./test-bus-transactions.mjs')
 await import('./test-adc-sampling.mjs')
 await import('./test-driver-recovery.mjs')
+await import('./test-interrupt-shared-data.mjs')
+await import('./test-dma-ownership.mjs')
+await import('./test-throughput-overload.mjs')
 for (const path of ['learn/gpio-button.html', 'learn/gpio-button-reference.html']) {
   const article = await readInteractiveNote(path)
   assert.ok(article.includes('href="gpio-led.html"'), 'Previous chapter must link to the real LED reader: ' + path)
@@ -260,14 +269,14 @@ for (const path of ['learn/gpio-button.html', 'learn/gpio-button-reference.html'
 }
 console.log('PASS: previous GPIO chapter and reference lead to the registered LED chapter and printable reference.')
 
-for (const [name, next] of [['gpio-led', 'c-bits-registers'], ['c-bits-registers', 'c-objects-bounds'], ['c-objects-bounds', 'bounded-fifo'], ['bounded-fifo', 'build-link-identity'], ['build-link-identity', 'reset-runtime'], ['reset-runtime', 'memory-budget'], ['memory-budget', 'clock-timebase'], ['clock-timebase', 'timer-pwm'], ['timer-pwm', 'uart-framing'], ['uart-framing', 'bus-transactions'], ['bus-transactions', 'adc-sampling'], ['adc-sampling', 'driver-recovery']]) {
+for (const [name, next] of [['gpio-led', 'c-bits-registers'], ['c-bits-registers', 'c-objects-bounds'], ['c-objects-bounds', 'bounded-fifo'], ['bounded-fifo', 'build-link-identity'], ['build-link-identity', 'reset-runtime'], ['reset-runtime', 'memory-budget'], ['memory-budget', 'clock-timebase'], ['clock-timebase', 'timer-pwm'], ['timer-pwm', 'uart-framing'], ['uart-framing', 'bus-transactions'], ['bus-transactions', 'adc-sampling'], ['adc-sampling', 'driver-recovery'], ['driver-recovery', 'interrupt-shared-data'], ['interrupt-shared-data', 'dma-ownership'], ['dma-ownership', 'throughput-overload']]) {
   for (const suffix of ['', '-reference']) {
     const article = await readInteractiveNote('learn/' + name + suffix + '.html')
     assert.ok(article.includes(next + '.html'), 'Course sequence must reach the real next chapter: ' + name + suffix + ' -> ' + next)
   }
 }
 for (const suffix of ['', '-reference']) {
-  const article = await readInteractiveNote('learn/driver-recovery' + suffix + '.html')
-  assert.ok(article.includes('engineering-map.html#stage-04'), 'Unit14 must lead honestly to pending unit15 in stage04')
+  const article = await readInteractiveNote('learn/throughput-overload' + suffix + '.html')
+  assert.ok(article.includes('engineering-map.html#stage-05'), 'Unit17 must lead honestly to pending unit18 in stage05')
 }
-console.log('PASS: unchanged32 canonical prefix and real11→12→13→14 sequence, with pending15 through stage04.')
+console.log('PASS: preserved38 canonical prefix and real14→15→16→17 sequence, with pending18 through stage05.')

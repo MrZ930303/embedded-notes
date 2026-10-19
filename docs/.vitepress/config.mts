@@ -11,6 +11,12 @@ export default defineConfig({
   description: '从 C 语言与内存到 MCU、FreeRTOS 和工程调试。把原理学清楚，把证据留在工程里。',
   base,
   cleanUrls: false,
+  // VitePress treats .c/.h Markdown links as HTML pages; check-build verifies
+  // these exact public downloads exist and match the immutable native bytes.
+  ignoreDeadLinks: [
+    '/examples/interrupt-shared-data/irq.c',
+    '/examples/interrupt-shared-data/irq.h'
+  ],
   transformHtml(html, _id, context) {
     const note = interactiveNotes.find(note => context.page === note.path.replace(/\.html$/, '.md'))
     return note ? readInteractiveNote(note.path) : html
@@ -61,6 +67,12 @@ export default defineConfig({
         { text: 'ADC参考、采样与输入条件：可打印速查', link: '/learn/adc-sampling-reference.html' },
         { text: '驱动错误、超时与恢复', link: '/learn/driver-recovery.html' },
         { text: '驱动错误、超时与恢复：可打印速查', link: '/learn/driver-recovery-reference.html' },
+        { text: '异常、NVIC 与共享数据', link: '/learn/interrupt-shared-data.html' },
+        { text: '异常、共享数据：可打印速查', link: '/learn/interrupt-shared-data-reference.html' },
+        { text: 'DMA 缓冲所有权', link: '/learn/dma-ownership.html' },
+        { text: 'DMA 缓冲所有权：可打印速查', link: '/learn/dma-ownership-reference.html' },
+        { text: '吞吐、抖动与过载', link: '/learn/throughput-overload.html' },
+        { text: '吞吐、抖动与过载：可打印速查', link: '/learn/throughput-overload-reference.html' },
         { text: 'MCU 堆栈原理与监测', link: '/c-memory/heap-stack.html' },
         { text: 'MCU 晶振与主频：从 8 MHz 到 168 MHz', link: '/mcu/crystal-pll-clock.html' },
         { text: 'Cortex-M CPU 核心寄存器', link: '/mcu/cortex-m-cpu-registers.html' },
@@ -113,6 +125,12 @@ export default defineConfig({
         { text: 'ADC参考、采样与输入条件：可打印速查', link: '/learn/adc-sampling-reference.html' },
         { text: '驱动错误、超时与恢复', link: '/learn/driver-recovery.html' },
         { text: '驱动错误、超时与恢复：可打印速查', link: '/learn/driver-recovery-reference.html' },
+        { text: '异常、NVIC 与共享数据', link: '/learn/interrupt-shared-data.html' },
+        { text: '异常、共享数据：可打印速查', link: '/learn/interrupt-shared-data-reference.html' },
+        { text: 'DMA 缓冲所有权', link: '/learn/dma-ownership.html' },
+        { text: 'DMA 缓冲所有权：可打印速查', link: '/learn/dma-ownership-reference.html' },
+        { text: '吞吐、抖动与过载', link: '/learn/throughput-overload.html' },
+        { text: '吞吐、抖动与过载：可打印速查', link: '/learn/throughput-overload-reference.html' },
       ]},
       { text: '从这里开始', items: [
         { text: 'MCU 内存学习路线', link: '/guide/memory-roadmap.html' }

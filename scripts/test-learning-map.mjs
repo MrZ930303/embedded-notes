@@ -111,8 +111,8 @@ assert.match(unitRows[1], /\| 完整 \| 已通过 \| 本单元无新工作 \| �
 for (const row of unitRows.slice(2, 5)) assert.match(row, /\| 完整 \| 已通过 \| 已有 C 证据 \| 未验 \| 已发布 \|$/, 'Units03–05 publication uses parent-confirmed78723d5 evidence and retains hardware limits')
 for (const row of unitRows.slice(5, 9)) assert.match(row, /\| 完整 \| 已通过 \| 已有 C 证据 \| 未验 \| 已发布 \|$/, 'Units06–09 publication uses parent-confirmed4ac57c4/CI39068664322 evidence and retains hardware limits')
 for (const row of unitRows.slice(9, 11)) assert.match(row, /\| 完整 \| 已通过 \| 已有 C 证据 \| 未验 \| 已发布 \|$/, 'Units10–11 publication uses parent-confirmed f215/CI39073047054 while hardware remains unverified')
-for (const row of unitRows.slice(11,14)) assert.match(row, /\| 本地完整 \| 已通过 \| 已有 C 证据 \| 未验 \| 本地候选 \|$/, 'Units12–14 retain distinct local content/model/C evidence and hardware/publication limits')
-for (const row of unitRows.slice(14)) assert.match(row, /\| 待写 \| 未做 \| 未做 \| 未验 \| 未发布 \|$/, 'Units15–32 remain pending; research and existing topic notes do not earn course credit')
+for (const row of unitRows.slice(11,14)) assert.match(row, /\| 完整 \| 已通过 \| 已有 C 证据 \| 未验 \| 已发布 \|$/, 'Units12–14 publication uses parent-confirmed dafffcc while hardware remains unverified')
+for (const row of unitRows.slice(17)) assert.match(row, /\| 待写 \| 未做 \| 未做 \| 未验 \| 未发布 \|$/, 'Units18–32 remain pending; research and existing topic notes do not earn course credit')
 await access(new URL('../curriculum/stage01-evidence.md', import.meta.url))
 await access(new URL('../curriculum/stage02-evidence.md', import.meta.url))
 assert.ok(coverage.includes('10—14') && coverage.includes('39058801087') && coverage.includes('78723d525775feb83b91071b3f634a9c65863a1a'))
@@ -125,5 +125,9 @@ for (const name of ['timer-pwm', 'uart-framing', 'bus-transactions', 'adc-sampli
     assert.ok(markdown.includes(name + suffix + '.html'), 'Search mirror must include each actual time/serial reader: ' + name + suffix)
   }
 }
-assert.match(focus['.focus-notes'].innerHTML, /12[—–]14.*本地候选/, 'The remaining stage03 protocol/ADC/fault units remain pending')
-console.log('PASS course ledger:32 ordered units,8 stages,01–11 published with bounded proof,12–14 local candidates,15–32 and all hardware pending.')
+assert.match(focus['.focus-notes'].innerHTML, /12[—–]14.*父任务确认/, 'Stage03 source publication and parent CI/online acceptance remain explicit')
+for (const row of unitRows.slice(14,17)) assert.match(row, /\| 本地完整 \| 已通过 \| 已有 C 证据 \| 未验 \| 本地候选 \|$/)
+buttons[3].click()
+for (const name of ['interrupt-shared-data', 'interrupt-shared-data-reference', 'dma-ownership', 'dma-ownership-reference', 'throughput-overload', 'throughput-overload-reference']) assert.ok(focus['.focus-notes'].innerHTML.includes('href="' + name + '.html"'))
+await access(new URL('../curriculum/stage04-evidence.md', import.meta.url))
+console.log('PASS course ledger:32 ordered units,8 stages,01–14 published with parent proof,15–17 local candidates,18–32 and all hardware pending.')

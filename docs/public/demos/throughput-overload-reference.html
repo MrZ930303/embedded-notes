@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>吞吐与过载速查 · 嵌入式笔记</title><link rel="icon" type="image/svg+xml" href="../favicon.svg"><style>
+:root{--paper:#fafbf8;--ink:#21382e;--muted:#526359;--line:#dce3d7;--green:#22664f;--pale:#eef2e9;--lime:#d5e7b3;--dark:#193e33;--mono:Consolas,monospace}*{box-sizing:border-box}html{scroll-padding-top:120px}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.9 system-ui,"Microsoft YaHei",sans-serif}a{color:var(--green);text-underline-offset:4px}p{margin:0 0 16px}.wrap{width:min(1120px,calc(100% - 64px));margin:auto}.skip{position:absolute;top:-100px;z-index:20;background:white;padding:10px}.skip:focus{top:5px}.topbar{position:sticky;top:0;border-bottom:1px solid var(--line)}.brand{text-decoration:none}.hero{display:grid;grid-template-columns:1.12fr 1fr;gap:48px;padding:48px 0 40px;border-bottom:1px solid var(--line)}h1{font-size:40px;line-height:1.35}h2{font-size:28px;line-height:1.5;margin:0 0 18px}h3{font-size:21px;line-height:1.5;margin:28px 0 12px}.tag,.small{color:var(--muted);font-size:13px}.hero-card,.lab,.callout{border:1px solid var(--line);border-radius:12px;padding:24px;background:var(--pale)}.hero-card strong{font-size:26px}.content-section{padding:48px 0;border-bottom:1px solid var(--line)}.section-nav,.controls,.notes-toolbar,.next-links{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.field{display:grid;gap:6px;min-width:0}.field.full{grid-column:1/-1}button,input,select{font:inherit;color:inherit}input,select{width:100%;min-width:0;min-height:44px;padding:8px;border:1px solid #aabaad;border-radius:6px;background:white}.btn{min-height:44px;min-width:44px;padding:9px 14px;background:white;border:1px solid #aabaad;border-radius:6px;cursor:pointer}.btn.primary{background:var(--dark);color:white}.btn:disabled{opacity:.55;cursor:default}.feedback,.applied-result{padding:16px;border:1px solid var(--line);border-radius:8px;background:#fffefb;margin:16px 0;overflow-wrap:anywhere}.pending{color:#7c581d}.lab{background:#fffefb}.lab>p{max-width:44rem}details{margin:16px 0;padding:16px;border:1px solid var(--line);border-radius:8px;background:#fffefb}summary{min-height:44px;cursor:pointer;font-weight:650}details p{margin-top:12px}.table-wrap{max-width:100%;overflow:auto}table{border-collapse:collapse;width:100%;font-size:14px;text-align:left}th,td{padding:10px;border-bottom:1px solid var(--line);vertical-align:top;white-space:nowrap}th{background:var(--pale)}figure{margin:20px 0;border:1px solid var(--line);border-radius:10px;padding:14px;background:white}svg{display:block;width:100%;height:auto}svg text{font:18px system-ui,"Microsoft YaHei",sans-serif;fill:#21382e}figcaption{font-size:13px;color:var(--muted);margin-top:12px}pre{max-width:100%;overflow:auto;padding:18px;background:var(--pale);font:14px/1.7 var(--mono);border-radius:8px}code{font-family:var(--mono)}li{margin-bottom:8px}.source-list a{overflow-wrap:anywhere}footer{padding:28px 0;font-size:13px;color:var(--muted)}:focus-visible{outline:3px solid #ad751d;outline-offset:4px}.exercise{padding:14px 0;border-bottom:1px solid var(--line)}.exercise h3{margin-top:14px}.exercise-answer{margin-bottom:20px}
+@media(max-width:760px){.hero,.fields{grid-template-columns:1fr}.hero{gap:24px}.field.full{grid-column:auto}.wrap{width:calc(100% - 40px)}.lab{padding:16px}}@media(max-width:370px){.lab{padding:12px}.btn{padding-inline:10px}svg text{font-size:20px}}
+@media print{body{background:white;color:#15251b;font-size:11pt}.wrap{width:100%;max-width:none}.topbar,.skip,.section-nav,.controls,.fields,.notes-toolbar,.next-links{display:none!important}.hero{display:block;padding:0 0 14px}.hero-card{display:none}.content-section{padding:18px 0}h1{font-size:25pt}h2{font-size:17pt}h3{font-size:13pt}.lab{padding:12px}pre{white-space:pre-wrap;overflow:visible;font-size:9pt}table{font-size:10pt}.table-wrap{overflow:visible}th,td{white-space:normal;padding:6px}a{color:inherit}details{break-inside:auto}.exercise{break-inside:avoid}body.exercise-print main>.hero,body.exercise-print main>.section-nav,body.exercise-print main>.content-section:not(#tp-practice),body.exercise-print .practice-intro,body.exercise-print footer{display:none!important}body.exercise-print .exercise-answer{display:none!important}body.exercise-print .applied-result,body.exercise-print .feedback{display:none!important}body.exercise-print #tp-practice{border:0;padding:0}}
+
+.flow-scroll{overflow:auto;max-width:100%}.flow-scroll svg{min-width:760px}.source-downloads{display:flex;flex-wrap:wrap;gap:12px}.source-downloads a{min-height:44px;display:inline-flex;align-items:center}.flow-scroll:focus-visible,.table-wrap:focus-visible,pre:focus-visible{outline:3px solid #ad751d;outline-offset:3px}svg .box{fill:#eef2e9;stroke:#63836f;stroke-width:2}svg .arrow{stroke:#63836f;stroke-width:2;fill:none}.hero-card code{overflow-wrap:anywhere}.exercise-print #tp-practice>h2{margin-top:0}
+
+h1 span{display:block;font-weight:500}.hero-card{overflow-wrap:anywhere}.content-section>p{max-width:48rem}
+.activity-log{min-height:44px;white-space:pre-wrap;overflow-wrap:anywhere}.flow-scroll svg{min-width:920px}.flow-scroll svg text{font-size:16px}
+.notes-article{overflow-wrap:anywhere}.notes-article main{min-width:0}.notes-article .hero>div{min-width:0}.source-downloads{overflow-wrap:anywhere}
+@media print{.flow-scroll{overflow:visible!important}.flow-scroll svg{min-width:0!important;width:100%!important}body.exercise-print main>.content-section:not(#tp-practice),body.exercise-print .next-links,body.exercise-print .source-downloads,body.exercise-print noscript{display:none!important}body.exercise-print #tp-practice .exercise-answer{display:none!important}body.exercise-print .question-stem{display:block!important}body.exercise-print #tp-practice>h2{margin:0 0 12px}body.exercise-print .exercise{padding:4px 0;break-inside:avoid}.lab form,.activity-log,.feedback,.applied-result{display:none!important}}
+</style><style>
+/* Shared reading layer: keep this block identical in all standalone notes. */
+@media screen {
+:root{--paper:#fafbf8;--ink:#21382e;--muted:#526359;--line:#dce3d7;--green:#22664f;--pale:#eef2e9;--lime:#d5e7b3;--dark:#193e33}
+.notes-article{font-size:16px;line-height:1.9}
+.notes-article .wrap{width:min(1120px,calc(100% - 64px));max-width:none;padding-inline:0;margin-inline:auto}
+.notes-article .topbar{background:#fafbf8f5;z-index:10}
+.notes-article .topbar-inner{height:auto;min-height:68px;display:flex;align-items:center;justify-content:space-between;gap:24px;padding-block:0}
+.notes-article .brand{display:inline-flex;align-items:center;gap:10px;min-height:44px;margin:0;font-size:15px;font-weight:700;letter-spacing:0;color:var(--ink)}
+.notes-article .brandmark{display:grid;place-items:center;width:30px;height:30px;margin:0;border-radius:6px;background:var(--dark);color:#e0edcb;font:19px/1 var(--mono)}
+.notes-article .topbar nav{display:flex;align-items:center;gap:18px;margin:0;padding:0;width:auto;flex-wrap:nowrap}
+.notes-article .topbar nav a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:4px 3px;font-size:14px;font-weight:500;color:var(--muted);text-decoration:none;border-radius:4px}
+.notes-article .topbar nav a:hover,.notes-article .topbar nav a[aria-current="location"]{color:var(--green);background:var(--pale)}
+.notes-article .topbar nav a[aria-current="location"]{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:6px}
+.notes-article .hero{padding-block:48px 40px;gap:48px;grid-template-columns:1.12fr 1fr}
+.notes-article .hero h1{font-size:clamp(32px,3.6vw,44px);line-height:1.35;letter-spacing:-.035em;text-wrap:balance}
+.notes-article .hero h1 span{font-size:.78em;line-height:1.5;margin-top:8px}
+.notes-article .hero-intro{font-size:17px;line-height:1.9;max-width:32rem;margin-block:20px}
+.notes-article .hero>.hero-card,.notes-article .hero-flow,.notes-article .intro-map{box-shadow:none;border-radius:12px}
+.notes-article .hero .tag{font-size:12px;border-radius:4px;padding:4px 9px;margin:0 0 16px;line-height:1.7}
+.notes-article .hero>.hero-figure .map{transform:none;box-shadow:none}
+.notes-article .hero>div>.eyebrow{display:none}
+.notes-article .hero>.hero-card>.eyebrow,.notes-article .hero>.hero-flow>.eyebrow{display:block;font-size:12px;line-height:1.7}
+.notes-article .hero-links{gap:12px 22px;margin-top:24px}
+.notes-article .hero .text-link{display:inline-flex;align-items:center;min-height:44px;font-size:14px}
+.notes-article .hero figcaption,.notes-article .hero-figure figcaption,.notes-article .date-note{font-size:13px;line-height:1.8}
+.notes-article .hero-card p:last-child,.notes-article .hero-flow .small,.notes-article .intro-map>p:last-child{font-size:14px;line-height:1.85}
+.notes-article .hero-numbers span,.notes-article .hero-step small{font-size:13px}
+.notes-article h2{font-size:28px;line-height:1.5;text-wrap:balance}
+.notes-article .section-head p{font-size:15px;line-height:1.85}
+.notes-article .content-section,.notes-article .article-section{padding-block:52px}
+.notes-article .content-section+.content-section{padding-top:48px}
+.notes-article .note-section{scroll-margin-top:100px}
+.notes-article .note-section>summary{min-height:56px;font-size:18px;line-height:1.6}
+.notes-article .note-section>summary h2{font-size:20px;line-height:1.6}
+.notes-article .note-body{max-width:none;font-size:16px;line-height:1.95}
+.notes-article .note-body p,.notes-article .note-body li{font-size:16px;line-height:1.95}
+.notes-article .note-body>p,.notes-article .note-body>ul,.notes-article .note-body>ol,.notes-article .article-section>p,.notes-article .article-section>ul,.notes-article .article-section>ol{max-width:44rem;font-size:16px;line-height:1.95}
+.notes-article .note-body h3{font-size:21px;margin-block:28px 12px;scroll-margin-top:100px}
+.notes-article .note-body pre,.notes-article pre{font-size:14px;line-height:1.8}
+.notes-article .note-body table,.notes-article table{font-size:14px;line-height:1.8}
+.notes-article .note-body th,.notes-article .note-body td{font-size:14px;line-height:1.8}
+.notes-article .article-section>h2{font-size:28px}
+.notes-article .concept p,.notes-article .subnote p,.notes-article .risk p,.notes-article .monitor-step p,.notes-article .monitor-step ul,.notes-article .step-card p{font-size:15px;line-height:1.85}
+.notes-article .callout,.notes-article .model-scope,.notes-article .demo-disclaimer,.notes-article .version-card,.notes-article .version-card p{font-size:14px;line-height:1.85}
+.notes-article .source-list a,.notes-article .source-list span,.notes-article #plane-references~ul{font-size:14px;line-height:1.85}
+.notes-article #plane-overview~ul{max-width:none}
+.notes-article #plane-overview~ul li{font-size:15px;line-height:1.85}
+.notes-article .note-body .source-list{max-width:none}
+.notes-article .small,.notes-article .lab-note,.notes-article .lab-foot,.notes-article .lab-footer,.notes-article .clock-lab-foot,.notes-article .print-hint{font-size:13px;line-height:1.85}
+.notes-article .principle,.notes-article .principles span{font-size:13px;line-height:1.8}
+.notes-article .principles strong{font-size:15px}
+.notes-article .memory-motto,.notes-article .motto{background:var(--pale);color:var(--ink);border-radius:8px;text-align:left;padding:24px;margin-top:30px}
+.notes-article .memory-motto span,.notes-article .motto small{color:var(--muted);font-size:14px}
+.notes-article button,.notes-article .btn,.notes-article .notes-toolbar button{min-height:44px;min-width:44px;font-size:14px}
+.notes-article button,.notes-article .btn,.notes-article .topbar a,.notes-article summary,.notes-article .section-nav a,.notes-article .toc a{transition:background .18s,color .18s,border-color .18s,transform .18s}
+.notes-article button:enabled:hover{filter:brightness(1.06)}
+.notes-article button:enabled:active,.notes-article .btn:active{transform:translateY(1px)}
+.notes-article button:disabled{opacity:.58}
+.notes-article .graph-node:disabled,.notes-article .work-card:disabled{opacity:1}
+.notes-article :focus-visible{outline:3px solid #ad751d;outline-offset:4px}
+.notes-article .lab :focus-visible,.notes-article .clock-lab :focus-visible{outline-color:#f0cc80}
+.notes-article .toc a,.notes-article .section-nav a{display:inline-flex;align-items:center;min-height:44px;border-radius:5px;font-size:14px;padding:8px 12px}
+.notes-article .checklist label,.notes-article .clock-check{min-height:44px;font-size:14px;line-height:1.8}
+.notes-article .clock-field label,.notes-article .clock-controls small,.notes-article .clock-node small,.notes-article .clock-node span{font-size:13px;line-height:1.6}
+.notes-article .clock-current p,.notes-article .clock-candidate,.notes-article .clock-warnings{font-size:14px;line-height:1.8}
+.notes-article .clock-node strong,.notes-article .hero-numbers strong,.notes-article .metric strong{font-variant-numeric:tabular-nums}
+.notes-article .task-option strong,.notes-article .work-card strong{font-size:14px;line-height:1.65}
+.notes-article .task-option span,.notes-article .scope-buttons small,.notes-article .card-id,.notes-article .card-project,.notes-article .card-status,.notes-article .card-tags>span,.notes-article .lane-en{font-size:12px;line-height:1.6}
+.notes-article .scope-explanation,.notes-article .detail-copy>p,.notes-article .detail .acceptance,.notes-article .state-controls>p,.notes-article .board-heading p{font-size:14px;line-height:1.8}
+.notes-article .lane h4{font-size:14px;line-height:1.5;flex-wrap:wrap}
+.notes-article .lane-count{font-size:12px}
+.notes-article .lab .task-option{min-height:96px}
+.notes-article .skills-step-card dd,.notes-article .route-pane p,.notes-article .chooser-intro,.notes-article .permissions-pane>p{font-size:14px;line-height:1.85}
+.notes-article .skills-step-card dt,.notes-article .step-counter,.notes-article .permissions-pane small,.notes-article .permission-list span,.notes-article .graph-legend,.notes-article .graph-arrow-note{font-size:13px;line-height:1.8}
+.notes-article .ui-arrow{width:18px;height:18px;display:inline-block;vertical-align:middle;flex-shrink:0}
+.notes-article .selection-jump,.notes-article .choice-result{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;padding:10px 12px;border-radius:5px;font-size:13px;font-weight:600;line-height:1.6;text-decoration:none}
+.notes-article .selection-jump{background:#22664f;color:#fff}
+.notes-article .choice-result{color:#e2efca;border:1px solid #829873;background:#173e33;margin-top:7px}
+.notes-article .task-choice{min-width:0}
+.notes-article .task-choice .task-option{width:100%}
+.notes-article .task-option[aria-pressed="false"]+.choice-result{display:none}
+.notes-article #selected-skill,.notes-article #plane-selected-title{scroll-margin-top:128px}
+.notes-article footer,.notes-article .footer{font-size:13px;line-height:1.8}
+.notes-article footer a,.notes-article .footer a{display:inline-flex;align-items:center;min-height:44px}
+.notes-article .note-body p,.notes-article .hero-intro,.notes-article .article-section>p{text-wrap:pretty}
+@media(max-width:760px){
+.notes-article .wrap{width:calc(100% - 40px)}
+.notes-article .topbar-inner{flex-wrap:wrap;gap:0;padding-top:6px}
+.notes-article .brand{min-height:44px;font-size:15px}
+.notes-article .topbar nav{width:100%;gap:12px;overflow-x:auto;flex-wrap:nowrap;padding:0 0 4px;scrollbar-width:thin}
+.notes-article .topbar nav a{font-size:13px;flex-shrink:0;padding-inline:2px}
+.notes-article .hero{grid-template-columns:1fr;gap:28px;padding-block:32px}
+.notes-article .hero h1{font-size:32px;line-height:1.4}
+.notes-article .hero-intro{font-size:16px;max-width:none;margin-block:16px}
+.notes-article .hero-figure{max-width:500px}
+.notes-article .hero .tag{margin-bottom:12px}
+.notes-article .content-section,.notes-article .article-section{padding-block:36px}
+.notes-article .content-section+.content-section{padding-top:36px}
+.notes-article h2,.notes-article .article-section>h2{font-size:24px}
+.notes-article .section-head p{font-size:15px}
+.notes-article .note-section>summary{font-size:17px}
+.notes-article .note-section>summary h2{font-size:18px}
+.notes-article .note-body p,.notes-article .note-body li{font-size:16px}
+.notes-article .note-body pre,.notes-article pre{font-size:13px}
+.notes-article .note-body th,.notes-article .note-body td{font-size:14px}
+.notes-article .principles{grid-template-columns:1fr;gap:14px}
+.notes-article .principles strong{display:inline;margin-right:8px}
+.notes-article .principles span{display:inline}
+.notes-article .task-options{grid-template-columns:1fr 1fr;align-items:start}.notes-article .lab .task-option{min-height:76px;padding:12px}
+.notes-article .board{grid-template-columns:1fr 1fr}
+.notes-article .lane:last-child .lane-cards{display:flex}
+.notes-article .lane-cards{min-height:0}
+.notes-article .lane{padding:14px}
+.notes-article .lane-en{margin-bottom:10px}
+.notes-article .work-card{padding:14px}
+.notes-article .card-tags{gap:6px}
+.notes-article .lab-top{flex-wrap:wrap}
+.notes-article .lab-top .tag{white-space:normal}
+.notes-article .note-section,.notes-article .note-body h3,.notes-article .article-section,.notes-article .article-section>h3{scroll-margin-top:124px}
+}
+@media(max-width:370px){.notes-article .task-options,.notes-article .board{grid-template-columns:1fr}.notes-article .hero h1{font-size:30px}.notes-article .topbar nav{gap:8px}}
+}
+@media(prefers-reduced-motion:reduce){.notes-article *,.notes-article *::before,.notes-article *::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+</style></head><body class="notes-article"><a class="skip" href="#main">跳到正文</a><header class="topbar"><div class="wrap topbar-inner"><a class="brand" href="../"><span class="brandmark">E</span>嵌入式技术笔记</a><nav aria-label="全站导航"><a href="../learn/">返回分类</a><a href="./throughput-overload.html#tp-capacity">交互实验</a><a href="./throughput-overload.html">完整笔记</a><a href="../learn/engineering-map.html">32单元地图</a><a href="./throughput-overload-reference.html">本章速查</a><a href="../?search=1">搜索笔记</a></nav></div></header><main class="wrap" id="main"><div class="hero"><div><p class="tag">17 · 可打印速查</p><h1 id="tp-ref-title">吞吐与过载速查<span>每个结论带着前提使用</span></h1><p>把这张速查用于同一采集终端的容量诊断。先修time回绕、UART framing、ADC条件、DMA lease。完整因果、活动和十题见<a href="throughput-overload.html">第17章</a>。</p></div><aside class="hero-card"><strong>四个检查</strong><p>单位相同？到达先后？source还是service时刻？epoch/window是否成立？</p></aside></div><div class="notes-toolbar"><button class="btn" id="expand-notes" type="button">展开全部说明</button><button class="btn" id="collapse-notes" type="button">收起全部说明</button><button class="btn" id="print-all" type="button">打印速查全文</button></div><section class="content-section" id="tp-ref-units"><h2 id="tp-ref-units-title">01 · 阶段、单位与条件线速</h2><p>每个速率注明阶段、单位、窗口：source capacity是条件理论上限；offered含拒绝项，admitted入本层，departed实际离开，service opportunity只是当前有数据时的预算。sample/record/byte/line-bit不可混用；RX命令work预算不是TX容量。</p><figure id="tp-pipeline"><div class="flow-scroll" tabindex="0" role="region" aria-label="原创图1：计量阶段与单位，宽图可横向滚动"><svg viewBox="0 0 920 240" role="img" aria-labelledby="tp-pipeline-title"><title id="tp-pipeline-title">原创图1：计量阶段与单位</title>
+<rect class="box" x="15" y="38" width="185" height="112" rx="8"/><text x="30" y="70">实际 source event</text><text x="30" y="101">sample / source time</text><text x="30" y="132">先编号，再准入</text>
+<path class="arrow" d="M200 94H250m-12-8 12 8-12 8"/><text x="210" y="28">offer</text>
+<rect class="box" x="250" y="38" width="185" height="112" rx="8"/><text x="265" y="70">cap4 SAMPLE 队列</text><text x="265" y="101">admitted / dropped</text><text x="265" y="132">service → departed</text>
+<path class="arrow" d="M435 94H485m-12-8 12 8-12 8"/>
+<rect class="box" x="485" y="38" width="185" height="112" rx="8"/><text x="500" y="70">虚构计账 record</text><text x="500" y="101">2+2+4+3 = 11 B</text><text x="500" y="132">并非 native sizeof</text>
+<path class="arrow" d="M670 94H720m-12-8 12 8-12 8"/>
+<rect class="box" x="720" y="38" width="185" height="112" rx="8"/><text x="735" y="70">8N1 字符线</text><text x="735" y="101">11×10 = 110 bits</text><text x="735" y="132">wire completion</text>
+<text x="20" y="195">转换完成 ≠ DMA块完成 ≠ 应用departure ≠ 线路发完；每个速率先写阶段、单位、窗口。</text></svg></div><figcaption>箭头是本课原创计量关系；最后两框仅作条件算术，没有实现新采样协议。DMA 不会减少每字符的 start/stop bit-times。</figcaption></figure><p>请求115200、8N1、连续无gap：1start+8data+1stop=10bit-times/字符，11520encodedB/s，字符3125/36µs。原创虚构记录2sample+2seq+4time+3framing=11B/110bits；每记录34375/36≈954.861111µs，连续上限1047.272727record/s。1000/s耗11000B/s、275/288≈95.486111%，payload8000B/s/sample字段2000B/s；1100/s要12100B/s，超过名义容量。</p><p>42MHz/OVER8=0/D365：nominal baud42000000/365≈115068.493150，相对请求误差−25/219%；11B耗20075/21µs。无escaping/padding/ACK/retry，没有规定layout/checksum/endianness，也不是unit11新命令。晶振、gap、服务、接收容差另证。合批R(N)=H+N×S须实际H只收一次，不能省每样本time/seq，且会增加fill delay/burst。DMA不改变10bit-times。ADC12bit/sample15/21MHz仅给27/21MHz=9/7µs，非可靠整机采样率。</p></section><section class="content-section" id="tp-ref-burst"><h2 id="tp-ref-queue-title">02 · 固定政策和三份字面trace</h2><p>固定FIFO/cap4 SAMPLE RECORDS、初始空、arrival-first/drop-new，每步0..4offer与0..4service；独立于旧4BYTE Fifo，无hidden slot/credit。drop=max(0,q+a−4)，pre=min(4,q+a)，depart=min(s,pre)，q′=pre−depart。以下保留完整原始ID0字面行。</p><h3 id="tp-trace-a">字面trace A：每行是tick结束</h3><div class="table-wrap" tabindex="0" role="region" aria-label="A tick表，可横向滚动"><table><thead><tr><th>A tick</th><th>offered</th><th>service</th><th>departed</th><th>dropped</th><th>end queue</th></tr></thead><tbody><tr><td>0</td><td>0,1,2,3</td><td>1</td><td>0</td><td>none</td><td>1,2,3</td></tr><tr><td>1</td><td>4,5,6,7</td><td>1</td><td>1</td><td>5,6,7</td><td>2,3,4</td></tr><tr><td>2</td><td>none</td><td>1</td><td>2</td><td>none</td><td>3,4</td></tr><tr><td>3</td><td>none</td><td>1</td><td>3</td><td>none</td><td>4</td></tr><tr><td>4</td><td>none</td><td>1</td><td>4</td><td>none</td><td>empty</td></tr><tr><td>5</td><td>none</td><td>1</td><td>none</td><td>none</td><td>empty</td></tr><tr><td>6</td><td>none</td><td>1</td><td>none</td><td>none</td><td>empty</td></tr><tr><td>7</td><td>none</td><td>1</td><td>none</td><td>none</td><td>empty</td></tr></tbody></table></div><h3 id="tp-trace-b">字面trace B：每行是tick结束</h3><div class="table-wrap" tabindex="0" role="region" aria-label="B tick表，可横向滚动"><table><thead><tr><th>B tick</th><th>offered</th><th>service</th><th>departed</th><th>dropped</th><th>end queue</th></tr></thead><tbody><tr><td>0</td><td>0,1</td><td>1</td><td>0</td><td>none</td><td>1</td></tr><tr><td>1</td><td>2,3</td><td>1</td><td>1</td><td>none</td><td>2,3</td></tr><tr><td>2</td><td>4,5</td><td>1</td><td>2</td><td>none</td><td>3,4,5</td></tr><tr><td>3</td><td>6,7</td><td>1</td><td>3</td><td>7</td><td>4,5,6</td></tr><tr><td>4</td><td>8,9</td><td>1</td><td>4</td><td>9</td><td>5,6,8</td></tr><tr><td>5</td><td>10,11</td><td>1</td><td>5</td><td>11</td><td>6,8,10</td></tr><tr><td>6</td><td>none</td><td>1</td><td>6</td><td>none</td><td>8,10</td></tr><tr><td>7</td><td>none</td><td>1</td><td>8</td><td>none</td><td>10</td></tr><tr><td>8</td><td>none</td><td>1</td><td>10</td><td>none</td><td>empty</td></tr></tbody></table></div><h3 id="tp-trace-c">字面trace C：每行是tick结束</h3><div class="table-wrap" tabindex="0" role="region" aria-label="C tick表，可横向滚动"><table><thead><tr><th>C tick</th><th>offered</th><th>service</th><th>departed</th><th>dropped</th><th>end queue</th></tr></thead><tbody><tr><td>0</td><td>0</td><td>0</td><td>none</td><td>none</td><td>0</td></tr><tr><td>1</td><td>1</td><td>0</td><td>none</td><td>none</td><td>0,1</td></tr><tr><td>2</td><td>2</td><td>0</td><td>none</td><td>none</td><td>0,1,2</td></tr><tr><td>3</td><td>3</td><td>0</td><td>none</td><td>none</td><td>0,1,2,3</td></tr><tr><td>4</td><td>4</td><td>0</td><td>none</td><td>4</td><td>0,1,2,3</td></tr><tr><td>5</td><td>5</td><td>4</td><td>0,1,2,3</td><td>5</td><td>empty</td></tr><tr><td>6</td><td>6</td><td>4</td><td>6</td><td>none</td><td>empty</td></tr><tr><td>7</td><td>7</td><td>0</td><td>none</td><td>none</td><td>7</td></tr></tbody></table></div><p>A8tick总8/5/5/drop3/q0，平均均1/tick却因第二准入峰值3+4=7而丢；仅此trace容量7免丢、6丢1。B六active+三drain后12/9/9/drop3/q0，尾11无随后seq可暴露。C总service8却8/6/5/drop2/q1，先丢5再服务0..3；终点7仍queued，没有flush。</p><p>未饱和守恒offered+initialQueued=departed+dropped+queued。无限offer2/service≤1时未截断积压每tick增≥1，固定K只能延后溢出，须改输入/服务/语义。无损条件需最大burst/服务gap/初始backlog/反应延迟/在途项，平均值不足。CTS失效仍完成当前帧，RTS对应receiver准备，均非软件count自动流控。A/C8步、B9步后TERMINAL无新动作；checked queue reset独立，不能擦16 lease/allocator。</p></section><section class="content-section" id="tp-ref-time"><h2 id="tp-ref-axes-title">03 · 时间事件、晚服务与序号</h2><p>fake sample[0,10,20,30]ms与service[1,11,38,38]ms：sample间隔10/10/10，service10/27/0，latency1/1/18/8。只知service无法重建sample；所有时间需事件关联/clock domain/分辨率前提，不是physical aperture测量。</p><figure id="tp-axes"><div class="flow-scroll" tabindex="0" role="region" aria-label="原创图2：source 与 service 两条独立时间轴，宽图可横向滚动"><svg viewBox="0 0 920 240" role="img" aria-labelledby="tp-axes-title"><title id="tp-axes-title">原创图2：source 与 service 两条独立时间轴</title>
+<text x="15" y="35">source/sample labels（ms）</text><path class="arrow" d="M270 45H900"/>
+<text x="15" y="142">service labels（ms）</text><path class="arrow" d="M270 150H900"/>
+<circle cx="290" cy="45" r="6"/><circle cx="440" cy="45" r="6"/><circle cx="590" cy="45" r="6"/><circle cx="740" cy="45" r="6"/>
+<text x="282" y="76">0</text><text x="426" y="76">10</text><text x="576" y="76">20</text><text x="726" y="76">30</text>
+<circle cx="305" cy="150" r="6"/><circle cx="455" cy="150" r="6"/><circle cx="860" cy="150" r="6"/>
+<text x="297" y="181">1</text><text x="442" y="181">11</text><text x="825" y="181">38 / 38</text>
+<path class="arrow" d="M290 82L305 130M440 82L455 130M590 82L850 130M740 82L870 130"/>
+<text x="25" y="222">间隔：source 10/10/10；service 10/27/0；延迟：1/1/18/8 ms。全部为提供的 fake labels。</text></svg></div><figcaption>两次 service 同为 38ms 不意味着两个 sample 同时发生。仅有 service 时间不能还原 20/30ms；图没有测量 ADC aperture jitter。</figcaption></figure><p>真实time init100/P10，service110后145给releases3/work1/missed2/remainder5；不补造120/130已采sample。source成功事件先编号再准入，drop推进，拒绝push不推进；ID0合法，run/block/epoch分域。同epoch且true span&lt;32768才可比较；初次只seed，d0duplicate-of-last，1..32767forward/gap=d−1，32768ambiguous，大于半周older；仅forward更新last。</p><div class="table-wrap" tabindex="0" role="region" aria-label="last65534 后 received表，可横向滚动"><table><thead><tr><th>last65534 后 received</th><th>分类</th><th>last</th></tr></thead><tbody><tr><td>65535</td><td>forward</td><td>65535</td></tr><tr><td>0</td><td>forward-wrap</td><td>0</td></tr><tr><td>0</td><td>duplicate</td><td>0</td></tr><tr><td>3</td><td>forward gap2</td><td>3</td></tr><tr><td>2</td><td>older</td><td>3</td></tr><tr><td>32771</td><td>ambiguous</td><td>3</td></tr><tr><td>4</td><td>forward</td><td>4</td></tr></tbody></table></div><p>gap不结算永久丢失，后到2说明乱序限制；last-only不识别全部历史重复、尾丢、未见整圈或restart。不同epoch拒绝。C语义由N1570公开草案§6.2.5p9/6.3.1.1/.3/7.20.1.1支持；RFC1982是DNS范例，本课epoch/window原创。ADI MT-007仅限定aperture术语。</p></section><section class="content-section" id="tp-ref-loss"><h2 id="tp-ref-loss-title">04 · byte连续性与饱和边界</h2><p>旧FIFO是4BYTE，FULL push先保持底层字段；UART上层明确清空queued4、清partial continuity，并丢失败第5byte。初始period100、旧command={SET_PERIOD,555}；receive A5 01 02 03均OK，尚未poll便没有新command。第5个A5返回UART_LOSS/FIFO_FULL/queuedBeforeLoss4/fullPreservedBeforeDiscard=true；losses1，period仍100。</p><p>poll1消耗0/events0/commandPresent=false，外部555保持。再给fresh A5 01 02 03，poll2消耗4/events4，才产生GET_STATUS/current100。这个已知例有5个入口byte不能进入后续解析，losses却只加一个<strong>事件</strong>；一般还可能有partial失效，不能推广成精确丢byte/packet数，也不承诺任意噪声最终重同步。</p><p>真实uart_poll仍先检查时间/20ms service-observed partial timeout，再最多drain4byte、5event、1command；每byte共享本轮now，无法还原wire interbyte time。MAX−1再加1到MAX且saturated=false；下一次尝试加才MAX/true。共享sticky标志不指出哪个counter截断，饱和诊断只能说明有限计数，不可算精确loss率。</p></section><section class="content-section" id="tp-ref-native"><h2 id="tp-ref-native-title">05 · 真正组合、生命周期和work</h2><p>实际safe第四push仍WRITER/valid4/NDTR0；complete才READY/CT切换/NDTR4；begin另分配或LATE。2bank×4entry用actual(run,block,slot,index)关联fake source labels，成功push才commit。正常任一valid phase可claim READY，最多4实际read，copy值+matching label后release，再一次offer；queue不留lease/pointer。held-A是显式诊断策略。</p><p>N1实际读取A10..13、B20..23，B填充service0；两次complete/copy服务1与三次drain1给offered8/admit5/drop3/depart5/q0，2block/8copy/16Bpayload。N2held-A让begin LATE/no30write；未confirm recover BUSY，confirm但held也BUSY；matching release后recoverrun2丢READY1、长度0/NDTR4，start另一步block3；old token STALE。N3验证stopped READY可正常copy，实际UART状态在running/BOUNDARY/overloaded/两种stop仍可解析。</p><p>每turn≤1producer phase、1claim、4read、1release、1observe、2status、1queue step/4offers/4service、4sequence observations、5receive、1poll/4byte/5event/1command、1time_service/work1。每个component独立提交，拒绝只保持自身，不能回滚之前push/ingress/release。新queue/sequence C/H命名与完整output/lifetime合同在下载头文件，所有unused report槽确定置零，optional history32/row33drop不挡进度。fresh storage无old owner/events前提不能当可检查reset；所有real typed objects/output足够大、不重叠、exclusive/non-reentrant。README完整caller原文抽取，重复include/分编译link/normal与NDEBUG；host栈/.su不证明target/WCET/physical timing。</p></section><section class="content-section" id="tp-ref-recall"><h2 id="tp-ref-recall-title">06 · 回忆入口</h2><p>十题题干与完整折叠推理：<a href="throughput-overload.html#tp-question-01">17-01</a> <a href="throughput-overload.html#tp-question-02">17-02</a> <a href="throughput-overload.html#tp-question-03">17-03</a> <a href="throughput-overload.html#tp-question-04">17-04</a> <a href="throughput-overload.html#tp-question-05">17-05</a> <a href="throughput-overload.html#tp-question-06">17-06</a> <a href="throughput-overload.html#tp-question-07">17-07</a> <a href="throughput-overload.html#tp-question-08">17-08</a> <a href="throughput-overload.html#tp-question-09">17-09</a> <a href="throughput-overload.html#tp-question-10">17-10</a> </p><p>改值任务：把A的容量按手算改为6/7，解释相同平均下为何分别丢1/0；把C的service次序改动并重新列出守恒。不要用这个静态比较擅改固定cap4 C合同。</p></section><section class="content-section" id="tp-ref-sources"><h2 id="tp-ref-sources-title">07 · 来源与证据界限</h2><p>一手依据按版本/条款使用：历史RM0090 DocID018909 Rev5 September2013的ADC §13.5/13.8 pp395/398–399、UART §30.3/30.3.4/30.3.14；C模算术用N1570公开草案；RFC1982是可选DNS范例，ADI MT-007仅供aperture术语。原始研究者读历史RM相关完整文本，目视395/398/950/955/984；DMA研究目视60/73/305/310/319/321/329。本作者读了这些研究dossiers与清单，未把研究者PDF/像素读数冒称自己的新测量。</p><p>当前官方RM仍未读；当前DS/PM/AN多数像素、所选硅片revision/current errata、目标电气、buffer placement/backend stop/concurrency/cache/WCET、真实sampling/wire/overrun、OS实体纸张均未验证。web-only origin文件缺bytes/SHA时保持缺口，文本快照hash不冒充origin PDF hash。F407的Flash I/D-Code加速不是M7 SRAM L1 D-cache；迁移F7/H7需另核reachability、attributes、cache state、line/shared邻接、方向，未交付维护指令。</p><p>本章原创的是队列政策、图、fake时间标签和有限回放。12–14已审源码已进入main dafffcc4b3426aae93f7562ff27a815dfcabe79b；其新CI/Pages/线上验收另验，本章17仍是本地候选。完整课程仍有32单元/8阶段；18–32尚待交付。本单元、源代码与native/browser验证不等于阶段完成、正式发布、硬件通过或个人掌握。可以向Agent追问：“若arrival先于service而最大空窗是5tick，我应怎样改守恒和容量前提？”</p></section><section class="content-section" id="tp-source"><h2 id="tp-c-title">完整源码下载与复现入口</h2><p>完整源码展示和可直接抽取的独立caller在<a href="throughput-overload.html#tp-source">主章源码区</a>。速查提供全部原生文件下载，按README相对目录保存，保留严格normal/NDEBUG、重复include、分编译link与mcu-build路由。没有遗漏的terminal模块。</p><div class="source-downloads"><a href="../examples/throughput-overload/throughput.c" download>throughput.c（throughput-overload）</a><a href="../examples/throughput-overload/throughput.h" download>throughput.h（throughput-overload）</a><a href="../examples/dma-ownership/dma.c" download>dma.c（dma-ownership）</a><a href="../examples/dma-ownership/dma.h" download>dma.h（dma-ownership）</a><a href="../examples/bounded-fifo/fifo.c" download>fifo.c（bounded-fifo）</a><a href="../examples/bounded-fifo/fifo.h" download>fifo.h（bounded-fifo）</a><a href="../examples/uart-framing/uart.c" download>uart.c（uart-framing）</a><a href="../examples/uart-framing/uart.h" download>uart.h（uart-framing）</a><a href="../examples/timer-pwm/time.c" download>time.c（timer-pwm）</a><a href="../examples/timer-pwm/time.h" download>time.h（timer-pwm）</a><a href="../examples/throughput-overload/README.txt" download>README.txt（throughput-overload）</a></div></section><nav class="next-links" aria-label="返回章节"><a href="throughput-overload.html">← 返回完整章节和活动</a><a href="../learn/engineering-map.html#stage-05">18尚待交付</a></nav></main><footer class="wrap">速查保留条件 · source/model/native/browser/hardware/physical paper分别取证。</footer><script id="tp-reader">
+(() => {
+  document.getElementById('expand-notes').addEventListener('click',()=>document.querySelectorAll('details').forEach(panel=>{panel.open=true;}));
+  document.getElementById('collapse-notes').addEventListener('click',()=>document.querySelectorAll('details').forEach(panel=>{panel.open=false;}));
+})();
+</script>
+<script id="tp-ordinary-print">(() => {document.getElementById('print-all').addEventListener('click',()=>{try{window.print();}catch{window.dispatchEvent(new Event('afterprint'));}});})();</script>
+<script id="note-deep-links">
+(() => {
+  const reveal = () => {
+    let id;try{id=decodeURIComponent(window.location.hash.slice(1));}catch{return;}
+    if(!id) return;
+    const target=document.getElementById(id);if(!target) return;
+    let panel=target.closest('details');
+    while(panel) {panel.open=true;panel=panel.parentElement?.closest?.('details')||null;}
+    target.closest('section')?.querySelectorAll?.('details').forEach(detail=>{detail.open=true;});
+    requestAnimationFrame(()=>target.scrollIntoView({block:'start'}));
+  };
+  window.addEventListener('hashchange',reveal);window.addEventListener('pageshow',reveal);reveal();
+})();
+</script>
+<script id="note-print">
+(() => {
+  let previous;
+  window.addEventListener('beforeprint',()=>{
+    if(previous) return;
+    previous=[...document.querySelectorAll('details')].map(panel=>[panel,panel.open]);
+    previous.forEach(([panel])=>{panel.open=true;});
+  });
+  window.addEventListener('afterprint',()=>{previous?.forEach(([panel,open])=>{panel.open=open;});previous=undefined;});
+})();
+</script></body></html>

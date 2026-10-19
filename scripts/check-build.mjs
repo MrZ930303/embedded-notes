@@ -51,11 +51,11 @@ const html=await readFile(path.join(root,'index.html'),'utf8')
 assert.ok(html.includes('嵌入式技术笔记'))
 assert.ok(html.includes(base+'c-memory/heap-stack.html'))
 assert.ok(html.includes('data-no-router'))
-assert.ok(html.includes('38 篇') && html.includes('5 个主题'), 'Home must describe thirty-eight entries across five active categories')
-assert.equal(interactiveNotes.length, 38, 'Exactly thirty-eight complete standalone readers must be registered')
+assert.ok(html.includes('44 篇') && html.includes('5 个主题'), 'Home must describe forty-four entries across five active categories')
+assert.equal(interactiveNotes.length, 44, 'Exactly forty-four complete standalone readers must be registered')
 const learningCategory = await readFile(path.join(root, 'learn/index.html'), 'utf8')
 const learningReaders = interactiveNotes.filter(note => note.path.startsWith('learn/'))
-assert.equal(learningReaders.length, 29, 'The learning center contains twenty-nine complete readers')
+assert.equal(learningReaders.length, 35, 'The learning center contains thirty-five complete readers')
 for (const note of learningReaders) assert.ok(learningCategory.includes(base + note.path), 'Learning center must reach each actual reader: ' + note.path)
 const debugCategory = await readFile(path.join(root, 'debug/index.html'), 'utf8')
 assert.ok(debugCategory.includes(base + 'debug/easylogger.html'), 'Debug category must link to the full EasyLogger reader')
@@ -427,3 +427,27 @@ await mkdir(protocolAcquisitionDirectory, { recursive: true })
 await writeFile(path.join(protocolAcquisitionDirectory, 'browser-search-cases.json'), JSON.stringify(protocolAcquisitionSearchCases, null, 2) + '\n')
 console.log('PASS: six protocol/acquisition readers have' + protocolAcquisitionSearchCases.length +
   ' exact generated substantial search targets and' + protocolAcquisitionDownloads.size + ' unique byte-identical native dependency/instruction downloads.')
+
+// Unit15–17 adds actual substantial section targets; all prior query sets stay intact.
+const interruptDmaThroughputSearchCases = [["interrupt-shared-data", "PRIGROUP", "irq-encoding-title"], ["interrupt-shared-data", "pending", "irq-states-title"], ["interrupt-shared-data", "BASEPRI", "irq-masks-title"], ["interrupt-shared-data", "volatile", "irq-rmw-title"], ["interrupt-shared-data-reference", "0x90", "irq-reference-title"], ["interrupt-shared-data-reference", "volatile", "irq-rmw-reference-title"], ["dma-ownership", "NDTR", "dma-mapping-title"], ["dma-ownership", "CCM", "dma-placement-title"], ["dma-ownership", "STOP_CONFIRMED", "dma-lease-title"], ["dma-ownership", "AN4839", "dma-cache-title"], ["dma-ownership-reference", "CCM", "dma-placement-title"], ["dma-ownership-reference", "recover", "dma-lease-title"], ["throughput-overload", "275", "tp-wire"], ["throughput-overload", "arrival-first", "tp-queue-title"], ["throughput-overload", "service", "tp-time-title"], ["throughput-overload", "32768", "tp-sequence-title"], ["throughput-overload-reference", "11520", "tp-ref-units-title"], ["throughput-overload-reference", "32768", "tp-ref-axes-title"]].map(([name, query, anchor]) => ({ name, query, anchor }))
+for (const {name, query, anchor} of interruptDmaThroughputSearchCases) {
+  assert.ok(search.search(query).some(result => result.id === base + 'learn/' + name + '.html#' + anchor),
+    'Interrupt/DMA/throughput substantial search target missing: ' + name + '/' + query + '/' + anchor)
+}
+const interruptDmaThroughputDownloads = new Map()
+for (const name of ["interrupt-shared-data", "interrupt-shared-data-reference", "dma-ownership", "dma-ownership-reference", "throughput-overload", "throughput-overload-reference"]) {
+  const reader = await readFile(path.join(root, 'learn', name + '.html'), 'utf8')
+  const links = [...reader.matchAll(/<a\b(?=[^>]*\bdownload(?:\s|=|>))[^>]*\bhref="\.\.\/examples\/([^"]+)"[^>]*>/g)].map(match => match[1])
+  assert.ok(links.length >= 3, 'Every new reader must expose native source/instructions: ' + name)
+  for (const relative of links) {
+    const original = await readFile(path.resolve(import.meta.dirname, '../docs/public/examples', relative))
+    const published = await readFile(path.join(root, 'examples', relative))
+    assert.deepEqual(published, original, 'New native download bytes differ: ' + relative)
+    interruptDmaThroughputDownloads.set(relative, {bytes: original.length})
+  }
+}
+const interruptDmaThroughputDirectory = path.resolve(import.meta.dirname, '../.scratch/interrupt-dma-throughput/integration')
+await mkdir(interruptDmaThroughputDirectory, {recursive:true})
+await writeFile(path.join(interruptDmaThroughputDirectory, 'browser-search-cases-v1.json'), JSON.stringify(interruptDmaThroughputSearchCases, null, 2) + '\n')
+await writeFile(path.join(interruptDmaThroughputDirectory, 'native-downloads-v1.json'), JSON.stringify([...interruptDmaThroughputDownloads], null, 2) + '\n')
+console.log('PASS: six interrupt/DMA/throughput readers, ' + interruptDmaThroughputSearchCases.length + ' substantial search targets and ' + interruptDmaThroughputDownloads.size + ' exact native downloads.')

@@ -1,6 +1,6 @@
 ---
 title: MCU 工程学习中心
-description: 八阶段学习地图、三路资料对照、GPIO、C 基础、构建启动、时间与串口十四章，以及各章可打印速查。
+description: 八阶段学习地图、三路资料对照、GPIO、C 基础、构建启动、时间与串口十七章，以及各章可打印速查。
 ---
 
 # MCU 工程学习中心
@@ -39,6 +39,13 @@ description: 八阶段学习地图、三路资料对照、GPIO、C 基础、构�
 - [驱动错误、超时与恢复](./driver-recovery.md)：用有限重试、匹配清理和隔离保留所有权，让实际UART与ADC继续协作。
 - [驱动错误、超时与恢复：可打印速查](./driver-recovery-reference.md)：用有限重试、匹配清理和隔离保留所有权，让实际UART与ADC继续协作。
 
-当前提供学习地图、01—14 十四章及各自速查，共二十九份资料。01—11已有发布证据；10—11由f215343与CI/Pages39073047054及父任务线上核验确认。12—14协议、ADC与驱动恢复为本地候选，分别提供有限事务、精确量化与真实UART/ADC主机组合。阶段03未整体完成；15—32仍待建设。内容、JavaScript、主机C、浏览器、独立审查、发布与硬件分别记录，不推定课程完成、个人掌握或上板实测。工程协作工具是可选补充，不作为学习外设的先修。
+- [异常、NVIC 与共享数据](./interrupt-shared-data.md)：推导四位优先级与 pending/active，用有限选择和显式交错解释共享数据。
+- [异常、共享数据：可打印速查](./interrupt-shared-data-reference.md)：压缩回看优先级表示、mask覆盖、RMW与固定工作边界。
+- [DMA 缓冲所有权](./dma-ownership.md)：区分 raw DBM 与安全交接，用匹配lease、stop确认和非回绕身份管理两块数据。
+- [DMA 缓冲所有权：可打印速查](./dma-ownership-reference.md)：回看NDTR单位、SRAM/CCM条件、所有权与有限恢复。
+- [吞吐、抖动与过载](./throughput-overload.md)：从完整线开销、burst与服务空窗手推过载，再运行真实DMA与UART/time组合。
+- [吞吐、抖动与过载：可打印速查](./throughput-overload-reference.md)：保留容量、序号窗口、生命周期与原生交接的使用前提。
+
+当前提供学习地图、01—17 十七章及各自速查，共三十五份资料。01—14已发布；12—14公开main源码为dafffcc4b3426aae93f7562ff27a815dfcabe79b，父任务确认CI与线上验收通过，未提供新runID。15—17中断、DMA与吞吐为本地候选，分别提供有限IRQ/RMW、匹配lease交接与真实DMA/UART/time组合。18—32仍待建设；阶段03/04均未宣称整体完成。正文、模型、主机C、浏览器、独立审查、发布、硬件与实体纸张分别记录，不推定个人掌握。工程协作工具是可选补充。
 
 教学组织参考 [Matt Pocock teach](https://github.com/mattpocock/skills/blob/main/skills/productivity/teach/SKILL.md?plain=1)：每课聚焦一个成果，解释必要知识，练习后及时反馈，并用回忆与迁移检验理解。页面不保存个人作答或学习进度。

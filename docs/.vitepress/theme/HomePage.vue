@@ -39,9 +39,15 @@ const notes = [
   { n: '36', category: '学习中心', title: 'ADC参考、采样与输入条件：可打印速查', desc: '推导条件时钟、精确floor码与输入误差，再服务有限主机转换。', path: '/learn/adc-sampling-reference.html', detail: '条件与失败 · 原创推导 · 可复现C11' },
   { n: '37', category: '学习中心', title: '驱动错误、超时与恢复', desc: '用有限重试、匹配清理和隔离保留所有权，让实际UART与ADC继续协作。', path: '/learn/driver-recovery.html', detail: '条件与失败 · 原创推导 · 可复现C11' },
   { n: '38', category: '学习中心', title: '驱动错误、超时与恢复：可打印速查', desc: '用有限重试、匹配清理和隔离保留所有权，让实际UART与ADC继续协作。', path: '/learn/driver-recovery-reference.html', detail: '条件与失败 · 原创推导 · 可复现C11' },
+  { n: '39', category: '学习中心', title: '异常、NVIC 与共享数据', desc: '推导四位优先级与 pending/active，用有限选择和显式交错解释共享数据。', path: '/learn/interrupt-shared-data.html', detail: '原创建模 · 有界C11 · 来源与验证条件' },
+  { n: '40', category: '学习中心', title: '异常、共享数据：可打印速查', desc: '压缩回看优先级表示、mask覆盖、RMW与固定工作边界。', path: '/learn/interrupt-shared-data-reference.html', detail: '原创建模 · 有界C11 · 来源与验证条件' },
+  { n: '41', category: '学习中心', title: 'DMA 缓冲所有权', desc: '区分 raw DBM 与安全交接，用匹配lease、stop确认和非回绕身份管理两块数据。', path: '/learn/dma-ownership.html', detail: '原创建模 · 有界C11 · 来源与验证条件' },
+  { n: '42', category: '学习中心', title: 'DMA 缓冲所有权：可打印速查', desc: '回看NDTR单位、SRAM/CCM条件、所有权与有限恢复。', path: '/learn/dma-ownership-reference.html', detail: '原创建模 · 有界C11 · 来源与验证条件' },
+  { n: '43', category: '学习中心', title: '吞吐、抖动与过载', desc: '从完整线开销、burst与服务空窗手推过载，再运行真实DMA与UART/time组合。', path: '/learn/throughput-overload.html', detail: '原创建模 · 有界C11 · 来源与验证条件' },
+  { n: '44', category: '学习中心', title: '吞吐、抖动与过载：可打印速查', desc: '保留容量、序号窗口、生命周期与原生交接的使用前提。', path: '/learn/throughput-overload-reference.html', detail: '原创建模 · 有界C11 · 来源与验证条件' },
 ]
 const categories = [
-  { title: '学习中心', path: '/learn/', count: '29 篇' },
+  { title: '学习中心', path: '/learn/', count: '35 篇' },
   { title: 'C 语言与内存', path: '/c-memory/', count: '1 篇' },
   { title: 'MCU 基础与外设', path: '/mcu/', count: '4 篇' },
   { title: '工程工具与协作', path: '/tools/', count: '3 篇' },
@@ -56,14 +62,14 @@ const categories = [
       <h1 id="notebook-title">嵌入式技术笔记</h1>
       <p class="intro-description">从内存到时钟，从原理到工程。<br>动手操作模型，再读懂背后的原理、代码与适用边界。</p>
       <div class="intro-actions">
-        <a class="notebook-button primary" href="#notes">浏览 38 篇笔记 <span aria-hidden="true">↓</span></a>
+        <a class="notebook-button primary" href="#notes">浏览 44 篇笔记 <span aria-hidden="true">↓</span></a>
         <a class="intro-route" :href="withBase('/learn/')">从工程学习地图开始 <svg class="ui-arrow" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-5-5 5 5-5 5"/></svg></a>
         <a class="intro-route" :href="withBase('/guide/memory-roadmap.html')">从 MCU 内存学习路线开始 <svg class="ui-arrow" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-5-5 5 5-5 5"/></svg></a>
       </div>
     </section>
 
     <section class="home-section" aria-labelledby="notes">
-      <div class="home-section-heading"><h2 id="notes">交互笔记</h2><span>38 篇 · 5 个主题</span></div>
+      <div class="home-section-heading"><h2 id="notes">交互笔记</h2><span>44 篇 · 5 个主题</span></div>
       <div class="note-list">
         <article v-for="note in notes" :key="note.path" class="note-entry">
           <span class="note-number" aria-hidden="true">{{ note.n }}</span>

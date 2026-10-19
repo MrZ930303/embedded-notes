@@ -1,0 +1,848 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="F407四位优先级、三IRQ有限选择、定义良好的RMW交错与mask恢复。"><link rel="icon" href="../favicon.svg" type="image/svg+xml"><title>异常、共享数据速查表 · 嵌入式技术笔记</title><style>
+:root{--paper:#fafbf8;--ink:#21382e;--muted:#526359;--line:#dce3d7;--green:#22664f;--pale:#eef2e9;--lime:#d5e7b3;--dark:#193e33;--mono:Consolas,monospace}*{box-sizing:border-box}html{scroll-padding-top:120px}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.9 system-ui,"Microsoft YaHei",sans-serif}a{color:var(--green);text-underline-offset:4px}p{margin:0 0 16px}.wrap{width:min(1120px,calc(100% - 64px));margin:auto}.skip{position:absolute;top:-100px;z-index:20;background:white;padding:10px}.skip:focus{top:5px}.topbar{position:sticky;top:0;border-bottom:1px solid var(--line)}.brand{text-decoration:none}.hero{display:grid;grid-template-columns:1.12fr 1fr;gap:48px;padding:48px 0 40px;border-bottom:1px solid var(--line)}h1{font-size:40px;line-height:1.35}h2{font-size:28px;line-height:1.5;margin:0 0 18px}h3{font-size:21px;line-height:1.5;margin:28px 0 12px}.tag,.small{color:var(--muted);font-size:13px}.hero-card,.lab,.callout{border:1px solid var(--line);border-radius:12px;padding:24px;background:var(--pale)}.hero-card strong{font-size:26px}.content-section{padding:48px 0;border-bottom:1px solid var(--line)}.section-nav,.controls,.notes-toolbar,.next-links{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.field{display:grid;gap:6px;min-width:0}.field.full{grid-column:1/-1}button,input,select{font:inherit;color:inherit}input,select{width:100%;min-width:0;min-height:44px;padding:8px;border:1px solid #aabaad;border-radius:6px;background:white}.btn{min-height:44px;min-width:44px;padding:9px 14px;background:white;border:1px solid #aabaad;border-radius:6px;cursor:pointer}.btn.primary{background:var(--dark);color:white}.btn:disabled{opacity:.55;cursor:default}.feedback,.applied-result{padding:16px;border:1px solid var(--line);border-radius:8px;background:#fffefb;margin:16px 0;overflow-wrap:anywhere}.pending{color:#7c581d}.lab{background:#fffefb}.lab>p{max-width:44rem}details{margin:16px 0;padding:16px;border:1px solid var(--line);border-radius:8px;background:#fffefb}summary{min-height:44px;cursor:pointer;font-weight:650}details p{margin-top:12px}.table-wrap{max-width:100%;overflow:auto}table{border-collapse:collapse;width:100%;font-size:14px;text-align:left}th,td{padding:10px;border-bottom:1px solid var(--line);vertical-align:top;white-space:nowrap}th{background:var(--pale)}figure{margin:20px 0;border:1px solid var(--line);border-radius:10px;padding:14px;background:white}svg{display:block;width:100%;height:auto}svg text{font:18px system-ui,"Microsoft YaHei",sans-serif;fill:#21382e}figcaption{font-size:13px;color:var(--muted);margin-top:12px}pre{max-width:100%;overflow:auto;padding:18px;background:var(--pale);font:14px/1.7 var(--mono);border-radius:8px}code{font-family:var(--mono)}li{margin-bottom:8px}.source-list a{overflow-wrap:anywhere}footer{padding:28px 0;font-size:13px;color:var(--muted)}:focus-visible{outline:3px solid #ad751d;outline-offset:4px}.exercise{padding:14px 0;border-bottom:1px solid var(--line)}.exercise h3{margin-top:14px}.exercise-answer{margin-bottom:20px}
+@media(max-width:760px){.hero,.fields{grid-template-columns:1fr}.hero{gap:24px}.field.full{grid-column:auto}.wrap{width:calc(100% - 40px)}.lab{padding:16px}}@media(max-width:370px){.lab{padding:12px}.btn{padding-inline:10px}svg text{font-size:20px}}
+@media print{body{background:white;color:#15251b;font-size:11pt}.wrap{width:100%;max-width:none}.topbar,.skip,.section-nav,.controls,.fields,.notes-toolbar,.next-links{display:none!important}.hero{display:block;padding:0 0 14px}.hero-card{display:none}.content-section{padding:18px 0}h1{font-size:25pt}h2{font-size:17pt}h3{font-size:13pt}.lab{padding:12px}pre{white-space:pre-wrap;overflow:visible;font-size:9pt}table{font-size:10pt}.table-wrap{overflow:visible}th,td{white-space:normal;padding:6px}a{color:inherit}details{break-inside:auto}.exercise{break-inside:avoid}body.exercise-print main>.hero,body.exercise-print main>.section-nav,body.exercise-print main>.content-section:not(#irq-practice),body.exercise-print .practice-intro,body.exercise-print footer{display:none!important}body.exercise-print .exercise-answer{display:none!important}body.exercise-print .applied-result,body.exercise-print .feedback{display:none!important}body.exercise-print #irq-practice{border:0;padding:0}}
+.diagram-scroll,.code-wrap{max-width:100%;overflow:auto}.code-wrap pre{overflow:visible;min-width:max-content}.diagram-scroll svg{min-width:720px}main,.content-section,.lab{min-width:0}.table-wrap{overflow:auto}p,li,h1,h2,h3,summary{overflow-wrap:anywhere} @media print{.diagram-scroll svg{min-width:0}.code-wrap pre{min-width:0}body.exercise-print .lab,body.exercise-print .worked-solution{display:none!important}}
+</style><style>
+/* Shared reading layer: keep this block identical in all standalone notes. */
+@media screen {
+:root{--paper:#fafbf8;--ink:#21382e;--muted:#526359;--line:#dce3d7;--green:#22664f;--pale:#eef2e9;--lime:#d5e7b3;--dark:#193e33}
+.notes-article{font-size:16px;line-height:1.9}
+.notes-article .wrap{width:min(1120px,calc(100% - 64px));max-width:none;padding-inline:0;margin-inline:auto}
+.notes-article .topbar{background:#fafbf8f5;z-index:10}
+.notes-article .topbar-inner{height:auto;min-height:68px;display:flex;align-items:center;justify-content:space-between;gap:24px;padding-block:0}
+.notes-article .brand{display:inline-flex;align-items:center;gap:10px;min-height:44px;margin:0;font-size:15px;font-weight:700;letter-spacing:0;color:var(--ink)}
+.notes-article .brandmark{display:grid;place-items:center;width:30px;height:30px;margin:0;border-radius:6px;background:var(--dark);color:#e0edcb;font:19px/1 var(--mono)}
+.notes-article .topbar nav{display:flex;align-items:center;gap:18px;margin:0;padding:0;width:auto;flex-wrap:nowrap}
+.notes-article .topbar nav a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:4px 3px;font-size:14px;font-weight:500;color:var(--muted);text-decoration:none;border-radius:4px}
+.notes-article .topbar nav a:hover,.notes-article .topbar nav a[aria-current="location"]{color:var(--green);background:var(--pale)}
+.notes-article .topbar nav a[aria-current="location"]{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:6px}
+.notes-article .hero{padding-block:48px 40px;gap:48px;grid-template-columns:1.12fr 1fr}
+.notes-article .hero h1{font-size:clamp(32px,3.6vw,44px);line-height:1.35;letter-spacing:-.035em;text-wrap:balance}
+.notes-article .hero h1 span{font-size:.78em;line-height:1.5;margin-top:8px}
+.notes-article .hero-intro{font-size:17px;line-height:1.9;max-width:32rem;margin-block:20px}
+.notes-article .hero>.hero-card,.notes-article .hero-flow,.notes-article .intro-map{box-shadow:none;border-radius:12px}
+.notes-article .hero .tag{font-size:12px;border-radius:4px;padding:4px 9px;margin:0 0 16px;line-height:1.7}
+.notes-article .hero>.hero-figure .map{transform:none;box-shadow:none}
+.notes-article .hero>div>.eyebrow{display:none}
+.notes-article .hero>.hero-card>.eyebrow,.notes-article .hero>.hero-flow>.eyebrow{display:block;font-size:12px;line-height:1.7}
+.notes-article .hero-links{gap:12px 22px;margin-top:24px}
+.notes-article .hero .text-link{display:inline-flex;align-items:center;min-height:44px;font-size:14px}
+.notes-article .hero figcaption,.notes-article .hero-figure figcaption,.notes-article .date-note{font-size:13px;line-height:1.8}
+.notes-article .hero-card p:last-child,.notes-article .hero-flow .small,.notes-article .intro-map>p:last-child{font-size:14px;line-height:1.85}
+.notes-article .hero-numbers span,.notes-article .hero-step small{font-size:13px}
+.notes-article h2{font-size:28px;line-height:1.5;text-wrap:balance}
+.notes-article .section-head p{font-size:15px;line-height:1.85}
+.notes-article .content-section,.notes-article .article-section{padding-block:52px}
+.notes-article .content-section+.content-section{padding-top:48px}
+.notes-article .note-section{scroll-margin-top:100px}
+.notes-article .note-section>summary{min-height:56px;font-size:18px;line-height:1.6}
+.notes-article .note-section>summary h2{font-size:20px;line-height:1.6}
+.notes-article .note-body{max-width:none;font-size:16px;line-height:1.95}
+.notes-article .note-body p,.notes-article .note-body li{font-size:16px;line-height:1.95}
+.notes-article .note-body>p,.notes-article .note-body>ul,.notes-article .note-body>ol,.notes-article .article-section>p,.notes-article .article-section>ul,.notes-article .article-section>ol{max-width:44rem;font-size:16px;line-height:1.95}
+.notes-article .note-body h3{font-size:21px;margin-block:28px 12px;scroll-margin-top:100px}
+.notes-article .note-body pre,.notes-article pre{font-size:14px;line-height:1.8}
+.notes-article .note-body table,.notes-article table{font-size:14px;line-height:1.8}
+.notes-article .note-body th,.notes-article .note-body td{font-size:14px;line-height:1.8}
+.notes-article .article-section>h2{font-size:28px}
+.notes-article .concept p,.notes-article .subnote p,.notes-article .risk p,.notes-article .monitor-step p,.notes-article .monitor-step ul,.notes-article .step-card p{font-size:15px;line-height:1.85}
+.notes-article .callout,.notes-article .model-scope,.notes-article .demo-disclaimer,.notes-article .version-card,.notes-article .version-card p{font-size:14px;line-height:1.85}
+.notes-article .source-list a,.notes-article .source-list span,.notes-article #plane-references~ul{font-size:14px;line-height:1.85}
+.notes-article #plane-overview~ul{max-width:none}
+.notes-article #plane-overview~ul li{font-size:15px;line-height:1.85}
+.notes-article .note-body .source-list{max-width:none}
+.notes-article .small,.notes-article .lab-note,.notes-article .lab-foot,.notes-article .lab-footer,.notes-article .clock-lab-foot,.notes-article .print-hint{font-size:13px;line-height:1.85}
+.notes-article .principle,.notes-article .principles span{font-size:13px;line-height:1.8}
+.notes-article .principles strong{font-size:15px}
+.notes-article .memory-motto,.notes-article .motto{background:var(--pale);color:var(--ink);border-radius:8px;text-align:left;padding:24px;margin-top:30px}
+.notes-article .memory-motto span,.notes-article .motto small{color:var(--muted);font-size:14px}
+.notes-article button,.notes-article .btn,.notes-article .notes-toolbar button{min-height:44px;min-width:44px;font-size:14px}
+.notes-article button,.notes-article .btn,.notes-article .topbar a,.notes-article summary,.notes-article .section-nav a,.notes-article .toc a{transition:background .18s,color .18s,border-color .18s,transform .18s}
+.notes-article button:enabled:hover{filter:brightness(1.06)}
+.notes-article button:enabled:active,.notes-article .btn:active{transform:translateY(1px)}
+.notes-article button:disabled{opacity:.58}
+.notes-article .graph-node:disabled,.notes-article .work-card:disabled{opacity:1}
+.notes-article :focus-visible{outline:3px solid #ad751d;outline-offset:4px}
+.notes-article .lab :focus-visible,.notes-article .clock-lab :focus-visible{outline-color:#f0cc80}
+.notes-article .toc a,.notes-article .section-nav a{display:inline-flex;align-items:center;min-height:44px;border-radius:5px;font-size:14px;padding:8px 12px}
+.notes-article .checklist label,.notes-article .clock-check{min-height:44px;font-size:14px;line-height:1.8}
+.notes-article .clock-field label,.notes-article .clock-controls small,.notes-article .clock-node small,.notes-article .clock-node span{font-size:13px;line-height:1.6}
+.notes-article .clock-current p,.notes-article .clock-candidate,.notes-article .clock-warnings{font-size:14px;line-height:1.8}
+.notes-article .clock-node strong,.notes-article .hero-numbers strong,.notes-article .metric strong{font-variant-numeric:tabular-nums}
+.notes-article .task-option strong,.notes-article .work-card strong{font-size:14px;line-height:1.65}
+.notes-article .task-option span,.notes-article .scope-buttons small,.notes-article .card-id,.notes-article .card-project,.notes-article .card-status,.notes-article .card-tags>span,.notes-article .lane-en{font-size:12px;line-height:1.6}
+.notes-article .scope-explanation,.notes-article .detail-copy>p,.notes-article .detail .acceptance,.notes-article .state-controls>p,.notes-article .board-heading p{font-size:14px;line-height:1.8}
+.notes-article .lane h4{font-size:14px;line-height:1.5;flex-wrap:wrap}
+.notes-article .lane-count{font-size:12px}
+.notes-article .lab .task-option{min-height:96px}
+.notes-article .skills-step-card dd,.notes-article .route-pane p,.notes-article .chooser-intro,.notes-article .permissions-pane>p{font-size:14px;line-height:1.85}
+.notes-article .skills-step-card dt,.notes-article .step-counter,.notes-article .permissions-pane small,.notes-article .permission-list span,.notes-article .graph-legend,.notes-article .graph-arrow-note{font-size:13px;line-height:1.8}
+.notes-article .ui-arrow{width:18px;height:18px;display:inline-block;vertical-align:middle;flex-shrink:0}
+.notes-article .selection-jump,.notes-article .choice-result{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;padding:10px 12px;border-radius:5px;font-size:13px;font-weight:600;line-height:1.6;text-decoration:none}
+.notes-article .selection-jump{background:#22664f;color:#fff}
+.notes-article .choice-result{color:#e2efca;border:1px solid #829873;background:#173e33;margin-top:7px}
+.notes-article .task-choice{min-width:0}
+.notes-article .task-choice .task-option{width:100%}
+.notes-article .task-option[aria-pressed="false"]+.choice-result{display:none}
+.notes-article #selected-skill,.notes-article #plane-selected-title{scroll-margin-top:128px}
+.notes-article footer,.notes-article .footer{font-size:13px;line-height:1.8}
+.notes-article footer a,.notes-article .footer a{display:inline-flex;align-items:center;min-height:44px}
+.notes-article .note-body p,.notes-article .hero-intro,.notes-article .article-section>p{text-wrap:pretty}
+@media(max-width:760px){
+.notes-article .wrap{width:calc(100% - 40px)}
+.notes-article .topbar-inner{flex-wrap:wrap;gap:0;padding-top:6px}
+.notes-article .brand{min-height:44px;font-size:15px}
+.notes-article .topbar nav{width:100%;gap:12px;overflow-x:auto;flex-wrap:nowrap;padding:0 0 4px;scrollbar-width:thin}
+.notes-article .topbar nav a{font-size:13px;flex-shrink:0;padding-inline:2px}
+.notes-article .hero{grid-template-columns:1fr;gap:28px;padding-block:32px}
+.notes-article .hero h1{font-size:32px;line-height:1.4}
+.notes-article .hero-intro{font-size:16px;max-width:none;margin-block:16px}
+.notes-article .hero-figure{max-width:500px}
+.notes-article .hero .tag{margin-bottom:12px}
+.notes-article .content-section,.notes-article .article-section{padding-block:36px}
+.notes-article .content-section+.content-section{padding-top:36px}
+.notes-article h2,.notes-article .article-section>h2{font-size:24px}
+.notes-article .section-head p{font-size:15px}
+.notes-article .note-section>summary{font-size:17px}
+.notes-article .note-section>summary h2{font-size:18px}
+.notes-article .note-body p,.notes-article .note-body li{font-size:16px}
+.notes-article .note-body pre,.notes-article pre{font-size:13px}
+.notes-article .note-body th,.notes-article .note-body td{font-size:14px}
+.notes-article .principles{grid-template-columns:1fr;gap:14px}
+.notes-article .principles strong{display:inline;margin-right:8px}
+.notes-article .principles span{display:inline}
+.notes-article .task-options{grid-template-columns:1fr 1fr;align-items:start}.notes-article .lab .task-option{min-height:76px;padding:12px}
+.notes-article .board{grid-template-columns:1fr 1fr}
+.notes-article .lane:last-child .lane-cards{display:flex}
+.notes-article .lane-cards{min-height:0}
+.notes-article .lane{padding:14px}
+.notes-article .lane-en{margin-bottom:10px}
+.notes-article .work-card{padding:14px}
+.notes-article .card-tags{gap:6px}
+.notes-article .lab-top{flex-wrap:wrap}
+.notes-article .lab-top .tag{white-space:normal}
+.notes-article .note-section,.notes-article .note-body h3,.notes-article .article-section,.notes-article .article-section>h3{scroll-margin-top:124px}
+}
+@media(max-width:370px){.notes-article .task-options,.notes-article .board{grid-template-columns:1fr}.notes-article .hero h1{font-size:30px}.notes-article .topbar nav{gap:8px}}
+}
+@media(prefers-reduced-motion:reduce){.notes-article *,.notes-article *::before,.notes-article *::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+</style></head><body class="notes-article"><a class="skip" href="#main">跳到正文</a><header class="topbar"><div class="wrap topbar-inner"><a class="brand" href="../"><span class="brandmark" aria-hidden="true">E</span>嵌入式技术笔记</a><nav aria-label="文章导航"><a href="../learn/">返回分类</a><a href="./interrupt-shared-data.html#irq-selection">交互实验</a><a href="./interrupt-shared-data.html">完整笔记</a><a href="./interrupt-shared-data-reference.html">速查表</a><a href="../?search=1">搜索笔记</a></nav></div></header><main class="wrap" id="main"><div class="hero"><div><span class="tag">阶段04 · 单元15 · 本地候选</span><h1 id="interrupt-shared-data-reference">异常、共享数据速查表</h1><p class="hero-intro">先推导资格，再解释一次有限转移；共享值需要完整的访问者合同。</p></div><div class="hero-card"><strong>pending ≠ count，volatile ≠ RMW</strong><p>g5的9/0x90；同组等待，高组抢占；保存的1仍恢复1。未验证硬件、目标栈/WCET与实体纸张。</p></div></div><nav class="section-nav" aria-label="本页章节"><a href="#irq-reference">四位编码与选择速查</a><a href="#irq-rmw-reference">共享数据与mask检查顺序</a><a href="#irq-c">公共接口与固定资源</a><a href="#irq-practice">十个独立回忆与迁移题</a><a href="#irq-sources">来源与使用限定</a></nav><div class="notes-toolbar"><button class="btn" id="expand-notes" type="button">展开全部折叠</button><button class="btn" id="collapse-notes" type="button">收起全部折叠</button><button class="btn" id="print-all" type="button">普通打印完整内容</button></div><div class="content-section" id="irq-reference" role="region" aria-labelledby="irq-reference-title"><h2 id="irq-reference-title">四位编码与选择速查</h2><p>选定F407/Cortex-M4，四位；数值小更紧迫。g0/1/2/3→p4/s0；g4→3/1；g5→2/2；g6→1/3；g7→0/4。p=min(4,7−g)、s=4−p；logical=pre×2^s+sub，寄存器byte=logical×16。g5/pre2/sub1→9/0x90；g3/pre5/sub0→5/0x50；g7/pre0/sub15→15/0xF0。CMSIS掩字段，本课严格拒绝g5/pre4：INVALID_PRIORITY、旧输出保持。</p><p>IRQ域仅EXTI0=6、TIM3=29、USART2=38；enable、pending、active、level cause各独立。disabled双pulse合成一个pending；清pending不清active/cause。enter清本次pending，active身份不重入；level cause持续到return会再pending。三active栈，select至多一entry，return至多一层且不顺带select。</p><p>资格：enabled/pending/nonactive、过mask、group严格小于current；候选按group/sub/IRQ号。g5 active38(2,3)+pending6(2,0)不能抢占；29(1,3)可抢占，return29→38，return38→thread，另select6。全部inactive/not pending才可改配置。thread相同字段先6再29再38。最大栈[38,29,6]不等于目标栈预算。</p><p>PRIMASK1阻止可配置异常进入，不停止DMA、不挡NMI/HardFault。BASEPRI只在g3接受raw0或0x10..0xF0：0x50让逻辑4通过、5等待；非g3只接受0，不推全分组阈值。FAULTMASK/NMI/HardFault/Reset仅来源限定静态比较。<a href="./interrupt-shared-data.html#irq-encoding">完整推导</a>、<a href="./interrupt-shared-data.html#irq-states">状态图</a>。</p></div><div class="content-section" id="irq-rmw-reference" role="region" aria-labelledby="irq-rmw-reference-title"><h2 id="irq-rmw-reference-title">共享数据与mask检查顺序</h2><p>定义良好解释器：F.READ0、I.READ0、I.COMPUTE1、I.WRITE1、F.COMPUTE1、F.WRITE1→x1/lost1；串行F三步再I三步→x2/lost0。每actor READ→COMPUTE→WRITE→DONE，总六步；非法次序拒绝保持。没有真实host线程/data race。volatile不合成RMW；atomic fetch-add只保证其原子对象的RMW意义，host不证明目标lock-free/ISR-safe。</p><p>临界区：列出全部冲突writer→核mask覆盖→区域有界→所有出口恢复saved。saved0→inside1→restore0；saved1→inside1→restore1。DMA/NMI/HardFault不在PRIMASK排除范围；原子标记/编译屏障/DMB/DSB/ISB均不授予稳定buffer lease，ordering也不等于cache maintenance。</p><p>ISR真实工作须有明确ack、最多K项、满政策与前台容量；模型每次有限扫描不是WCET。异常basic/FP/alignment/lazy和调用帧不同，32bytes不能作每IRQ最大值。<a href="./interrupt-shared-data.html#irq-practice">十个完整独立题及折叠原因</a>用于复查；下方也保留完整十题以便本页题页打印。</p></div><div class="content-section" id="irq-c" role="region" aria-labelledby="irq-c-title"><h2 id="irq-c-title">公共接口与固定资源</h2><div class="table-wrap" role="region" tabindex="0" aria-label="公共操作 / 对象，可横向滚动"><table><thead><tr><th scope="col">公共操作 / 对象</th><th scope="col">固定容量或每次工作</th><th scope="col">输出/失败</th></tr></thead><tbody><tr><td>irq_encode / mask_roundtrip</td><td>常量算术；无循环</td><td>仅OK给新输出</td></tr><tr><td>irq_init / configure</td><td>恰好3优先级；初始化至多3记录</td><td>fresh不读旧字段；configure拒绝pending/active</td></tr><tr><td>irq_apply</td><td>校验至多3栈+3记录；select至多3候选；报告3记录</td><td>最多1entry或1return，非二者；拒绝保持</td></tr><tr><td>IrqModel</td><td>3线路、3 active身份、6个uint32诊断</td><td>pulses与entries独立，计数饱和</td></tr><tr><td>IrqHistory（可选）</td><td>32个复制IrqReport，count0..32</td><td>每accepted apply至多1行；row33丢行仍推进</td></tr><tr><td>RmwModel / step</td><td>2actor×3stage，共6步；无内部循环</td><td>OK新report；终点TERMINAL保持</td></tr><tr><td>诊断增量</td><td>UINT32_MAX−1→MAX/false；再尝试→MAX/true</td><td>sticky饱和不是精确总量或速率</td></tr></tbody></table></div><p>新report只在本次IRQ_OK可消费；非OK包括TERMINAL都保持命名字段/输出。fresh init不读旧字节，但不检测live owner；对象真实存活、独占非重入、输入/state/history/输出不重叠且尺寸足够。NULL/域检查不检测伪造悬空指针或任意损坏。可选32行满仅丢诊断行、执行仍前进；饱和不是精确总量。README有完整consumer和正常/NDEBUG命令。</p><details id="irq-source-irq-h"><summary>完整 irq.h（与原生下载逐字节核对）</summary><p><a href="../examples/interrupt-shared-data/irq.h" download>原生下载 irq.h</a></p><div class="code-wrap" role="region" tabindex="0" aria-label="irq.h源码，可横向滚动"><pre><code class="language-text">/******************************************************************************
+ * Copyright (C) 2024 EternalChip, Inc.(Gmbh) or its affiliates.
+ *
+ * All Rights Reserved.
+ *
+ * @file irq.h
+ * @author OpenAI | R&amp;D Dept. | EternalChip 立芯嵌入式
+ * @brief Original, single-context host teaching models; no target instructions.
+ * @version V1.0 2026-10-19
+ *****************************************************************************/
+#ifndef INTERRUPT_SHARED_DATA_IRQ_H
+#define INTERRUPT_SHARED_DATA_IRQ_H
+
+#include &lt;stdbool.h&gt;
+#include &lt;stddef.h&gt;
+#include &lt;stdint.h&gt;
+
+#define IRQ_LINE_COUNT 3U
+#define IRQ_HISTORY_CAPACITY 32U
+#define IRQ_NONE 0U
+
+/* All objects are exclusively owned, non-reentrant, live, typed and initialized.
+ * Caller may inspect named fields but must not edit them. Fresh init requires
+ * fresh storage with no live operation/old event. It does not read old bytes.
+ * Every pointer names sufficient actual storage, alive through the call.
+ * Inputs, state, optional history and writable outputs must be pairwise disjoint.
+ * Null/domain/checkable metadata reject; dangling/forged pointers, caller aliasing
+ * and arbitrary corruption cannot be detected. No heap, MMIO, threads or ISR.
+ * Non-OK returns preserve all named fields, history and outputs. A report is fresh
+ * ONLY on IRQ_OK; a retained report after rejection is historical, even if its
+ * event says ENTERED. OK NO_ENTRY is fresh evidence of zero entry this call.
+ */
+typedef enum { IRQ_OK, IRQ_INVALID_ARGUMENT, IRQ_INVALID_PRIORITY, IRQ_BAD_STATE,
+               IRQ_BUSY, IRQ_TERMINAL } IrqStatus;
+typedef struct { uint32_t preempt; uint32_t sub; } IrqPriority;
+typedef struct { uint32_t preemptBits; uint32_t subBits; uint32_t logical;
+                 uint32_t registerByte; } IrqEncoding;
+typedef struct { bool enabled; bool pending; bool active; bool cause;
+                 IrqPriority priority; uint32_t pulses; uint32_t entries; } IrqLine;
+typedef struct { uint32_t group; IrqLine lines[IRQ_LINE_COUNT];
+                 uint32_t stack[IRQ_LINE_COUNT]; size_t depth;
+                 uint32_t primask; uint32_t basepri; bool saturated; } IrqModel;
+typedef enum { IRQ_ENABLE, IRQ_PULSE, IRQ_LEVEL, IRQ_CLEAR_PENDING,
+               IRQ_SELECT, IRQ_RETURN, IRQ_MASKS } IrqOperation;
+/* ENABLE/LEVEL: irq=6/29/38,value=0/1,extra=0. PULSE/CLEAR: value=extra=0.
+ * MASKS: irq=0,value=PRIMASK0/1,extra=raw BASEPRI. SELECT/RETURN: all three0.
+ * LEVEL supplies a cause fact, not an MMIO acknowledgement. False cause leaves
+ * the pending latch unchanged. Return with cause true explicitly re-pends.
+ */
+typedef struct { IrqOperation operation; uint32_t irq; uint32_t value; uint32_t extra; } IrqCommand;
+typedef enum { IRQ_CHANGED, IRQ_NO_ENTRY, IRQ_ENTERED, IRQ_RETURNED } IrqEvent;
+typedef struct { IrqEvent event; uint32_t irq; size_t depth;
+                 uint32_t enabledBits; uint32_t pendingBits;
+                 uint32_t activeBits; uint32_t causeBits; } IrqReport;
+/* Bits0/1/2 consistently identify IRQ6/29/38; unused stack/report slots are0.
+ * History is optional caller-owned copied diagnostics, never execution storage.
+ * First32 accepted apply calls append one row each. Row33+ drops only that row,
+ * increments droppedRows saturating, and execution still advances. */
+typedef struct { IrqReport rows[IRQ_HISTORY_CAPACITY]; size_t count;
+                 uint32_t droppedRows; bool saturated; } IrqHistory;
+typedef enum { RMW_READ, RMW_COMPUTE, RMW_WRITE, RMW_DONE } RmwStage;
+typedef struct { uint32_t value; uint32_t readValue[2]; uint32_t computed[2];
+                 RmwStage stage[2]; uint32_t steps; uint32_t completed; } RmwModel;
+typedef struct { uint32_t value; uint32_t steps; uint32_t completed;
+                 uint32_t lost; bool terminal; } RmwReport;
+typedef struct { uint32_t saved; uint32_t inside; uint32_t restored; } IrqMaskRoundtrip;
+
+/** @brief Strict four-bit planner; unlike CMSIS it rejects rather than masks.
+ * @param[in] group0..7, preempt/sub allocated-width values.
+ * @param[Out] output fresh only on IRQ_OK. @return IrqStatus. */
+IrqStatus irq_encode(uint32_t group, uint32_t preempt, uint32_t sub, IrqEncoding *output);
+/** @brief Fresh model init; lines enabled, no pending/active/cause/counters.
+ * @param[in] priorities exactly3 valid values, copied; group0..7.
+ * @param[Out] model fresh initialized storage. @return IrqStatus. */
+IrqStatus irq_init(IrqModel *model, uint32_t group, const IrqPriority priorities[IRQ_LINE_COUNT]);
+/** @brief Replace group/priorities only when all lines inactive and not pending.
+ * @param[in] priorities3, group compatible with current mask.
+ * @param[Out] model accepted state on OK. @return IrqStatus. */
+IrqStatus irq_configure(IrqModel *model, uint32_t group, const IrqPriority priorities[IRQ_LINE_COUNT]);
+/** @brief Apply one event, at most one entry OR one return; no handler execution.
+ * @param[in] command complete and validated; model initialized.
+ * @param[Out] report fresh on OK; optional history initialized, otherwise NULL.
+ * @return IrqStatus. Rejection preserves every named object. */
+IrqStatus irq_apply(IrqModel *model, const IrqCommand *command, IrqReport *report, IrqHistory *history);
+/** @brief Fresh empty optional history, including every unused row.
+ * @param[in] None. @param[Out] history fresh storage. @return IrqStatus. */
+IrqStatus irq_history_init(IrqHistory *history);
+/** @brief Saturate a diagnostic; sticky only after attempted increment at MAX.
+ * @param[in] initialized disjoint objects. @param[Out] value and sticky flag.
+ * @return IrqStatus. This standalone seam permits a finite near-MAX fixture. */
+IrqStatus irq_diagnostic_increment(uint32_t *value, bool *saturated);
+/** @brief Fresh two-actor RMW interpreter, x0, both actors at READ.
+ * @param[in] None. @param[Out] model fresh storage. @return IrqStatus. */
+IrqStatus rmw_init(RmwModel *model);
+/** @brief Execute exactly the selected actor's next legal stage.
+ * @param[in] actor0 foreground/1 IRQ, stage READ/COMPUTE/WRITE.
+ * @param[Out] report fresh only on OK. @return IrqStatus. Six accepted steps max. */
+IrqStatus rmw_step(RmwModel *model, uint32_t actor, RmwStage stage, RmwReport *report);
+/** @brief Pure saved-mask illustration, never changes host interrupt state.
+ * @param[in] saved0/1. @param[Out] output fresh on OK. @return IrqStatus. */
+IrqStatus irq_mask_roundtrip(uint32_t saved, IrqMaskRoundtrip *output);
+
+#endif
+</code></pre></div></details><details id="irq-source-irq-c"><summary>完整 irq.c（与原生下载逐字节核对）</summary><p><a href="../examples/interrupt-shared-data/irq.c" download>原生下载 irq.c</a></p><div class="code-wrap" role="region" tabindex="0" aria-label="irq.c源码，可横向滚动"><pre><code class="language-text">/******************************************************************************
+ * Copyright (C) 2024 EternalChip, Inc.(Gmbh) or its affiliates.
+ *
+ * All Rights Reserved.
+ *
+ * @file irq.c
+ * @author OpenAI | R&amp;D Dept. | EternalChip 立芯嵌入式
+ * @brief Original deterministic host IRQ and RMW teaching models.
+ * @version V1.0 2026-10-19
+ *****************************************************************************/
+#include "irq.h"
+
+/** @brief Map the complete external IRQ domain to slots.
+ * @param[in] irq external number. @param[Out] None. @return 0..2 or3. */
+static size_t irq_index(uint32_t irq)
+{
+    /**
+    * IRQ0 is deliberately not a configurable line in this model.
+    **/
+    switch (irq) {
+        case 6U: return 0U;
+        case 29U: return 1U;
+        case 38U: return 2U;
+        default: return IRQ_LINE_COUNT;
+    }
+}
+
+/** @brief Resolve a validated slot. @param[in] index0..2.
+ * @param[Out] None. @return External IRQ number. */
+static uint32_t irq_number(size_t index)
+{
+    /**
+    * This array is immutable; callers validate index before lookup.
+    **/
+    static const uint32_t numbers[IRQ_LINE_COUNT] = {6U, 29U, 38U};
+    return numbers[index];
+}
+
+/** @brief Check the intentionally restricted threshold model.
+ * @param[in] group, primask, basepri wide values. @param[Out] None. @return Validity. */
+static bool irq_masks_valid(uint32_t group, uint32_t primask, uint32_t basepri)
+{
+    /**
+    * Only g3 gives the all-preemption-bit BASEPRI example taught here.
+    **/
+    return primask &lt;= 1U &amp;&amp; basepri &lt;= 240U &amp;&amp; (basepri % 16U) == 0U &amp;&amp;
+        (basepri == 0U || group == 3U);
+}
+
+/** @brief Validate all three priority fields before mutation.
+ * @param[in] group and live priorities. @param[Out] None. @return Validity. */
+static bool irq_priorities_valid(uint32_t group, const IrqPriority priorities[IRQ_LINE_COUNT])
+{
+    IrqEncoding encoding;
+    size_t index;
+    /**
+    * Each planner output is local; rejection cannot leak a partial config.
+    **/
+    for (index = 0U; index &lt; IRQ_LINE_COUNT; index++) {
+        if (irq_encode(group, priorities[index].preempt, priorities[index].sub, &amp;encoding) != IRQ_OK) {
+            return false;
+        }
+    }
+    return true;
+}
+
+/** @brief Check named initialized metadata, not arbitrary pointer validity.
+ * @param[in] model initialized object. @param[Out] None. @return Validity. */
+static bool irq_model_valid(const IrqModel *model)
+{
+    size_t index;
+    IrqEncoding encoding;
+    bool found[IRQ_LINE_COUNT] = {false, false, false};
+    /**
+    * The fixed stack must agree with active flags and strict nested groups.
+    **/
+    if (model-&gt;group &gt; 7U || model-&gt;depth &gt; IRQ_LINE_COUNT ||
+        !irq_masks_valid(model-&gt;group, model-&gt;primask, model-&gt;basepri)) {
+        return false;
+    }
+    for (index = 0U; index &lt; model-&gt;depth; index++) {
+        size_t slot = irq_index(model-&gt;stack[index]);
+        if (slot == IRQ_LINE_COUNT || found[slot]) {
+            return false;
+        }
+        if (index &gt; 0U &amp;&amp; model-&gt;lines[slot].priority.preempt &gt;=
+            model-&gt;lines[irq_index(model-&gt;stack[index - 1U])].priority.preempt) {
+            return false;
+        }
+        found[slot] = true;
+    }
+    for (index = 0U; index &lt; IRQ_LINE_COUNT; index++) {
+        if (model-&gt;lines[index].active != found[index] ||
+            irq_encode(model-&gt;group, model-&gt;lines[index].priority.preempt,
+                       model-&gt;lines[index].priority.sub, &amp;encoding) != IRQ_OK ||
+            (index &gt;= model-&gt;depth &amp;&amp; model-&gt;stack[index] != IRQ_NONE)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+/** @brief Strict planner. @param[in] group, preempt, sub.
+ * @param[Out] output on OK only. @return IrqStatus. */
+IrqStatus irq_encode(uint32_t group, uint32_t preempt, uint32_t sub, IrqEncoding *output)
+{
+    /**
+    * Validate in the wide input type before assigning any output field.
+    **/
+    IrqEncoding result;
+    if (output == NULL) {
+        return IRQ_INVALID_ARGUMENT;
+    }
+    if (group &gt; 7U) {
+        return IRQ_INVALID_PRIORITY;
+    }
+    result.preemptBits = (group &lt; 4U) ? 4U : 7U - group;
+    result.subBits = 4U - result.preemptBits;
+    if (preempt &gt;= (UINT32_C(1) &lt;&lt; result.preemptBits) || sub &gt;= (UINT32_C(1) &lt;&lt; result.subBits)) {
+        return IRQ_INVALID_PRIORITY;
+    }
+    result.logical = (preempt &lt;&lt; result.subBits) | sub;
+    result.registerByte = result.logical &lt;&lt; 4U;
+    *output = result;
+    return IRQ_OK;
+}
+
+/** @brief Fresh init without reading old storage. @param[in] group and priorities3.
+ * @param[Out] model. @return IrqStatus. */
+IrqStatus irq_init(IrqModel *model, uint32_t group, const IrqPriority priorities[IRQ_LINE_COUNT])
+{
+    IrqModel fresh = {0};
+    size_t index;
+    /**
+    * The fresh-storage premise is a caller lifetime obligation.
+    **/
+    if (model == NULL || priorities == NULL) {
+        return IRQ_INVALID_ARGUMENT;
+    }
+    if (!irq_priorities_valid(group, priorities)) {
+        return IRQ_INVALID_PRIORITY;
+    }
+    fresh.group = group;
+    for (index = 0U; index &lt; IRQ_LINE_COUNT; index++) {
+        fresh.lines[index].enabled = true;
+        fresh.lines[index].priority = priorities[index];
+    }
+    *model = fresh;
+    return IRQ_OK;
+}
+
+/** @brief Checked idle reconfiguration. @param[in] group, priorities3.
+ * @param[Out] model on OK. @return IrqStatus. */
+IrqStatus irq_configure(IrqModel *model, uint32_t group, const IrqPriority priorities[IRQ_LINE_COUNT])
+{
+    size_t index;
+    /**
+    * Existing pending state must never be reinterpreted under another split.
+    **/
+    if (model == NULL || priorities == NULL) {
+        return IRQ_INVALID_ARGUMENT;
+    }
+    if (!irq_model_valid(model)) {
+        return IRQ_BAD_STATE;
+    }
+    if (!irq_priorities_valid(group, priorities) || !irq_masks_valid(group, model-&gt;primask, model-&gt;basepri)) {
+        return IRQ_INVALID_PRIORITY;
+    }
+    for (index = 0U; index &lt; IRQ_LINE_COUNT; index++) {
+        if (model-&gt;lines[index].pending || model-&gt;lines[index].active) {
+            return IRQ_BUSY;
+        }
+    }
+    model-&gt;group = group;
+    for (index = 0U; index &lt; IRQ_LINE_COUNT; index++) {
+        model-&gt;lines[index].priority = priorities[index];
+    }
+    return IRQ_OK;
+}
+
+/** @brief Saturating diagnostic operation. @param[in] Initialized objects.
+ * @param[Out] value, saturated. @return IrqStatus. */
+IrqStatus irq_diagnostic_increment(uint32_t *value, bool *saturated)
+{
+    /**
+    * Exactly reaching MAX is still exact; only a further attempt is clipped.
+    **/
+    if (value == NULL || saturated == NULL) {
+        return IRQ_INVALID_ARGUMENT;
+    }
+    if (*value == UINT32_MAX) {
+        *saturated = true;
+    } else {
+        (*value)++;
+    }
+    return IRQ_OK;
+}
+
+/** @brief Fresh history including unused slots. @param[in] None.
+ * @param[Out] history. @return IrqStatus. */
+IrqStatus irq_history_init(IrqHistory *history)
+{
+    size_t index;
+    const IrqReport empty = {IRQ_CHANGED, IRQ_NONE, 0U, 0U, 0U, 0U, 0U};
+    /**
+    * Aggregate initialization initializes named members, not a padding promise.
+    **/
+    if (history == NULL) {
+        return IRQ_INVALID_ARGUMENT;
+    }
+    for (index = 0U; index &lt; IRQ_HISTORY_CAPACITY; index++) {
+        history-&gt;rows[index] = empty;
+    }
+    history-&gt;count = 0U;
+    history-&gt;droppedRows = 0U;
+    history-&gt;saturated = false;
+    return IRQ_OK;
+}
+
+/** @brief Validate a complete one-operation command. @param[in] model, command.
+ * @param[Out] None. @return Validity. */
+static bool irq_command_valid(const IrqModel *model, const IrqCommand *command)
+{
+    /**
+    * Unused fields are required zero so typos cannot silently change meaning.
+    **/
+    switch (command-&gt;operation) {
+        case IRQ_ENABLE:
+        case IRQ_LEVEL:
+            return irq_index(command-&gt;irq) &lt; IRQ_LINE_COUNT &amp;&amp; command-&gt;value &lt;= 1U &amp;&amp; command-&gt;extra == 0U;
+        case IRQ_PULSE:
+        case IRQ_CLEAR_PENDING:
+            return irq_index(command-&gt;irq) &lt; IRQ_LINE_COUNT &amp;&amp; command-&gt;value == 0U &amp;&amp; command-&gt;extra == 0U;
+        case IRQ_MASKS:
+            return command-&gt;irq == IRQ_NONE &amp;&amp; irq_masks_valid(model-&gt;group, command-&gt;value, command-&gt;extra);
+        case IRQ_SELECT:
+        case IRQ_RETURN:
+            return command-&gt;irq == IRQ_NONE &amp;&amp; command-&gt;value == 0U &amp;&amp; command-&gt;extra == 0U;
+        default:
+            return false;
+    }
+}
+
+/** @brief Choose at most one eligible nonactive identity. @param[in] model valid.
+ * @param[Out] None. @return Slot0..2 or3 for none. */
+static size_t irq_candidate(const IrqModel *model)
+{
+    size_t index;
+    size_t best = IRQ_LINE_COUNT;
+    uint32_t activeGroup = 16U;
+    /**
+    * Same-group subpriority cannot preempt an active handler.
+    **/
+    if (model-&gt;primask != 0U) {
+        return best;
+    }
+    if (model-&gt;depth &gt; 0U) {
+        activeGroup = model-&gt;lines[irq_index(model-&gt;stack[model-&gt;depth - 1U])].priority.preempt;
+    }
+    for (index = 0U; index &lt; IRQ_LINE_COUNT; index++) {
+        const IrqLine *line = &amp;model-&gt;lines[index];
+        if (!line-&gt;enabled || !line-&gt;pending || line-&gt;active || line-&gt;priority.preempt &gt;= activeGroup ||
+            (model-&gt;basepri != 0U &amp;&amp; line-&gt;priority.preempt &gt;= model-&gt;basepri / 16U)) {
+            continue;
+        }
+        if (best == IRQ_LINE_COUNT || line-&gt;priority.preempt &lt; model-&gt;lines[best].priority.preempt ||
+            (line-&gt;priority.preempt == model-&gt;lines[best].priority.preempt &amp;&amp;
+             line-&gt;priority.sub &lt; model-&gt;lines[best].priority.sub)) {
+            best = index;
+        }
+    }
+    return best;
+}
+
+/** @brief Build copied current state flags. @param[in] model, event, irq.
+ * @param[Out] None. @return Fully initialized report. */
+static IrqReport irq_report(const IrqModel *model, IrqEvent event, uint32_t irq)
+{
+    IrqReport result = {IRQ_CHANGED, IRQ_NONE, 0U, 0U, 0U, 0U, 0U};
+    size_t index;
+    /**
+    * Bit identities are fixed6/29/38, independent of current stack order.
+    **/
+    result.event = event;
+    result.irq = irq;
+    result.depth = model-&gt;depth;
+    for (index = 0U; index &lt; IRQ_LINE_COUNT; index++) {
+        uint32_t bit = UINT32_C(1) &lt;&lt; index;
+        result.enabledBits |= model-&gt;lines[index].enabled ? bit : 0U;
+        result.pendingBits |= model-&gt;lines[index].pending ? bit : 0U;
+        result.activeBits |= model-&gt;lines[index].active ? bit : 0U;
+        result.causeBits |= model-&gt;lines[index].cause ? bit : 0U;
+    }
+    return result;
+}
+
+/** @brief Perform one validated operation. @param[in] command, model initialized.
+ * @param[Out] report fresh on OK, history optional. @return IrqStatus. */
+IrqStatus irq_apply(IrqModel *model, const IrqCommand *command, IrqReport *report, IrqHistory *history)
+{
+    size_t index;
+    IrqEvent event = IRQ_CHANGED;
+    uint32_t identity = IRQ_NONE;
+    /**
+    * Complete preflight precedes every state, counter, output or history write.
+    **/
+    if (model == NULL || command == NULL || report == NULL) {
+        return IRQ_INVALID_ARGUMENT;
+    }
+    if (!irq_model_valid(model) || (history != NULL &amp;&amp; history-&gt;count &gt; IRQ_HISTORY_CAPACITY)) {
+        return IRQ_BAD_STATE;
+    }
+    if (!irq_command_valid(model, command)) {
+        return IRQ_INVALID_ARGUMENT;
+    }
+    if (command-&gt;operation == IRQ_RETURN &amp;&amp; model-&gt;depth == 0U) {
+        return IRQ_BAD_STATE;
+    }
+    index = irq_index(command-&gt;irq);
+    switch (command-&gt;operation) {
+        case IRQ_ENABLE:
+            model-&gt;lines[index].enabled = command-&gt;value != 0U;
+            break;
+        case IRQ_PULSE:
+            model-&gt;lines[index].pending = true;
+            if (irq_diagnostic_increment(&amp;model-&gt;lines[index].pulses, &amp;model-&gt;saturated) != IRQ_OK) {
+                return IRQ_BAD_STATE;
+            }
+            break;
+        case IRQ_LEVEL:
+            model-&gt;lines[index].cause = command-&gt;value != 0U;
+            if (command-&gt;value != 0U) {
+                model-&gt;lines[index].pending = true;
+            }
+            break;
+        case IRQ_CLEAR_PENDING:
+            model-&gt;lines[index].pending = false;
+            break;
+        case IRQ_MASKS:
+            model-&gt;primask = command-&gt;value;
+            model-&gt;basepri = command-&gt;extra;
+            break;
+        case IRQ_SELECT:
+            index = irq_candidate(model);
+            event = IRQ_NO_ENTRY;
+            if (index &lt; IRQ_LINE_COUNT) {
+                identity = irq_number(index);
+                model-&gt;stack[model-&gt;depth++] = identity;
+                model-&gt;lines[index].pending = false;
+                model-&gt;lines[index].active = true;
+                if (irq_diagnostic_increment(&amp;model-&gt;lines[index].entries, &amp;model-&gt;saturated) != IRQ_OK) {
+                    return IRQ_BAD_STATE;
+                }
+                event = IRQ_ENTERED;
+            }
+            break;
+        case IRQ_RETURN:
+            identity = model-&gt;stack[--model-&gt;depth];
+            model-&gt;stack[model-&gt;depth] = IRQ_NONE;
+            index = irq_index(identity);
+            model-&gt;lines[index].active = false;
+            model-&gt;lines[index].pending = model-&gt;lines[index].pending || model-&gt;lines[index].cause;
+            event = IRQ_RETURNED;
+            break;
+        default:
+            break;
+    }
+    *report = irq_report(model, event, identity);
+    if (history != NULL) {
+        if (history-&gt;count &lt; IRQ_HISTORY_CAPACITY) {
+            history-&gt;rows[history-&gt;count++] = *report;
+        } else if (irq_diagnostic_increment(&amp;history-&gt;droppedRows, &amp;history-&gt;saturated) != IRQ_OK) {
+            return IRQ_BAD_STATE;
+        }
+    }
+    return IRQ_OK;
+}
+
+/** @brief Fresh deterministic interpreter. @param[in] None.
+ * @param[Out] model. @return IrqStatus. */
+IrqStatus rmw_init(RmwModel *model)
+{
+    /**
+    * No host volatile object or concurrent writer is involved.
+    **/
+    if (model == NULL) {
+        return IRQ_INVALID_ARGUMENT;
+    }
+    *model = (RmwModel){0};
+    return IRQ_OK;
+}
+
+/** @brief Execute a single legal actor stage. @param[in] actor, stage.
+ * @param[Out] model and fresh report on OK. @return IrqStatus. */
+IrqStatus rmw_step(RmwModel *model, uint32_t actor, RmwStage stage, RmwReport *report)
+{
+    /**
+    * A six-step domain makes both interleavings defined and finite.
+    **/
+    if (model == NULL || report == NULL || actor &gt; 1U || stage &lt; RMW_READ || stage &gt; RMW_WRITE) {
+        return IRQ_INVALID_ARGUMENT;
+    }
+    if (model-&gt;value &gt; 2U || model-&gt;steps &gt; 6U || model-&gt;completed &gt; 2U ||
+        model-&gt;stage[0] &lt; RMW_READ || model-&gt;stage[0] &gt; RMW_DONE ||
+        model-&gt;stage[1] &lt; RMW_READ || model-&gt;stage[1] &gt; RMW_DONE ||
+        model-&gt;readValue[0] &gt; 1U || model-&gt;readValue[1] &gt; 1U ||
+        model-&gt;computed[0] &gt; 2U || model-&gt;computed[1] &gt; 2U) {
+        return IRQ_BAD_STATE;
+    }
+    if (model-&gt;steps == 6U) {
+        return IRQ_TERMINAL;
+    }
+    if (model-&gt;stage[actor] != stage) {
+        return IRQ_BAD_STATE;
+    }
+    switch (stage) {
+        case RMW_READ:
+            model-&gt;readValue[actor] = model-&gt;value;
+            break;
+        case RMW_COMPUTE:
+            model-&gt;computed[actor] = model-&gt;readValue[actor] + 1U;
+            break;
+        case RMW_WRITE:
+            model-&gt;value = model-&gt;computed[actor];
+            model-&gt;completed++;
+            break;
+        default:
+            break;
+    }
+    model-&gt;stage[actor] = (RmwStage)((uint32_t)stage + 1U);
+    model-&gt;steps++;
+    *report = (RmwReport){model-&gt;value, model-&gt;steps, model-&gt;completed,
+        model-&gt;completed &gt; model-&gt;value ? model-&gt;completed - model-&gt;value : 0U, model-&gt;steps == 6U};
+    return IRQ_OK;
+}
+
+/** @brief Illustrate restoring caller mask. @param[in] saved0/1.
+ * @param[Out] output on OK. @return IrqStatus. */
+IrqStatus irq_mask_roundtrip(uint32_t saved, IrqMaskRoundtrip *output)
+{
+    /**
+    * This is a pure contract example, never a host mask write.
+    **/
+    if (output == NULL || saved &gt; 1U) {
+        return IRQ_INVALID_ARGUMENT;
+    }
+    *output = (IrqMaskRoundtrip){saved, 1U, saved};
+    return IRQ_OK;
+}
+</code></pre></div></details><details id="irq-source-README-txt"><summary>完整 README.txt（与原生下载逐字节核对）</summary><p><a href="../examples/interrupt-shared-data/README.txt" download>原生下载 README.txt</a></p><div class="code-wrap" role="region" tabindex="0" aria-label="README.txt源码，可横向滚动"><pre><code class="language-text">Interrupt/shared-data host models, v1
+===================================
+Original single-context, non-reentrant host C11. No target NVIC/CMSIS/MMIO,
+threads, actual ISR, DMA, heap, callbacks, waits or hardware timing claims.
+Keep irq.h, irq.c and this README.txt in one directory. Save exactly the text
+between BEGIN CONSUMER.C and END CONSUMER.C below as consumer.c (markers excluded).
+The module has no main. The independent consumer includes the public header twice.
+
+With an existing C11 compiler, from that directory:
+  cc -std=c11 -Wall -Wextra -Werror -pedantic -fstack-usage -c irq.c -o irq.o
+  cc -std=c11 -Wall -Wextra -Werror -pedantic -fstack-usage -c consumer.c -o consumer.o
+  cc irq.o consumer.o -o consumer
+  ./consumer
+On Windows, name the linked output consumer.exe and run .\consumer.exe.
+Repeat with -DNDEBUG in BOTH compile commands, distinct output names and linkage.
+Do not run a previous executable if any compile/link failed. CHECK remains live
+with NDEBUG. No target toolchain/atomic library/ISR guarantee follows from this.
+
+The course's actual author/CI C experiments use existing mcu-build routing:
+  node scripts/test-interrupt-shared-data.mjs --native --compiler &lt;existing-cc&gt; --python &lt;existing-python&gt; --router &lt;existing-build_router.py&gt; --output .scratch/interrupt-dma-throughput/native
+Run that command from the repository root. Each production module, independent
+caller and link goes through validate -&gt; dry-run -&gt; build profiles. Tool identities,
+raw exit, diagnostics, fresh artifacts and input SHA-256 are recorded. Nothing is
+installed. The same runner extracts THIS minimal consumer text and builds/runs it
+as an additional separate normal/NDEBUG caller, rather than trusting a transcript.
+
+Success output (exactly one line):
+PASS minimal IRQ: logical9/raw0x90 lost1/serialized2 saved1/restored1
+
+BEGIN CONSUMER.C
+#include "irq.h"
+#include "irq.h"
+#include &lt;stdio.h&gt;
+#define CHECK(x) do { if (!(x)) { fprintf(stderr, "FAIL %d: %s\n", __LINE__, #x); return 1; } } while (0)
+int main(void)
+{
+    IrqEncoding encoding = {0U, 0U, 0U, 0U};
+    IrqMaskRoundtrip mask = {0U, 0U, 0U};
+    RmwModel lost;
+    RmwModel serial;
+    RmwReport report = {0U, 0U, 0U, 0U, false};
+    const uint32_t actors[6] = {0U, 1U, 1U, 1U, 0U, 0U};
+    const RmwStage stages[6] = {RMW_READ, RMW_READ, RMW_COMPUTE, RMW_WRITE, RMW_COMPUTE, RMW_WRITE};
+    size_t index;
+    CHECK(irq_encode(5U, 2U, 1U, &amp;encoding) == IRQ_OK);
+    CHECK(encoding.logical == 9U &amp;&amp; encoding.registerByte == 144U);
+    CHECK(rmw_init(&amp;lost) == IRQ_OK &amp;&amp; rmw_init(&amp;serial) == IRQ_OK);
+    for (index = 0U; index &lt; 6U; index++) {
+        CHECK(rmw_step(&amp;lost, actors[index], stages[index], &amp;report) == IRQ_OK);
+    }
+    CHECK(report.terminal &amp;&amp; report.value == 1U &amp;&amp; report.lost == 1U);
+    for (index = 0U; index &lt; 2U; index++) {
+        CHECK(rmw_step(&amp;serial, (uint32_t)index, RMW_READ, &amp;report) == IRQ_OK);
+        CHECK(rmw_step(&amp;serial, (uint32_t)index, RMW_COMPUTE, &amp;report) == IRQ_OK);
+        CHECK(rmw_step(&amp;serial, (uint32_t)index, RMW_WRITE, &amp;report) == IRQ_OK);
+    }
+    CHECK(report.terminal &amp;&amp; report.value == 2U &amp;&amp; report.lost == 0U);
+    CHECK(irq_mask_roundtrip(1U, &amp;mask) == IRQ_OK &amp;&amp; mask.inside == 1U &amp;&amp; mask.restored == 1U);
+    if (puts("PASS minimal IRQ: logical9/raw0x90 lost1/serialized2 saved1/restored1") &lt; 0 || fflush(stdout) != 0) {
+        return 2;
+    }
+    return 0;
+}
+END CONSUMER.C
+
+Ownership and freshness
+-----------------------
+All state, input arrays/commands, optional history and output objects must be real,
+live, sufficiently sized typed objects, pairwise disjoint and exclusively owned.
+Fresh irq_init/rmw_init/history_init validate then write every named field without
+reading indeterminate storage. Fresh storage has no live operation/owner/old event;
+initialization is not a runtime test or erase permission for a violated lifetime.
+Later operations require initialized objects. Callers inspect but do not edit named
+model members. No claim of detecting forged/dangling pointers, false extents,
+arbitrary corruption or aliasing. NULL/enum/domain/checkable metadata reject.
+Only IRQ_OK gives a fresh output. All non-OK results, including IRQ_TERMINAL,
+preserve every named state/diagnostic/history/output field. Retained reports are
+historical. IRQ_OK + IRQ_NO_ENTRY freshly reports zero entries. No assert-dependent
+validation; compare named members, not padding. Bool and uint32/size_t availability
+follow C11 implementation support; no ABI-fixed sizeof promise.
+
+Priority and external IRQ model
+-------------------------------
+Selected F407 has four priority bits. Raw g0/1/2/3 -&gt; pre4/sub0; g4 -&gt; 3/1;
+g5 -&gt; 2/2; g6 -&gt; 1/3; g7 -&gt; 0/4. Strict inputs reject before assignment;
+CMSIS5.9.0 masks fields instead (g5/pre4/sub0 would mask to0).
+Only EXTI0_IRQn6 / TIM3_IRQn29 / USART2_IRQn38 exist; fixed slot bits0/1/2.
+Initial lines enabled; pending/active/cause false, counters/masks/depth/stack0.
+irq_configure changes all three priorities/group only when none pending/active;
+existing nonzero BASEPRI also requires g3. Counters/cause/enables remain unchanged.
+irq_apply accepts exactly one complete command. SELECT enters at most one enabled,
+pending, nonactive identity whose group is strictly more urgent than current.
+Smallest group, then sub, then IRQ number wins. Same-group sub does not preempt.
+Enter clears its pending latch. RETURN pops only the current top and never selects.
+Persistent LEVEL cause relatches pending only at the explicit RETURN transition;
+LEVEL false does not clear pending. PULSE is a request fact, coalesces pending and
+increments injected-pulse diagnostics. CLEAR_PENDING does not clear cause/active.
+ENABLE changes only enable. This fake does not acknowledge any physical peripheral.
+MASKS requires irq0,value PRIMASK0/1,extra BASEPRI raw0 or upper-nibble0x10..0xF0.
+Nonzero BASEPRI is supported only in g3; all other groups require0. PRIMASK blocks
+these configurable entries; it does not cancel active work or stop DMA/NMI/HardFault.
+Fault architecture and privileged target mask operations are not executed.
+
+Fixed resource/work limits
+--------------------------
+IrqModel: 3 line records, 3 active identity slots, 6 pulse/entry uint32 diagnostics.
+Planner/roundtrip: constant arithmetic. Init/configure validate exactly3 priorities.
+Apply: check at most3 stack identities +3 line records; SELECT scans3 candidates;
+report scans3 lines; at most1 entry OR1 return, no callback or automatic pending drain.
+Optional IrqHistory: exactly32 copied IrqReport rows, count0..32, no execution owner.
+One accepted apply appends at most1 row; row33+ is dropped, droppedRows increments
+saturating, existing rows stay intact, execution continues. NULL disables history.
+Init clears every unused named row/stack field. Config/encode/RMW do not append it.
+Counters saturate: MAX-1 -&gt; MAX with flag unchangedfalse; attempted next increment
+staysMAX and sets stickytrue. Further increments remainMAX/true. Diagnostics no
+longer yield exact totals/rates after saturation. irq_diagnostic_increment provides
+a finite initialized near-MAX public test seam, not permission to edit live state.
+RMW: 2 actors (0 foreground,1 IRQ), READ/COMPUTE/WRITE/DONE, exactly6 accepted
+steps total, one step/call and no internal loop. Illegal/out-of-order/repeated stage
+rejects preserving state/report. Completed6 -&gt; IRQ_TERMINAL on any later legal call.
+The two schedules above are explicit single-context interpretation, no real C race.
+Saved-mask output is pure data:0-&gt;1-&gt;0 and1-&gt;1-&gt;1, no actual host mask operation.
+
+Limits and primary evidence
+----------------------------
+volatile does not supply mutual exclusion or atomic RMW. Atomic fetch-add/relaxed,
+compiler barriers, DMB/DSB/ISB, DMA ownership/cache visibility and capacity differ.
+A bounded critical section covers only conflicting CPU contexts actually masked,
+with saved-mask restoration; DMA/NMI/HardFault remain excluded writers.
+Three model slots and host per-function .su/heuristics do not prove target WCET or
+whole-stack budget. Basic/FP/alignment/lazy exception conditions prevent treating
+32bytes as a maximum per interrupt. No hardware or physical paper was tested.
+PM0214 Rev10 March2020 selected text; CMSIS5.9.0 pinned2b7495b8535bdcb306dac29b9ded4cfb679d7e5c;
+DeviceF4 v2.6.10 pinned5f41fb29d22773896c780052bf61e47fc924d524; WG14 N1570 April2011 draft.
+Researcher manual text/pixels retain their attribution; current official RM0090 is
+unread, current PM/DS/AN pixels and current selected silicon errata/target contracts
+remain gaps. Local candidate and native checks do not prove public release/mastery.
+</code></pre></div></details></div><div class="content-section" id="irq-practice" role="region" aria-labelledby="irq-practice-title"><h2 id="irq-practice-title">十个独立回忆与迁移题</h2><div class="practice-intro"><p>十题均有独立前提，无需当前活动状态。先遮住答案手算，再展开原因与下一检查。题页打印恰好十个完整题干，隐藏答案、反馈与其它解题；返回后恢复先前fold和body class，包括原本没有class属性的情况。</p><div class="notes-toolbar"><button class="btn" id="print-questions" type="button">只打印十个完整题干</button></div></div><article class="exercise" id="irq-exercise-01"><h3 id="irq-question-01">01 · 选定F407有4位优先级。原始g5/pre2/sub1的逻辑值和寄存器字节各是多少；0x90能当未移位CMSIS优先级吗？</h3><details class="exercise-answer" id="irq-answer-01"><summary>展开原因与下一检查</summary><p>g5分2抢占位/2子位，2×4+1=9，写入高半字节0x90。NVIC_SetPriority接未移位逻辑表示，不接已移位0x90。下一检查：查API参数表示，再从寄存器反推。</p></details></article><article class="exercise" id="irq-exercise-02"><h3 id="irq-question-02">02 · 4位/g5下提供pre4/sub0。严格模型与真实CMSIS掩码分别怎样处理？</h3><details class="exercise-answer" id="irq-answer-02"><summary>展开原因与下一检查</summary><p>2抢占位只允许0..3；严格模型INVALID_PRIORITY并保留输出。CMSIS会把4掩成0而编码0，故拒绝是课程政策。下一检查：核每个字段的分配位宽，包括零位字段。</p></details></article><article class="exercise" id="irq-exercise-03"><h3 id="irq-question-03">03 · g5 active38=(group2,sub3)，pending6=(group2,sub0)，都enabled且unmasked。6能进入吗；若29=(group1,sub3)也pending呢？</h3><details class="exercise-answer" id="irq-answer-03"><summary>展开原因与下一检查</summary><p>6同组不能抢占，sub更小只影响待选，故仍pending；29组1更紧迫，进入38之上。29显式返回恢复38，38再返回后另一次select才可进入6。下一检查：看current的group及独立return边界。</p></details></article><article class="exercise" id="irq-exercise-04"><h3 id="irq-question-04">04 · thread中6/29/38都pending且group/sub完全相同。另一个独立场景active6同时pending6，调用clear-pending。分别得到什么？</h3><details class="exercise-answer" id="irq-answer-04"><summary>展开原因与下一检查</summary><p>thread先选最小IRQ号6，这不是额外抢占规则；后续还要return再选29/38。独立场景只清pending6，active6继续。下一检查：分别检查active栈、pending位和外设cause。</p></details></article><article class="exercise" id="irq-exercise-05"><h3 id="irq-question-05">05 · disabled6接收两次pulse后再enabled。另一场景level cause跨越clear-pending及return仍asserted。能断言排了几次pulse、是否再pending？</h3><details class="exercise-answer" id="irq-answer-05"><summary>展开原因与下一检查</summary><p>pending是锁存，两pulse合成一个待服务条件，启用后只允许一次合格entry，并非两个排队服务。明确level模型return时仍有cause会再锁存；清NVIC pending不证明物理外设ack。下一检查：查所选外设原因清法。</p></details></article><article class="exercise" id="irq-exercise-06"><h3 id="irq-question-06">06 · g3、BASEPRI raw0x50，thread中逻辑4与5都enabled/pending。谁能进入；raw0与PRIMASK1各改变什么？</h3><details class="exercise-answer" id="irq-answer-06"><summary>展开原因与下一检查</summary><p>4通过阈值，5等待；raw0取消BASEPRI限制但仍需其它资格。PRIMASK1阻止这些可配置entry，均不停止DMA，也不能说PRIMASK挡住NMI/HardFault。下一检查：确认group、原始表示和mask覆盖范围。</p></details></article><article class="exercise" id="irq-exercise-07"><h3 id="irq-question-07">07 · x初始0，foreground读0；IRQ读0并写1；foreground最后写1。volatile能强制2吗；两次串行增量呢？</h3><details class="exercise-answer" id="irq-answer-07"><summary>展开原因与下一检查</summary><p>解释器最终1，foreground的旧读覆盖IRQ贡献；volatile没有把读/计算/写合成不可分割动作。串行两次完整增量得2。此为定义良好的fake交错，不是真实C race的确定结果。下一检查：列每个actor的local和stage。</p></details></article><article class="exercise" id="irq-exercise-08"><h3 id="irq-question-08">08 · 有界mask临界区进入前saved PRIMASK=1。退出应取何值；能排除DMA writer吗？</h3><details class="exercise-answer" id="irq-answer-08"><summary>展开原因与下一检查</summary><p>恢复1，保留调用者已屏蔽状态；固定enable会错误改变它。证明只覆盖真被该mask挡住的CPU冲突上下文，DMA/NMI/HardFault仍需另外分析。下一检查：枚举全部writer和每条退出路径。</p></details></article><article class="exercise" id="irq-exercise-09"><h3 id="irq-question-09">09 · DMA-ready旁加atomic计数与DMB，是否就证明整个buffer稳定和目标ISR lock-free？</h3><details class="exercise-answer" id="irq-answer-09"><summary>展开原因与下一检查</summary><p>原子RMW只针对指定对象；DMB只约束访问顺序，都不提供稳定buffer lease或让DMA参与C11同步。host atomics不能证明目标库、宽度、对齐及ISR耗时。下一检查：查block生命周期与目标工具链合同。</p></details></article><article class="exercise" id="irq-exercise-10"><h3 id="irq-question-10">10 · 三IRQ模型每call至多一entry或一return。能否据此证明ISR WCET，或每嵌套最多32bytes？</h3><details class="exercise-answer" id="irq-answer-10"><summary>展开原因与下一检查</summary><p>仅证明模型工作有限、身份深度≤3。编译器调用帧与异常basic/FP/alignment/lazy条件是额外需求；32bytes基本帧不是最大保证。下一检查：结合限定.su、调用路径和目标异常栈分析，硬件/全程序界尚未证。</p></details></article><div class="practice-intro"><p>隔天变值任务：把g5的6改为group0/sub2，先写出38/29/6新次序，再用活动之外的公共接口构造验证；保存mask从1改0后重新解释退出。可向助手追问：“为什么active+pending在这一轮没有重入？”这类具体问题比只问是否懂了更能定位原因。</p></div></div><div class="content-section" id="irq-sources" role="region" aria-labelledby="irq-sources-title"><h2 id="irq-sources-title">来源与使用限定</h2><p>作者全文读取冻结规格、两个研究底稿及实际manifest，并按本地固定头检查三条IRQ与四位声明；下表的原手册文字/像素阅读归研究者，不能算成本作者重新目视。模型、图、严格拒绝、三IRQ域、g3阈值限制和六步调度均为原创课程政策。</p><div class="table-wrap" role="region" tabindex="0" aria-label="来源 / 版本，可横向滚动"><table><thead><tr><th scope="col">来源 / 版本</th><th scope="col">本章使用</th><th scope="col">实际阅读限定</th></tr></thead><tbody><tr><td>PM0214 Rev10 March2020</td><td>§2.1.3 pp23–26；§2.3 pp37–43；CPS182/MSR187；NVIC210–218；AIRCR228–229</td><td>研究者web文字；原PDF bytes/SHA缺失，相关像素未见</td></tr><tr><td>CMSIS5.9.0 固定commit2b7495b…</td><td>core_cm4 encode/setpriority；cmsis_gcc mask/barrier</td><td>本地固定源码；非全部头审计；寄存器网页单独自报5.6.0</td></tr><tr><td>DeviceF4 v2.6.10 commit5f41fb29…</td><td>F407 __NVIC_PRIO_BITS与IRQ6/29/38</td><td>已核具名头，不推及全Cortex-M</td></tr><tr><td>WG14 N1570 April12 2011</td><td>§5.1.2.4、§6.7.3、§7.17</td><td>公开委员会草案；研究者选定文字，不是最终ISO</td></tr><tr><td>历史RM0090 DocID018909 Rev5 September2013</td><td>邻章DMA/存储连接的来源边界</td><td>研究者仅目视60/73/305/310/319/321/329；当前官方RM仍未读</td></tr></tbody></table></div><p>固定来源：<a href="https://www.st.com/resource/en/programming_manual/pm0214-stm32-cortexm4-mcus-and-mpus-programming-manual-stmicroelectronics.pdf">PM0214 Rev10 March2020</a>；<a href="https://github.com/ARM-software/CMSIS_5/blob/2b7495b8535bdcb306dac29b9ded4cfb679d7e5c/CMSIS/Core/Include/core_cm4.h">固定CMSIS5.9.0 core_cm4.h</a>；<a href="https://github.com/ARM-software/CMSIS_5/blob/2b7495b8535bdcb306dac29b9ded4cfb679d7e5c/CMSIS/Core/Include/cmsis_gcc.h">同commit cmsis_gcc.h</a>；<a href="https://github.com/STMicroelectronics/cmsis-device-f4/blob/5f41fb29d22773896c780052bf61e47fc924d524/Include/stm32f407xx.h">DeviceF4 v2.6.10 F407头</a>；<a href="https://www.open-std.org/jtc1/sc22/wg14/www/docs/n1570.pdf">N1570草案</a>；<a href="https://www.keil.com/dd/docs/datashts/st/stm32f4xx/dm00031020.pdf">历史RM0090 Rev5</a>。</p><p>缺口保留：当前官方RM未读；当前DS/PM/AN相关像素除列明历史RM页外未见；web-only源原始字节/SHA缺失；具体silicon revision/current DMA/ADC errata、完整mask边缘、目标atomic/ISR/compiler、真实并发/placement/cache/停止时序/WCET、采样/线路/overrun与实体纸张均未验。旧GCC13.1 volatile页面只继承前批研究记录，本次未重读成功；当前主张由N1570与固定CMSIS支撑。</p><p>下一步<a href="./dma-ownership.html">16 DMA缓冲所有权</a>属于同批候选，尚待root整站激活；<a href="./throughput-overload.html">17吞吐与过载</a>须等16实际接口冻结后单独准入。源包边界不代表课程完成；<a href="../learn/engineering-map.html">32单元/八阶段地图</a>仍保留18–32待建设。</p></div><div class="next-links"><a href="./driver-recovery.html">上一章：14驱动恢复</a><a href="./interrupt-shared-data.html">15完整章节</a><a href="./interrupt-shared-data-reference.html">15速查表</a><a href="./dma-ownership.html">下一章：16同批候选，待激活</a></div></main><footer class="wrap">原创单上下文教学模型。浏览器、宿主原生、发布、硬件与实体纸张证据分别限定。</footer><script id="timer-reader">(()=>{document.getElementById('expand-notes').addEventListener('click',()=>document.querySelectorAll('details').forEach(p=>{p.open=true;}));document.getElementById('collapse-notes').addEventListener('click',()=>document.querySelectorAll('details').forEach(p=>{p.open=false;}));})();</script>
+<script id="timer-ordinary-print">(()=>{let previous,bodyClass;const restore=()=>{if(!previous)return;previous.forEach(([p,o])=>{p.open=o;});if(bodyClass===null)document.body.removeAttribute('class');else document.body.setAttribute('class',bodyClass);previous=undefined;};window.addEventListener('afterprint',restore);document.getElementById('print-all').addEventListener('click',()=>{if(previous)return;previous=[...document.querySelectorAll('details')].map(p=>[p,p.open]);bodyClass=document.body.getAttribute('class');document.body.classList.remove('exercise-print');try{window.print();}catch{window.dispatchEvent(new Event('afterprint'));restore();}});})();</script>
+<script id="timer-worksheet">(()=>{let folds,bodyClass;const clear=()=>{if(!folds)return;folds.forEach(([p,o])=>{p.open=o;});if(bodyClass===null)document.body.removeAttribute('class');else document.body.setAttribute('class',bodyClass);folds=undefined;};window.addEventListener('afterprint',clear);document.getElementById('print-questions').addEventListener('click',()=>{if(folds)return;folds=[...document.querySelectorAll('details')].map(p=>[p,p.open]);bodyClass=document.body.getAttribute('class');document.body.classList.add('exercise-print');try{window.print();}catch{clear();window.dispatchEvent(new Event('afterprint'));}});})();</script>
+<script id="note-deep-links">
+(() => {
+  const reveal = () => {
+    let id;try{id=decodeURIComponent(window.location.hash.slice(1));}catch{return;}
+    if(!id) return;
+    const target=document.getElementById(id);if(!target) return;
+    let panel=target.closest('details');
+    while(panel) {panel.open=true;panel=panel.parentElement?.closest?.('details')||null;}
+    target.closest('section')?.querySelectorAll?.('details').forEach(detail=>{detail.open=true;});
+    requestAnimationFrame(()=>target.scrollIntoView({block:'start'}));
+  };
+  window.addEventListener('hashchange',reveal);window.addEventListener('pageshow',reveal);reveal();
+})();
+</script>
+<script id="note-print">
+(() => {
+  let previous;
+  window.addEventListener('beforeprint',()=>{
+    if(previous) return;
+    previous=[...document.querySelectorAll('details')].map(panel=>[panel,panel.open]);
+    previous.forEach(([panel])=>{panel.open=true;});
+  });
+  window.addEventListener('afterprint',()=>{previous?.forEach(([panel,open])=>{panel.open=open;});previous=undefined;});
+})();
+</script>
+</body></html>

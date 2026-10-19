@@ -40,7 +40,13 @@ export const interactiveNotes = [
   { path: notePaths[34], source: 'adc-sampling.html' },
   { path: notePaths[35], source: 'adc-sampling-reference.html' },
   { path: notePaths[36], source: 'driver-recovery.html' },
-  { path: notePaths[37], source: 'driver-recovery-reference.html' }
+  { path: notePaths[37], source: 'driver-recovery-reference.html' },
+  { path: notePaths[38], source: 'interrupt-shared-data.html' },
+  { path: notePaths[39], source: 'interrupt-shared-data-reference.html' },
+  { path: notePaths[40], source: 'dma-ownership.html' },
+  { path: notePaths[41], source: 'dma-ownership-reference.html' },
+  { path: notePaths[42], source: 'throughput-overload.html' },
+  { path: notePaths[43], source: 'throughput-overload-reference.html' }
 ]
 
 export function readInteractiveNote(path = notePath) {
